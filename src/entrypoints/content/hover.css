@@ -29,10 +29,23 @@
 
 .ll-band {
   font-size: 11px;
+  font-weight: 600;
   color: var(--ll-accent);
   background: var(--ll-accent-soft);
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 999px;
+}
+.ll-band[data-band='A'] {
+  color: var(--ll-band-a);
+  background: var(--ll-band-a-soft);
+}
+.ll-band[data-band='B'] {
+  color: var(--ll-band-b);
+  background: var(--ll-band-b-soft);
+}
+.ll-band[data-band='C'] {
+  color: var(--ll-band-c);
+  background: var(--ll-band-c-soft);
 }
 
 .ll-senses {

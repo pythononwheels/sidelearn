@@ -1,46 +1,68 @@
 /*
  * Design tokens — the single source of truth for the look.
- * Philosophy: we assist, we don't dominate. Quiet palette, restrained accent,
- * easy words recede (muted), challenging words gently stand out.
+ * Philosophy: we assist, we don't dominate — but warm and friendly, not sterile.
+ * Easy words recede (muted), challenging words gently stand out.
  */
 :root {
   --ll-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ll-font-size: 14px;
-  --ll-line-height: 1.65;
+  --ll-line-height: 1.6;
 
-  /* Surfaces */
-  --ll-bg: #fbfbfa;
+  /* Surfaces — a touch of warmth instead of clinical grey */
+  --ll-bg: #faf7f5;
   --ll-surface: #ffffff;
-  --ll-border: #e7e5e1;
-  --ll-shadow: 0 4px 16px rgba(20, 20, 20, 0.1);
+  --ll-border: #ece6e1;
+  --ll-shadow: 0 6px 20px rgba(80, 60, 90, 0.1);
 
-  /* Text — the core "easy recedes, hard stands out" contrast */
-  --ll-text: #2a2a28; /* normal / challenging text */
-  --ll-text-muted: #b4b1aa; /* at/below level — light grey, unobtrusive */
-  --ll-text-soft: #6b6862;
+  /* Text */
+  --ll-text: #2c2a30;
+  --ll-text-muted: #b6b1ad; /* at/below level — light grey, unobtrusive */
+  --ll-text-soft: #6f6a72;
 
-  /* Accent — calm, single hue */
-  --ll-accent: #3a6ea5;
-  --ll-accent-soft: rgba(58, 110, 165, 0.1);
+  /* Accent — friendly violet */
+  --ll-accent: #6b57d6;
+  --ll-accent-strong: #5b46c8;
+  --ll-accent-soft: rgba(107, 87, 214, 0.12);
+  --ll-accent-grad: linear-gradient(135deg, #7a63e0 0%, #9a7af0 100%);
+
+  /* Friendly secondary used for highlights/success */
+  --ll-mint: #2bb487;
+  --ll-mint-soft: rgba(43, 180, 135, 0.14);
 
   /* Challenging-word marker: subtle underline, not a highlighter */
-  --ll-mark-underline: rgba(58, 110, 165, 0.45);
+  --ll-mark-underline: rgba(107, 87, 214, 0.5);
 
-  --ll-radius: 8px;
+  /* CEFR band tints — green (easy) → amber → red (hard) */
+  --ll-band-a: #2bb487;
+  --ll-band-a-soft: rgba(43, 180, 135, 0.14);
+  --ll-band-b: #d59423;
+  --ll-band-b-soft: rgba(213, 148, 35, 0.16);
+  --ll-band-c: #d2603f;
+  --ll-band-c-soft: rgba(210, 96, 63, 0.15);
+
+  --ll-radius: 12px;
+  --ll-radius-sm: 8px;
   --ll-gap: 12px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ll-bg: #1d1d1b;
-    --ll-surface: #262624;
-    --ll-border: #3a3a36;
-    --ll-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    --ll-text: #e8e6e1;
-    --ll-text-muted: #6e6b64;
-    --ll-text-soft: #a7a39b;
-    --ll-accent: #7aa7d6;
-    --ll-accent-soft: rgba(122, 167, 214, 0.14);
-    --ll-mark-underline: rgba(122, 167, 214, 0.5);
+    --ll-bg: #1c1b20;
+    --ll-surface: #26242b;
+    --ll-border: #38353f;
+    --ll-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    --ll-text: #ebe8ee;
+    --ll-text-muted: #706c78;
+    --ll-text-soft: #a8a3b0;
+    --ll-accent: #9a85f0;
+    --ll-accent-strong: #ab97ff;
+    --ll-accent-soft: rgba(154, 133, 240, 0.18);
+    --ll-accent-grad: linear-gradient(135deg, #7a63e0 0%, #9a7af0 100%);
+    --ll-mint: #3fd0a0;
+    --ll-mint-soft: rgba(63, 208, 160, 0.18);
+    --ll-mark-underline: rgba(154, 133, 240, 0.55);
+    --ll-band-a-soft: rgba(63, 208, 160, 0.2);
+    --ll-band-b-soft: rgba(213, 148, 35, 0.22);
+    --ll-band-c-soft: rgba(210, 96, 63, 0.22);
   }
 }

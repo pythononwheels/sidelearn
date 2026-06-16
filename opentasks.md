@@ -31,6 +31,15 @@ Status: `open` · `hold` · `closed` · `archive`
   the loaded page text (via Readability) is in context, so the user can ask
   questions about what they're reading. Multi-turn, history in the panel.
 
+## Ideas (pipeline)
+
+- [open] **Page quiz** — generate a small multiple-choice quiz from the current
+  page, tuned to the user's CEFR level (vocab + comprehension). Uses page text
+  (Readability) + LLM.
+- [open] **Spaced-repetition learning plan** — remember looked-up words and
+  paragraphs locally (IndexedDB), build a multiple-choice review test on click.
+  Needs: capture store for word/paragraph lookups → review session generator.
+
 ## Later
 
 - [open] **Vocabulary collection** — store looked-up words for review.

@@ -46,7 +46,10 @@ export function App() {
   return (
     <main class="ll-panel">
       <header class="ll-panel-head">
-        <h1>LangLearn</h1>
+        <div class="ll-brand">
+          <span class="ll-logo" aria-hidden="true">📖</span>
+          <h1>LangLearn</h1>
+        </div>
         <div class="ll-head-right">
           <span class={`ll-status ${online ? 'on' : 'off'}`} title="LM Studio">
             {online === null ? '…' : online ? '● LM' : '○ LM'}
@@ -118,6 +121,7 @@ function ResultsView({ results }: { results: PanelResult[] }) {
   if (results.length === 0) {
     return (
       <section class="ll-result ll-empty">
+        <div class="ll-empty-emoji" aria-hidden="true">✨</div>
         <p>Markiere Text auf der Seite, dann Rechtsklick → <b>LangLearn: übersetzen</b>.</p>
         <p>Oder fahre über ein <span class="ll-hint-mark">unterstrichenes</span> Wort.</p>
       </section>

@@ -49,7 +49,9 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
     <button class="ll-more" type="button">mehr in der Sidebar →</button>
   `;
   card.querySelector('.ll-word')!.textContent = info.word;
-  card.querySelector('.ll-band')!.textContent = info.band;
+  const bandEl = card.querySelector('.ll-band')!;
+  bandEl.textContent = info.band;
+  bandEl.setAttribute('data-band', info.band[0] ?? '');
 
   const list = card.querySelector('.ll-senses')!;
   if (info.senses.length) {

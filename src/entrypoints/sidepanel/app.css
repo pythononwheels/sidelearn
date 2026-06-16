@@ -22,10 +22,27 @@ body {
   justify-content: space-between;
   gap: 8px;
 }
+.ll-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ll-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  border-radius: 9px;
+  background: var(--ll-accent-grad);
+  box-shadow: 0 2px 8px var(--ll-accent-soft);
+}
 .ll-panel-head h1 {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 .ll-head-right {
   display: flex;
@@ -146,9 +163,17 @@ body {
 .ll-result.ll-empty {
   color: var(--ll-text-soft);
   font-size: 13px;
+  text-align: center;
+  padding: 22px 16px;
+  background: var(--ll-accent-soft);
+  border: 1px dashed var(--ll-border);
 }
 .ll-result.ll-empty p {
   margin: 0 0 6px;
+}
+.ll-empty-emoji {
+  font-size: 28px;
+  margin-bottom: 6px;
 }
 .ll-hint-mark {
   text-decoration: underline dotted var(--ll-mark-underline);
@@ -251,12 +276,20 @@ body {
 .ll-onboarding button {
   align-self: flex-start;
   font: inherit;
-  padding: 6px 16px;
+  font-weight: 600;
+  padding: 8px 18px;
   border: none;
-  border-radius: var(--ll-radius);
-  background: var(--ll-accent);
+  border-radius: 999px;
+  background: var(--ll-accent-grad);
   color: #fff;
   cursor: pointer;
+  box-shadow: 0 2px 10px var(--ll-accent-soft);
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+}
+.ll-manual button:hover,
+.ll-onboarding button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px var(--ll-accent-soft);
 }
 
 /* Onboarding -------------------------------------------------------------- */

@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-06-16
+
+### Changed
+- Friendlier, warmer look: violet accent with a gradient, logo chip in the
+  header, pill buttons with a soft hover lift, rounder cards, a warmer neutral
+  palette, and a friendlier empty state. Colored CEFR badges in the hover card
+  (A green → B amber → C red). Still restrained — assist, don't dominate.
+
 ## [0.1.3] — 2026-06-16
 
 ### Added
