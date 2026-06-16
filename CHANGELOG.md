@@ -5,6 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.13] — 2026-06-17
+
+### Fixed
+- Chat textarea overflowed the panel (width:100% + padding without border-box).
+  Added global `box-sizing: border-box`.
+
 ## [0.6.12] — 2026-06-17
 
 ### Changed
