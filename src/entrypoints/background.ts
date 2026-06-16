@@ -30,6 +30,10 @@ const MENU_EXPLAIN = 'll-explain';
 export default defineBackground(() => {
   chrome.sidePanel?.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 
+  // On (re)start no panel can be connected yet — clear any stale "open" flag so
+  // markings never linger after the panel is gone.
+  void setPanelOpen(false);
+
   browser.runtime.onInstalled.addListener(() => {
     browser.contextMenus.create({
       id: MENU_TRANSLATE,

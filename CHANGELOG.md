@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.4] — 2026-06-16
+
+### Fixed
+- Made "panel closed → markings off" robust against service-worker restarts: the
+  background clears the open-flag on startup, and the panel reconnects its port if
+  the worker recycles — so markings never linger after the panel is gone, and
+  reappear correctly when it's open.
+
 ## [0.6.3] — 2026-06-16
 
 ### Changed
