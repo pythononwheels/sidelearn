@@ -5,7 +5,19 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.4] — 2026-06-16
+## [0.6.5] — 2026-06-17
+
+### Added
+- **Right-click a link → "Sidelearn: übersetzen" / "Wort erklären"** (context now
+  includes links): translates the link's text. Makes link-heavy pages (news/
+  aggregators) usable without selecting text.
+
+### Fixed
+- **Bookmarking a second page failed** when colour extraction via scripting was
+  blocked on that tab — the error aborted the whole save. Scripting is now
+  wrapped in try/catch (bookmark saves without a colour), and host permissions
+  for http/https make panel scripting (page text, bookmark colour, quiz) reliable
+  across tabs instead of depending on per-tab activeTab.
 
 ### Fixed
 - Made "panel closed → markings off" robust against service-worker restarts: the

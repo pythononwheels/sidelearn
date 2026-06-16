@@ -38,17 +38,19 @@ export default defineBackground(() => {
     browser.contextMenus.create({
       id: MENU_TRANSLATE,
       title: 'Sidelearn: übersetzen',
-      contexts: ['selection'],
+      contexts: ['selection', 'link'],
     });
     browser.contextMenus.create({
       id: MENU_EXPLAIN,
       title: 'Sidelearn: Wort erklären',
-      contexts: ['selection'],
+      contexts: ['selection', 'link'],
     });
   });
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
-    const text = info.selectionText?.trim();
+    // Selected text wins; otherwise fall back to the link's text (link pages).
+    const click = info as { selectionText?: string; linkText?: string };
+    const text = (click.selectionText || click.linkText)?.trim();
     if (!text) return;
     // Open the panel within the user gesture before the async work starts.
     if (tab?.windowId != null) chrome.sidePanel?.open({ windowId: tab.windowId }).catch(() => {});

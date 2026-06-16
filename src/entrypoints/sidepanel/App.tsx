@@ -118,14 +118,18 @@ export function App() {
     }
     let color: string | undefined;
     if (tab.id != null) {
-      const [res] = await browser.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => {
-          const meta = document.querySelector('meta[name="theme-color"]');
-          return meta?.getAttribute('content') || getComputedStyle(document.body).backgroundColor || '';
-        },
-      });
-      color = (res?.result as string) || undefined;
+      try {
+        const [res] = await browser.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const meta = document.querySelector('meta[name="theme-color"]');
+            return meta?.getAttribute('content') || getComputedStyle(document.body).backgroundColor || '';
+          },
+        });
+        color = (res?.result as string) || undefined;
+      } catch {
+        // Scripting may be blocked on some pages — bookmark without a colour.
+      }
     }
     await addBookmark({
       url: key,
@@ -777,14 +781,18 @@ interface QuizState {
 async function getPageText(): Promise<string> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) return '';
-  const [res] = await browser.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: () => {
-      const el = document.querySelector('article, main') ?? document.body;
-      return (el as HTMLElement).innerText.replace(/\n{3,}/g, '\n\n').trim().slice(0, 8000);
-    },
-  });
-  return (res?.result as string) ?? '';
+  try {
+    const [res] = await browser.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const el = document.querySelector('article, main') ?? document.body;
+        return (el as HTMLElement).innerText.replace(/\n{3,}/g, '\n\n').trim().slice(0, 8000);
+      },
+    });
+    return (res?.result as string) ?? '';
+  } catch {
+    return '';
+  }
 }
 
 /** First language that isn't `lang` — keeps native ≠ learn. */
