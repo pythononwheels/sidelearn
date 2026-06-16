@@ -5,7 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.10] — 2026-06-17
+## [0.6.11] — 2026-06-17
+
+### Changed
+- Tighter, flatter UI: chat send button moved below the textarea (right-aligned,
+  flatter), and reduced vertical padding across nav buttons, marking toggle,
+  star, colour button and section headers; smaller panel gaps.
 
 ### Fixed
 - Settings added after a user's first run are now backfilled with defaults
