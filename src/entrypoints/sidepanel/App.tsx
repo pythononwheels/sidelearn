@@ -51,7 +51,6 @@ export function App() {
   const [quizLoading, setQuizLoading] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [sitesOpen, setSitesOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
 
   useEffect(() => {
@@ -325,20 +324,18 @@ export function App() {
         </section>
       )}
 
-      {sitesOpen ? (
-        <Sites bookmarks={bookmarks} onClose={() => setSitesOpen(false)} />
-      ) : quiz ? (
+      {quiz ? (
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
       ) : (
         <>
           <ResultsView results={results} pageKey={currentKey} />
 
-          <details class="ll-section" open={vocab.length > 0}>
+          <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
             <summary>Vokabeln ({vocab.length})</summary>
             <VocabList entries={vocab} />
           </details>
 
-          <details class="ll-section">
+          <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
             <summary>Chat zur Seite</summary>
             <Chat
               key={currentKey}
@@ -349,59 +346,56 @@ export function App() {
             />
           </details>
 
-          <button type="button" class="ll-sites-btn" onClick={() => setSitesOpen(true)}>
-            🔖 Sites ({bookmarks.length})
-          </button>
+          <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
+            <summary>🔖 Sites ({bookmarks.length})</summary>
+            <SitesList bookmarks={bookmarks} />
+          </details>
         </>
       )}
     </main>
   );
 }
 
-function Sites({ bookmarks, onClose }: { bookmarks: Bookmark[]; onClose: () => void }) {
-  function open(url: string) {
-    void browser.tabs.create({ url });
+/** Open an accordion section scrolls it into view (and closes the others via name). */
+function onSectionToggle(e: Event) {
+  const el = e.currentTarget as HTMLDetailsElement;
+  if (el.open) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function SitesList({ bookmarks }: { bookmarks: Bookmark[] }) {
+  if (bookmarks.length === 0) {
+    return (
+      <p class="ll-vocab-empty">
+        Noch keine Seiten gemerkt. Klicke oben auf den ☆-Stern, um die aktuelle Seite zu merken.
+      </p>
+    );
   }
   return (
-    <section class="ll-sites">
-      <div class="ll-sites-head">
-        <h2>Gemerkte Seiten</h2>
-        <button type="button" class="ll-close" title="schließen" onClick={onClose}>
-          ×
-        </button>
-      </div>
-      {bookmarks.length === 0 ? (
-        <p class="ll-muted">
-          Noch keine Seiten gemerkt. Klicke oben auf den ☆-Stern, um die aktuelle Seite zu merken.
-        </p>
-      ) : (
-        <ul class="ll-site-list">
-          {bookmarks.map((b) => (
-            <li key={b.url} class="ll-site-card" style={{ borderLeftColor: b.color || 'var(--ll-accent)' }}>
-              <button type="button" class="ll-site-open" onClick={() => open(b.url)}>
-                {b.favIconUrl ? (
-                  <img class="ll-site-favicon" src={b.favIconUrl} alt="" />
-                ) : (
-                  <span class="ll-site-dot" style={{ background: b.color || 'var(--ll-accent)' }} />
-                )}
-                <span class="ll-site-text">
-                  <span class="ll-site-title">{b.title}</span>
-                  <span class="ll-site-url">{domainOf(b.url)}</span>
-                </span>
-              </button>
-              <button
-                type="button"
-                class="ll-close"
-                title="entfernen"
-                onClick={() => void removeBookmark(b.url)}
-              >
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <ul class="ll-site-list">
+      {bookmarks.map((b) => (
+        <li key={b.url} class="ll-site-card" style={{ borderLeftColor: b.color || 'var(--ll-accent)' }}>
+          <button type="button" class="ll-site-open" onClick={() => void browser.tabs.create({ url: b.url })}>
+            {b.favIconUrl ? (
+              <img class="ll-site-favicon" src={b.favIconUrl} alt="" />
+            ) : (
+              <span class="ll-site-dot" style={{ background: b.color || 'var(--ll-accent)' }} />
+            )}
+            <span class="ll-site-text">
+              <span class="ll-site-title">{b.title}</span>
+              <span class="ll-site-url">{domainOf(b.url)}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="ll-close"
+            title="entfernen"
+            onClick={() => void removeBookmark(b.url)}
+          >
+            ×
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

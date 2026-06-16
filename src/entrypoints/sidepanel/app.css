@@ -506,38 +506,10 @@ body {
 }
 
 /* Sites ------------------------------------------------------------------- */
-.ll-sites-btn {
-  font: inherit;
-  font-weight: 600;
-  font-size: 13px;
-  padding: 9px 12px;
-  border: 1px solid var(--ll-border);
-  border-radius: var(--ll-radius);
-  background: var(--ll-surface);
-  color: var(--ll-text);
-  cursor: pointer;
-}
-.ll-sites-btn:hover {
-  border-color: var(--ll-accent);
-}
-.ll-sites {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.ll-sites-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.ll-sites-head h2 {
-  margin: 0;
-  font-size: 15px;
-}
 .ll-site-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;

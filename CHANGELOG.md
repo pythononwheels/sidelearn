@@ -5,7 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.6] — 2026-06-17
+## [0.6.7] — 2026-06-17
+
+### Changed
+- Vokabeln, Chat and **Sites are now one exclusive accordion** (collapsed by
+  default; opening one closes the others and scrolls it into view). Sites is no
+  longer a confusing full-panel takeover — it's a section like the others.
 
 ### Added
 - **Underline colour adapts to dark pages**: "Auto" picks a bright underline on
