@@ -23,6 +23,13 @@ import {
 } from '@/core/vocab';
 import { buildSession, canReview } from '@/core/review';
 import { generatePageQuiz, type QuizQuestion } from '@/core/quiz';
+import {
+  addBookmark,
+  getBookmarks,
+  removeBookmark,
+  watchBookmarks,
+  type Bookmark,
+} from '@/core/bookmarks';
 
 /**
  * Side panel — the stable backbone.
@@ -42,13 +49,17 @@ export function App() {
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [quizLoading, setQuizLoading] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [sitesOpen, setSitesOpen] = useState(false);
 
   useEffect(() => {
     void getSettings().then(setLocal);
     void isReachable().then(setOnline);
     void listModels().then(setModels);
     void getVocab().then(setVocab);
+    void getBookmarks().then(setBookmarks);
     const offVocab = watchVocab(setVocab);
+    const offBookmarks = watchBookmarks(setBookmarks);
     // Signal "panel open" to the background; auto-disconnects when it closes.
     const port = browser.runtime.connect({ name: 'panel' });
 
@@ -71,6 +82,7 @@ export function App() {
 
     return () => {
       offVocab();
+      offBookmarks();
       offResults();
       port.disconnect();
       browser.tabs.onActivated.removeListener(onActivated);
@@ -82,6 +94,36 @@ export function App() {
 
   async function patch(p: Partial<Settings>) {
     setLocal(await setSettings(p));
+  }
+
+  const isBookmarked = bookmarks.some((b) => b.url === currentKey);
+
+  async function toggleBookmark() {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.url) return;
+    const key = pageKey(tab.url);
+    if (bookmarks.some((b) => b.url === key)) {
+      await removeBookmark(key);
+      return;
+    }
+    let color: string | undefined;
+    if (tab.id != null) {
+      const [res] = await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          const meta = document.querySelector('meta[name="theme-color"]');
+          return meta?.getAttribute('content') || getComputedStyle(document.body).backgroundColor || '';
+        },
+      });
+      color = (res?.result as string) || undefined;
+    }
+    await addBookmark({
+      url: key,
+      title: tab.title ?? key,
+      favIconUrl: tab.favIconUrl,
+      color,
+      ts: Date.now(),
+    });
   }
 
   function startReview() {
@@ -161,6 +203,14 @@ export function App() {
       <nav class="ll-nav">
         <button
           type="button"
+          class={`ll-star ${isBookmarked ? 'on' : ''}`}
+          title={isBookmarked ? 'Seite gemerkt — entfernen' : 'Seite merken'}
+          onClick={() => void toggleBookmark()}
+        >
+          {isBookmarked ? '★' : '☆'}
+        </button>
+        <button
+          type="button"
           class="ll-navbtn"
           disabled={!canReview(vocab)}
           title="Wiederhole deine gemerkten Wörter als Multiple-Choice-Quiz (ab 4 Wörtern)."
@@ -223,7 +273,9 @@ export function App() {
         </section>
       )}
 
-      {quiz ? (
+      {sitesOpen ? (
+        <Sites bookmarks={bookmarks} onClose={() => setSitesOpen(false)} />
+      ) : quiz ? (
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
       ) : (
         <>
@@ -238,10 +290,69 @@ export function App() {
             <summary>Freitext übersetzen</summary>
             <ManualTranslate />
           </details>
+
+          <button type="button" class="ll-sites-btn" onClick={() => setSitesOpen(true)}>
+            🔖 Sites ({bookmarks.length})
+          </button>
         </>
       )}
     </main>
   );
+}
+
+function Sites({ bookmarks, onClose }: { bookmarks: Bookmark[]; onClose: () => void }) {
+  function open(url: string) {
+    void browser.tabs.create({ url });
+  }
+  return (
+    <section class="ll-sites">
+      <div class="ll-sites-head">
+        <h2>Gemerkte Seiten</h2>
+        <button type="button" class="ll-close" title="schließen" onClick={onClose}>
+          ×
+        </button>
+      </div>
+      {bookmarks.length === 0 ? (
+        <p class="ll-muted">
+          Noch keine Seiten gemerkt. Klicke oben auf den ☆-Stern, um die aktuelle Seite zu merken.
+        </p>
+      ) : (
+        <ul class="ll-site-list">
+          {bookmarks.map((b) => (
+            <li key={b.url} class="ll-site-card" style={{ borderLeftColor: b.color || 'var(--ll-accent)' }}>
+              <button type="button" class="ll-site-open" onClick={() => open(b.url)}>
+                {b.favIconUrl ? (
+                  <img class="ll-site-favicon" src={b.favIconUrl} alt="" />
+                ) : (
+                  <span class="ll-site-dot" style={{ background: b.color || 'var(--ll-accent)' }} />
+                )}
+                <span class="ll-site-text">
+                  <span class="ll-site-title">{b.title}</span>
+                  <span class="ll-site-url">{domainOf(b.url)}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                class="ll-close"
+                title="entfernen"
+                onClick={() => void removeBookmark(b.url)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function domainOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
 }
 
 function Quiz({ state, onExit }: { state: QuizState; onExit: () => void }) {

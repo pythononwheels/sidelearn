@@ -391,6 +391,113 @@ body {
   cursor: default;
 }
 
+.ll-star {
+  flex: 0 0 auto;
+  font-size: 16px;
+  line-height: 1;
+  padding: 9px 11px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+  color: var(--ll-text-muted);
+  cursor: pointer;
+}
+.ll-star.on {
+  color: #e0a92e;
+  border-color: #e0a92e;
+  background: rgba(224, 169, 46, 0.12);
+}
+
+/* Sites ------------------------------------------------------------------- */
+.ll-sites-btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+  color: var(--ll-text);
+  cursor: pointer;
+}
+.ll-sites-btn:hover {
+  border-color: var(--ll-accent);
+}
+.ll-sites {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ll-sites-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ll-sites-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.ll-site-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ll-site-card {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-left: 4px solid var(--ll-accent);
+  border-radius: var(--ll-radius);
+  padding: 8px 8px 8px 10px;
+}
+.ll-site-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.ll-site-favicon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+}
+.ll-site-dot {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+.ll-site-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ll-site-title {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ll-site-url {
+  font-size: 11px;
+  color: var(--ll-text-soft);
+}
+
 /* Review quiz ------------------------------------------------------------- */
 .ll-review {
   display: flex;

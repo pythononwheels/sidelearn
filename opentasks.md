@@ -27,15 +27,14 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Next
 
-- [open] **Chat with page context** — turn the "Freitext" box into a chat where
-  the loaded page text (via Readability) is in context, so the user can ask
-  questions about what they're reading. Multi-turn, history in the panel.
+- [open] **Chat with page context** — turn the "Freitext" box into a multi-turn
+  chat with the page text in context (approved; build next).
 
 ## Ideas (pipeline)
 
-- [open] **Bookmark a page** — "Seite merken" button; bookmarked pages keep their
-  result cache pinned (exempt from the MAX_PAGES eviction) and could optionally
-  pre-seed translation/quiz. Link vocab/quiz back to the page they came from.
+- [closed] **Bookmark a page + Sites view** — done (0.6.2). Follow-ups: pin
+  bookmarked pages' result cache (exempt from eviction); link vocab/quiz back to
+  the source page; optional pre-seed for bookmarked pages.
 
 - [closed] **Vocab capture store** — done. `core/vocab.ts`: looked-up words
   remembered locally (★ merken + explain), listed in the panel.

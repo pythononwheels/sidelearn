@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.1] — 2026-06-16
+## [0.6.2] — 2026-06-16
+
+### Added
+- **Bookmarks + Sites view**: a ☆/★ toggle in the action bar remembers the
+  current page (title, favicon, theme-color). A "🔖 Sites" button opens a list of
+  bookmarked pages as cards (favicon, title, domain, colour accent); clicking a
+  card opens it in a new tab, × removes it. `core/bookmarks.ts`.
 
 ### Added
 - **Per-page result cache**: results are keyed by page URL. A fresh page shows an

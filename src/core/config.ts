@@ -99,4 +99,6 @@ export const STORAGE_KEYS = {
   vocab: 'local:vocab',
   /** Whether the side panel is currently open (gates inline marking). */
   panelOpen: 'local:panelOpen',
+  /** Bookmarked pages shown in the "Sites" view. */
+  bookmarks: 'local:bookmarks',
 } as const;
