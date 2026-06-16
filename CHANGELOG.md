@@ -5,7 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.8] — 2026-06-17
+## [0.6.9] — 2026-06-17
+
+### Changed
+- **Chat improvements**: replies stream token-by-token (`chatStream`, LM Studio
+  SSE; the model's reasoning is ignored, only the answer streams). The assistant
+  answers in the **learning language at the user's level** by default — the user
+  can override it in their message. The message list now scrolls and auto-sticks
+  to the bottom. Each finished answer has a **"↦ auf <Muttersprache>"** button to
+  translate it. Send button is more compact.
 
 ### Added
 - **"＋ Wörter von Seite"** in the Vokabeln section: collects a level-appropriate

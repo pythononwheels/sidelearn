@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
 import { LANG_LABELS, LANGUAGES, MARKER_COLORS, type Language, type Settings } from '@/core/config';
 import { getSettings, setSettings } from '@/core/settings';
@@ -32,6 +32,7 @@ import {
   type Bookmark,
 } from '@/core/bookmarks';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
+import { translateParagraph } from '@/core/llm/prompts';
 import { pickStudyWords, type Candidate } from '@/core/collect';
 import { resolveWord } from '@/core/wordinfo';
 import { normalize } from '@/core/difficulty/frequency';
@@ -416,6 +417,7 @@ export function App() {
               key={currentKey}
               learn={settings.learnLang}
               native={settings.nativeLang}
+              level={settings.level}
               model={settings.model}
               online={!!online}
             />
@@ -708,61 +710,107 @@ function Explanation({ e }: { e: NonNullable<PanelResult['explanation']> }) {
   );
 }
 
+interface ChatMsg extends ChatTurn {
+  translation?: string;
+  translating?: boolean;
+}
+
 function Chat({
   learn,
   native,
+  level,
   model,
   online,
 }: {
   learn: Language;
   native: Language;
+  level: CefrLevel;
   model: string;
   online: boolean;
 }) {
   const [pageText, setPageText] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatTurn[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
   async function send() {
     const q = input.trim();
     if (!q || busy) return;
     setInput('');
     setBusy(true);
-    const history = messages;
-    setMessages([...history, { role: 'user', content: q }]);
+    const history: ChatTurn[] = messages.map((m) => ({ role: m.role, content: m.content }));
+    setMessages([...messages, { role: 'user', content: q }, { role: 'assistant', content: '' }]);
     try {
       let ctx = pageText;
       if (ctx === null) {
         ctx = await getPageText();
         setPageText(ctx);
       }
-      const reply = await askAboutPage(ctx, history, q, learn, native, model);
-      setMessages([...history, { role: 'user', content: q }, { role: 'assistant', content: reply }]);
+      await askAboutPage(ctx, history, q, learn, native, level, model, (delta) => {
+        setMessages((cur) => {
+          const copy = cur.slice();
+          const last = copy.length - 1;
+          copy[last] = { ...copy[last]!, content: copy[last]!.content + delta };
+          return copy;
+        });
+      });
     } catch (err) {
-      setMessages([
-        ...history,
-        { role: 'user', content: q },
-        { role: 'assistant', content: `Fehler: ${String(err)}` },
-      ]);
+      setMessages((cur) => {
+        const copy = cur.slice();
+        copy[copy.length - 1] = { role: 'assistant', content: `Fehler: ${String(err)}` };
+        return copy;
+      });
     } finally {
       setBusy(false);
     }
   }
 
+  async function translateTurn(i: number) {
+    const target = messages[i];
+    if (!target || target.translating || target.translation) return;
+    setMessages((cur) => cur.map((m, idx) => (idx === i ? { ...m, translating: true } : m)));
+    try {
+      const r = await translateParagraph(target.content, learn, native, model);
+      setMessages((cur) =>
+        cur.map((m, idx) => (idx === i ? { ...m, translation: r.translation, translating: false } : m)),
+      );
+    } catch {
+      setMessages((cur) => cur.map((m, idx) => (idx === i ? { ...m, translating: false } : m)));
+    }
+  }
+
   return (
     <div class="ll-chat">
-      {messages.length === 0 && (
-        <p class="ll-chat-hint">
-          Frag etwas zur Seite — z.B. „Worum geht es hier?" oder „Übersetze den ersten Absatz."
-        </p>
-      )}
-      {messages.map((m, i) => (
-        <div key={i} class={`ll-bubble ll-bubble-${m.role}`}>
-          {m.content}
-        </div>
-      ))}
-      {busy && <div class="ll-bubble ll-bubble-assistant ll-muted">…</div>}
+      <div class="ll-chat-messages" ref={listRef}>
+        {messages.length === 0 && (
+          <p class="ll-chat-hint">
+            Frag etwas zur Seite — z.B. „Worum geht es hier?" Antwort kommt auf {LANG_LABELS[learn]}{' '}
+            (Niveau {level}).
+          </p>
+        )}
+        {messages.map((m, i) => (
+          <div key={i} class={`ll-bubble-wrap ll-bubble-wrap-${m.role}`}>
+            <div class={`ll-bubble ll-bubble-${m.role}`}>{m.content || (busy ? '…' : '')}</div>
+            {m.role === 'assistant' && m.content && !busy && (
+              <button
+                type="button"
+                class="ll-translate-link"
+                disabled={m.translating}
+                onClick={() => void translateTurn(i)}
+              >
+                {m.translating ? '…' : m.translation ? '' : `↦ auf ${LANG_LABELS[native]}`}
+              </button>
+            )}
+            {m.translation && <div class="ll-bubble ll-bubble-translation">{m.translation}</div>}
+          </div>
+        ))}
+      </div>
       <div class="ll-chat-input">
         <textarea
           rows={2}
@@ -777,7 +825,7 @@ function Chat({
             }
           }}
         />
-        <button type="button" onClick={() => void send()} disabled={!online || busy}>
+        <button type="button" class="ll-send" onClick={() => void send()} disabled={!online || busy}>
           Senden
         </button>
       </div>

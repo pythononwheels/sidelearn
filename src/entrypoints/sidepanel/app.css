@@ -341,13 +341,33 @@ body {
   gap: 8px;
   padding: 0 12px 12px;
 }
+.ll-chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
 .ll-chat-hint {
   margin: 0;
   font-size: 12px;
   color: var(--ll-text-soft);
 }
+.ll-bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 92%;
+}
+.ll-bubble-wrap-user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.ll-bubble-wrap-assistant {
+  align-self: flex-start;
+  align-items: flex-start;
+}
 .ll-bubble {
-  max-width: 90%;
   padding: 8px 11px;
   border-radius: 12px;
   font-size: 13px;
@@ -355,31 +375,46 @@ body {
   white-space: pre-wrap;
 }
 .ll-bubble-user {
-  align-self: flex-end;
   background: var(--ll-accent-soft);
   color: var(--ll-text);
   border-bottom-right-radius: 4px;
 }
 .ll-bubble-assistant {
-  align-self: flex-start;
   background: var(--ll-surface);
   border: 1px solid var(--ll-border);
   border-bottom-left-radius: 4px;
 }
+.ll-bubble-translation {
+  background: var(--ll-accent-soft);
+  color: var(--ll-text-soft);
+  font-style: italic;
+}
+.ll-translate-link {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ll-accent);
+  cursor: pointer;
+}
+.ll-translate-link:hover {
+  text-decoration: underline;
+}
 .ll-chat-input {
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
-
-/* Shared accent button */
-.ll-chat button,
+.ll-chat-input textarea {
+  flex: 1;
+}
+.ll-send,
 .ll-onboarding button {
   align-self: flex-start;
   font: inherit;
   font-weight: 600;
-  padding: 8px 18px;
   border: none;
   border-radius: 999px;
   background: var(--ll-accent-grad);
@@ -388,11 +423,18 @@ body {
   box-shadow: 0 2px 10px var(--ll-accent-soft);
   transition: transform 0.08s ease, box-shadow 0.15s ease;
 }
-.ll-chat button:disabled {
+.ll-send {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+.ll-onboarding button {
+  padding: 8px 18px;
+}
+.ll-send:disabled {
   opacity: 0.6;
   cursor: default;
 }
-.ll-chat button:hover:not(:disabled),
+.ll-send:hover:not(:disabled),
 .ll-onboarding button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px var(--ll-accent-soft);
