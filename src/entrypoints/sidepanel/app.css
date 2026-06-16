@@ -59,6 +59,27 @@ body {
   color: var(--ll-text);
 }
 
+/* Marking on/off toggle --------------------------------------------------- */
+.ll-marktoggle {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--ll-radius);
+  border: 1px solid var(--ll-border);
+  cursor: pointer;
+  text-align: left;
+}
+.ll-marktoggle.on {
+  background: var(--ll-accent-soft);
+  border-color: transparent;
+  color: var(--ll-accent);
+}
+.ll-marktoggle.off {
+  background: var(--ll-surface);
+  color: var(--ll-text-muted);
+}
+
 /* Settings ---------------------------------------------------------------- */
 .ll-settings {
   display: flex;

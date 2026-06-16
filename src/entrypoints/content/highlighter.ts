@@ -45,6 +45,9 @@ function collectTextNodes(root: ParentNode): Text[] {
       const parent = (node as Text).parentElement;
       if (!parent || SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
       if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+      // Never mark inside links: underlining hides that they are links and
+      // discourages clicking them.
+      if (parent.closest('a')) return NodeFilter.FILTER_REJECT;
       if (parent.closest('[data-ll-ui]')) return NodeFilter.FILTER_REJECT;
       if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;

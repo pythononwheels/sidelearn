@@ -42,8 +42,8 @@ export function App() {
       <header class="ll-panel-head">
         <h1>LangLearn</h1>
         <div class="ll-head-right">
-          <span class={`ll-status ${online ? 'on' : 'off'}`}>
-            {online === null ? '…' : online ? 'verbunden' : 'offline'}
+          <span class={`ll-status ${online ? 'on' : 'off'}`} title="LM Studio">
+            {online === null ? '…' : online ? '● LM' : '○ LM'}
           </span>
           <button
             type="button"
@@ -55,6 +55,14 @@ export function App() {
           </button>
         </div>
       </header>
+
+      <button
+        type="button"
+        class={`ll-marktoggle ${settings.inlineEnabled ? 'on' : 'off'}`}
+        onClick={() => patch({ inlineEnabled: !settings.inlineEnabled })}
+      >
+        {settings.inlineEnabled ? '◉ Markierung an' : '○ Markierung aus'}
+      </button>
 
       {settingsOpen && (
         <section class="ll-settings">
@@ -78,14 +86,6 @@ export function App() {
                 <option value={m.id}>{modelLabel(m)}</option>
               ))}
             </select>
-          </label>
-          <label class="ll-toggle">
-            <input
-              type="checkbox"
-              checked={settings.inlineEnabled}
-              onChange={(e) => patch({ inlineEnabled: e.currentTarget.checked })}
-            />
-            Inline-Markierung auf der Seite
           </label>
         </section>
       )}

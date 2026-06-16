@@ -25,6 +25,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   sentence/paragraph-aware chunking for paragraph translation.
 
 ### Changed
+- Inline marking now skips text inside links (`<a>`), so links stay recognisable
+  and clickable.
+- Prominent "Markierung an/aus" toggle in the panel (live on/off); removed the
+  duplicate checkbox from settings.
 - Right-click context menu on a selection: "LangLearn: übersetzen" and
   "Wort erklären" → opens the panel and shows the result. Results now flow
   through a shared storage slot (`core/result.ts`) that the panel renders.
