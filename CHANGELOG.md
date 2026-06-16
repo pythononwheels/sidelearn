@@ -5,6 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-06-16
+
+### Added
+- **Vocabulary capture store** (`core/vocab.ts`): looked-up words are remembered
+  locally (chrome.storage.local, deduped, newest-first, capped). Captured on a
+  new **★ merken** button on the hover card (instant) and on explicit "Wort
+  erklären". A "Vokabeln (N)" section in the panel lists them with band, main
+  translation, per-item × and "alle löschen". Foundation for review + quiz.
+
 ## [0.2.1] — 2026-06-16
 
 ### Changed

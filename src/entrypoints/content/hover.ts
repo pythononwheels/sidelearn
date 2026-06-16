@@ -46,7 +46,10 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
   card.innerHTML = `
     <div class="ll-head"><span class="ll-word"></span><span class="ll-band"></span></div>
     <ul class="ll-senses"></ul>
-    <button class="ll-more" type="button">mehr in der Sidebar →</button>
+    <div class="ll-actions">
+      <button class="ll-save" type="button">★ merken</button>
+      <button class="ll-more" type="button">mehr in der Sidebar →</button>
+    </div>
   `;
   card.querySelector('.ll-word')!.textContent = info.word;
   const bandEl = card.querySelector('.ll-band')!;
@@ -72,6 +75,11 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
     card.querySelector('.ll-more')!.textContent = '✓ im Panel (öffne die Sidebar)';
   });
 
+  card.querySelector('.ll-save')!.addEventListener('click', () => {
+    void sendMessage({ type: 'saveVocab', word: info.word, context: sentenceAround(anchor) });
+    card.querySelector('.ll-save')!.textContent = '✓ gemerkt';
+  });
+
   root.append(card);
   position(card, anchor);
 }
@@ -89,6 +97,13 @@ export function cancelHide(): void {
     window.clearTimeout(hideTimer);
     hideTimer = undefined;
   }
+}
+
+/** Best-effort sentence/context the word sits in, for the vocab entry. */
+function sentenceAround(anchor: HTMLElement): string | undefined {
+  const block = anchor.closest('p, li, h1, h2, h3, h4, td, blockquote') ?? anchor.parentElement;
+  const text = block?.textContent?.replace(/\s+/g, ' ').trim();
+  return text ? text.slice(0, 200) : undefined;
 }
 
 function position(card: HTMLElement, anchor: HTMLElement): void {

@@ -228,26 +228,26 @@ body {
 }
 
 /* Manual translator (collapsible) ---------------------------------------- */
-.ll-translator {
+.ll-section {
   border: 1px solid var(--ll-border);
   border-radius: var(--ll-radius);
   background: var(--ll-surface);
 }
-.ll-translator > summary {
+.ll-section > summary {
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   list-style: none;
 }
-.ll-translator > summary::-webkit-details-marker {
+.ll-section > summary::-webkit-details-marker {
   display: none;
 }
-.ll-translator > summary::before {
+.ll-section > summary::before {
   content: '▸ ';
   color: var(--ll-text-muted);
 }
-.ll-translator[open] > summary::before {
+.ll-section[open] > summary::before {
   content: '▾ ';
 }
 .ll-manual {
@@ -276,6 +276,68 @@ body {
 .ll-onboarding button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px var(--ll-accent-soft);
+}
+
+/* Vocabulary -------------------------------------------------------------- */
+.ll-vocab {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+.ll-vocab-empty {
+  margin: 0;
+  padding: 0 12px 12px;
+  color: var(--ll-text-soft);
+  font-size: 13px;
+}
+.ll-vocab-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ll-vocab-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ll-vocab-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.ll-vocab-word {
+  font-weight: 600;
+}
+.ll-vocab-trans {
+  color: var(--ll-text-soft);
+  font-size: 13px;
+}
+.ll-vocab-band {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: var(--ll-accent);
+  background: var(--ll-accent-soft);
+}
+.ll-vocab-band[data-band='A'] {
+  color: var(--ll-band-a);
+  background: var(--ll-band-a-soft);
+}
+.ll-vocab-band[data-band='B'] {
+  color: var(--ll-band-b);
+  background: var(--ll-band-b-soft);
+}
+.ll-vocab-band[data-band='C'] {
+  color: var(--ll-band-c);
+  background: var(--ll-band-c-soft);
 }
 
 /* Onboarding -------------------------------------------------------------- */

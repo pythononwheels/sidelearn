@@ -13,6 +13,7 @@ import {
   type PanelResult,
 } from '@/core/result';
 import { getPageTheme, watchPageTheme, type PageTheme } from '@/core/theme';
+import { clearVocab, getVocab, removeVocab, watchVocab, type VocabEntry } from '@/core/vocab';
 
 /**
  * Side panel — the stable backbone.
@@ -28,6 +29,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [results, setResults] = useState<PanelResult[]>([]);
   const [pageTheme, setPageThemeState] = useState<PageTheme | null>(null);
+  const [vocab, setVocab] = useState<VocabEntry[]>([]);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -35,11 +37,14 @@ export function App() {
     void listModels().then(setModels);
     void getResults().then(setResults);
     void getPageTheme().then(setPageThemeState);
+    void getVocab().then(setVocab);
     const offResults = watchResults(setResults);
     const offTheme = watchPageTheme(setPageThemeState);
+    const offVocab = watchVocab(setVocab);
     return () => {
       offResults();
       offTheme();
+      offVocab();
     };
   }, []);
 
@@ -129,11 +134,53 @@ export function App() {
 
       <ResultsView results={results} />
 
-      <details class="ll-translator">
+      <details class="ll-section" open={vocab.length > 0}>
+        <summary>Vokabeln ({vocab.length})</summary>
+        <VocabList entries={vocab} />
+      </details>
+
+      <details class="ll-section">
         <summary>Freitext übersetzen</summary>
         <ManualTranslate />
       </details>
     </main>
+  );
+}
+
+function VocabList({ entries }: { entries: VocabEntry[] }) {
+  if (entries.length === 0) {
+    return (
+      <p class="ll-vocab-empty">
+        Noch keine Vokabeln. Nutze <b>★ merken</b> auf der Hover-Karte oder Rechtsklick →
+        „Wort erklären".
+      </p>
+    );
+  }
+  return (
+    <div class="ll-vocab">
+      <button type="button" class="ll-clearall" onClick={() => void clearVocab()}>
+        alle löschen ({entries.length})
+      </button>
+      <ul class="ll-vocab-list">
+        {entries.map((e) => (
+          <li key={e.id} class="ll-vocab-item">
+            <div class="ll-vocab-main">
+              <span class="ll-vocab-word">{e.text}</span>
+              {e.band && <span class="ll-vocab-band" data-band={e.band[0]}>{e.band}</span>}
+              {e.translation && <span class="ll-vocab-trans">— {e.translation}</span>}
+            </div>
+            <button
+              type="button"
+              class="ll-close"
+              title="entfernen"
+              onClick={() => void removeVocab(e.id)}
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

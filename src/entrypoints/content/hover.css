@@ -62,6 +62,12 @@
   color: var(--ll-text-soft);
 }
 
+.ll-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ll-save,
 .ll-more {
   font: inherit;
   font-size: 12px;
@@ -71,6 +77,10 @@
   padding: 0;
   cursor: pointer;
 }
+.ll-save {
+  font-weight: 600;
+}
+.ll-save:hover,
 .ll-more:hover {
   text-decoration: underline;
 }

@@ -100,4 +100,6 @@ export const STORAGE_KEYS = {
   results: 'local:results',
   /** Palette extracted from the active page, for adaptive panel theming. */
   pageTheme: 'local:pageTheme',
+  /** Captured vocabulary (looked-up words) for review. */
+  vocab: 'local:vocab',
 } as const;

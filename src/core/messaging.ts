@@ -6,7 +6,8 @@
 
 export type Message =
   | { type: 'translateToPanel'; text: string }
-  | { type: 'explainToPanel'; word: string };
+  | { type: 'explainToPanel'; word: string }
+  | { type: 'saveVocab'; word: string; context?: string };
 
 /** Send a message to the background worker. Resolves once it is accepted. */
 export async function sendMessage(message: Message): Promise<void> {

@@ -33,12 +33,14 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Ideas (pipeline)
 
+- [closed] **Vocab capture store** — done. `core/vocab.ts`: looked-up words
+  remembered locally (★ merken + explain), listed in the panel.
+- [open] **Review test** — build a multiple-choice review from the captured
+  vocab. Distractors from same-band dictionary words (instant) or LLM. Update
+  `reviews`/`lastReviewed` per entry; simple spaced-repetition ordering.
 - [open] **Page quiz** — generate a small multiple-choice quiz from the current
   page, tuned to the user's CEFR level (vocab + comprehension). Uses page text
   (Readability) + LLM.
-- [open] **Spaced-repetition learning plan** — remember looked-up words and
-  paragraphs locally (IndexedDB), build a multiple-choice review test on click.
-  Needs: capture store for word/paragraph lookups → review session generator.
 
 ## Later
 

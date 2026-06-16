@@ -12,6 +12,8 @@ import type { Message } from '@/core/messaging';
 import { explainWord, translateParagraph } from '@/core/llm/prompts';
 import { getSettings } from '@/core/settings';
 import { clearResults, pushResult, updateResult } from '@/core/result';
+import { resolveWord } from '@/core/wordinfo';
+import { addVocab } from '@/core/vocab';
 
 // chrome.sidePanel is Chrome-only and not in the cross-browser `browser` types.
 declare const chrome: {
@@ -53,6 +55,7 @@ export default defineBackground(() => {
     const m = msg as Message;
     if (m.type === 'translateToPanel') void runTranslate(m.text);
     if (m.type === 'explainToPanel') void runExplain(m.word);
+    if (m.type === 'saveVocab') void captureWord(m.word, m.context);
     return false;
   });
 });
@@ -73,6 +76,7 @@ async function runTranslate(text: string): Promise<void> {
 async function runExplain(word: string): Promise<void> {
   const { learnLang, nativeLang, model, keepResults } = await getSettings();
   if (!keepResults) await clearResults();
+  void captureWord(word); // explicit explain = a study moment worth remembering
   const id = newId();
   await pushResult({ id, kind: 'explanation', status: 'loading', title: word });
   try {
@@ -81,6 +85,25 @@ async function runExplain(word: string): Promise<void> {
   } catch (err) {
     await updateResult(id, { status: 'error', error: String(err) });
   }
+}
+
+/** Record a looked-up word in the local vocabulary store (no LLM needed). */
+async function captureWord(word: string, context?: string): Promise<void> {
+  const { learnLang, nativeLang, level } = await getSettings();
+  const info = await resolveWord(word, learnLang, nativeLang, level);
+  const translation = info.senses[0]?.translations.slice(0, 3).join(', ');
+  await addVocab({
+    id: newId(),
+    text: word,
+    learn: learnLang,
+    native: nativeLang,
+    band: info.band,
+    translation,
+    context,
+    ts: Date.now(),
+    seen: 1,
+    reviews: 0,
+  });
 }
 
 let counter = 0;
