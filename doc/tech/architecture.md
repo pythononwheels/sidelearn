@@ -1,6 +1,6 @@
 # Architecture
 
-LangLearn is a Manifest V3 browser extension that helps you read pages in a
+Sidelearn is a Manifest V3 browser extension that helps you read pages in a
 language you are learning with reading aids in your native language, powered
 entirely by a **local** LLM (LM Studio). Nothing leaves your machine.
 
@@ -73,8 +73,10 @@ size correlates strongly with frequency rank. We bucket the rank into bands
 - **Dutch** has no comparable open resource, so frequency is the common
   denominator.
 
-Unknown words (not in the frequency table) are treated as the hardest band so
-rare words still get flagged — fail-soft, never blocks reading.
+Unknown words (not in the frequency table — names, foreign words, or simply not
+in the learning language) are **not** flagged, to keep pages quiet. Only words in
+the frequency list and above the learner's level are highlighted. Inflected forms
+are resolved via lightweight lemmatization (`core/dict/lemmatize.ts`).
 
 ## LM Studio
 

@@ -9,8 +9,10 @@
 
 import { resolveWord } from '@/core/wordinfo';
 import { getSettings, watchSettings } from '@/core/settings';
+import { setPageTheme } from '@/core/theme';
 import { clear, highlight } from './highlighter';
 import { cancelHide, scheduleHide, showHover } from './hover';
+import { extractPageTheme } from './pagetheme';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -50,8 +52,20 @@ export default defineContentScript({
       settings = next;
       void apply();
     });
+
+    // Share this page's palette with the panel (on load and whenever it
+    // becomes the visible tab again).
+    publishTheme();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') publishTheme();
+    });
   },
 });
+
+function publishTheme(): void {
+  const theme = extractPageTheme();
+  if (theme) void setPageTheme(theme);
+}
 
 /** Marker styling injected into the host page; intentionally minimal. */
 function injectMarkerStyle(): void {

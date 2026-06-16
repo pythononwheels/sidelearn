@@ -12,6 +12,7 @@ import {
   watchResults,
   type PanelResult,
 } from '@/core/result';
+import { getPageTheme, watchPageTheme, type PageTheme } from '@/core/theme';
 
 /**
  * Side panel — the stable backbone.
@@ -26,14 +27,26 @@ export function App() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [results, setResults] = useState<PanelResult[]>([]);
+  const [pageTheme, setPageThemeState] = useState<PageTheme | null>(null);
 
   useEffect(() => {
     void getSettings().then(setLocal);
     void isReachable().then(setOnline);
     void listModels().then(setModels);
     void getResults().then(setResults);
-    return watchResults(setResults);
+    void getPageTheme().then(setPageThemeState);
+    const offResults = watchResults(setResults);
+    const offTheme = watchPageTheme(setPageThemeState);
+    return () => {
+      offResults();
+      offTheme();
+    };
   }, []);
+
+  // Apply (or clear) the page-adaptive palette as CSS variables on :root.
+  useEffect(() => {
+    applyTheme(settings?.adaptToPage ? pageTheme : null);
+  }, [pageTheme, settings?.adaptToPage]);
 
   if (!settings) return null;
 
@@ -47,8 +60,8 @@ export function App() {
     <main class="ll-panel">
       <header class="ll-panel-head">
         <div class="ll-brand">
-          <span class="ll-logo" aria-hidden="true">📖</span>
-          <h1>LangLearn</h1>
+          <span class="ll-logo" aria-hidden="true">S</span>
+          <h1>Sidelearn</h1>
         </div>
         <div class="ll-head-right">
           <span class={`ll-status ${online ? 'on' : 'off'}`} title="LM Studio">
@@ -104,6 +117,14 @@ export function App() {
             />
             Ergebnisse sammeln (sonst nur das letzte)
           </label>
+          <label class="ll-toggle">
+            <input
+              type="checkbox"
+              checked={settings.adaptToPage}
+              onChange={(e) => patch({ adaptToPage: e.currentTarget.checked })}
+            />
+            An die Seitenfarben anpassen
+          </label>
         </section>
       )}
 
@@ -121,8 +142,7 @@ function ResultsView({ results }: { results: PanelResult[] }) {
   if (results.length === 0) {
     return (
       <section class="ll-result ll-empty">
-        <div class="ll-empty-emoji" aria-hidden="true">✨</div>
-        <p>Markiere Text auf der Seite, dann Rechtsklick → <b>LangLearn: übersetzen</b>.</p>
+        <p>Markiere Text auf der Seite, dann Rechtsklick → <b>Sidelearn: übersetzen</b>.</p>
         <p>Oder fahre über ein <span class="ll-hint-mark">unterstrichenes</span> Wort.</p>
       </section>
     );
@@ -235,7 +255,7 @@ function Onboarding({
 
   return (
     <main class="ll-panel ll-onboarding">
-      <h1>Willkommen bei LangLearn</h1>
+      <h1>Willkommen bei Sidelearn</h1>
       <p class="ll-intro">
         Lies Webseiten in deiner Lernsprache — schwere Wörter werden markiert und
         lokal erklärt. Stell kurz dein Profil ein:
@@ -315,6 +335,22 @@ function LanguagePicker({
       </label>
     </>
   );
+}
+
+/** Apply (or clear) the page-derived palette as CSS variables on :root. */
+function applyTheme(theme: PageTheme | null): void {
+  const root = document.documentElement.style;
+  const vars: Record<string, string | undefined> = {
+    '--ll-bg': theme?.bg,
+    '--ll-surface': theme?.surface,
+    '--ll-border': theme?.border,
+    '--ll-text': theme?.text,
+    '--ll-text-soft': theme?.textSoft,
+  };
+  for (const [key, value] of Object.entries(vars)) {
+    if (value) root.setProperty(key, value);
+    else root.removeProperty(key);
+  }
 }
 
 /** First language that isn't `lang` — keeps native ≠ learn. */

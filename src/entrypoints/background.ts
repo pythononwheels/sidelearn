@@ -30,12 +30,12 @@ export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(() => {
     browser.contextMenus.create({
       id: MENU_TRANSLATE,
-      title: 'LangLearn: übersetzen',
+      title: 'Sidelearn: übersetzen',
       contexts: ['selection'],
     });
     browser.contextMenus.create({
       id: MENU_EXPLAIN,
-      title: 'LangLearn: Wort erklären',
+      title: 'Sidelearn: Wort erklären',
       contexts: ['selection'],
     });
   });

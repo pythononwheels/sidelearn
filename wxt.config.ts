@@ -10,7 +10,7 @@ export default defineConfig({
     plugins: [preact()],
   }),
   manifest: {
-    name: 'LangLearn',
+    name: 'Sidelearn',
     description:
       'Read foreign-language pages with inline, CEFR-aware reading help powered by a local LLM.',
     // Side panel is the stable backbone; content script adds the optional inline layer.
@@ -21,7 +21,13 @@ export default defineConfig({
       default_path: 'sidepanel.html',
     },
     action: {
-      default_title: 'Open LangLearn panel',
+      default_title: 'Open Sidelearn panel',
+      default_icon: {
+        '16': 'icon/16.png',
+        '32': 'icon/32.png',
+        '48': 'icon/48.png',
+        '128': 'icon/128.png',
+      },
     },
     // Bundled data must be fetchable from the content script context.
     web_accessible_resources: [

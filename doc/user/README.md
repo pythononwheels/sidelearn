@@ -1,6 +1,6 @@
-# LangLearn — User Guide
+# Sidelearn — User Guide
 
-LangLearn helps you read web pages in a language you're learning (French, German,
+Sidelearn helps you read web pages in a language you're learning (French, German,
 English or Dutch) with reading aids in your own native language. Everything runs
 **locally** — the AI lives on your own machine via [LM Studio](https://lmstudio.ai),
 nothing is sent to the cloud.
@@ -17,7 +17,7 @@ nothing is sent to the cloud.
 
 ## Using it
 
-1. Click the LangLearn toolbar icon to open the side panel.
+1. Click the Sidelearn toolbar icon to open the side panel.
 2. On first run, pick your **native language**, the **language you're learning**
    and your **level** (A1–C2). You can change these any time in the panel.
    Words harder than your level get marked on the page.

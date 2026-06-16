@@ -1,10 +1,10 @@
-# LangLearn
+# Sidelearn
 
 > Read foreign-language web pages with inline, CEFR-aware reading help —
 > powered entirely by a **local** LLM (LM Studio). Nothing leaves your machine.
 
-LangLearn is a Manifest V3 browser extension for learning **French** or **Dutch**
-by reading real pages. Words above your level are gently highlighted; hover for
+Sidelearn is a Manifest V3 browser extension for learning **French, German,
+English or Dutch** by reading real pages. Words above your level are gently highlighted; hover for
 an instant translation; ask the local model for deeper explanations or paragraph
 translations — only when you want them.
 

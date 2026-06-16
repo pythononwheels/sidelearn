@@ -5,6 +5,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-16
+
+### Changed
+- **Renamed the extension to "Sidelearn"** (fits the side-panel nature).
+- Added a real extension icon (violet side-panel mark, `assets/icon.svg` → PNGs).
+- Removed emojis; the header is now a full-width brand bar in our colour with an
+  "S" monogram.
+- **Page-adaptive panel theming**: the panel body adopts the colours of the
+  currently loaded page (background/text/surface/border), while the header keeps
+  the brand colour. Toggle via "An die Seitenfarben anpassen" (default on).
+
 ## [0.1.4] — 2026-06-16
 
 ### Changed
