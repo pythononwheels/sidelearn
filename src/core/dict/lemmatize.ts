@@ -22,6 +22,11 @@ export function lemmaCandidates(word: string, lang: Language): string[] {
 
   switch (lang) {
     case 'fr':
+      if (ends('ant')) add(word.slice(0, -3) + 'er'); // utilisant → utiliser (participe présent)
+      if (ends('ées')) add(word.slice(0, -3) + 'er'); // participe passé, fem. plural
+      else if (ends('ée')) add(word.slice(0, -2) + 'er'); // référencée → référencer
+      else if (ends('és')) add(word.slice(0, -2) + 'er');
+      else if (ends('é')) add(word.slice(0, -1) + 'er'); // publié → publier
       if (ends('aux')) add(word.slice(0, -3) + 'al'); // chevaux → cheval
       if (ends('x')) add(word.slice(0, -1)); // -x plural
       if (ends('s')) add(word.slice(0, -1)); // -s plural

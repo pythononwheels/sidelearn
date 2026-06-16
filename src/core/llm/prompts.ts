@@ -15,10 +15,16 @@ export async function explainWord(
   learn: Language,
   native: Language,
   model: string,
+  context?: string,
   signal?: AbortSignal,
 ): Promise<WordExplanation> {
   const learnName = LANG_NAMES_EN[learn];
   const nativeName = LANG_NAMES_EN[native];
+  // When we know the sentence the word appeared in, explain the word *as used
+  // there* — otherwise an isolated participle/inflection gets a wrong meaning.
+  const inContext = context
+    ? ` as used in this sentence: "${context}". Give the meaning that fits this context.`
+    : '.';
   const raw = await chat(
     [
       {
@@ -30,7 +36,7 @@ export async function explainWord(
       },
       {
         role: 'user',
-        content: `Explain the ${learnName} word "${word}". Give a concise ${nativeName} meaning, 2 short example sentences in ${learnName}, up to 3 synonyms, and a one-line grammar note.`,
+        content: `Explain the ${learnName} word "${word}"${inContext} Give a concise ${nativeName} meaning, 2 short example sentences in ${learnName}, up to 3 synonyms, and a one-line grammar note.`,
       },
     ],
     { model, signal },

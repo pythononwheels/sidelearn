@@ -71,7 +71,7 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
   }
 
   card.querySelector('.ll-more')!.addEventListener('click', () => {
-    void sendMessage({ type: 'explainToPanel', word: info.word });
+    void sendMessage({ type: 'explainToPanel', word: info.word, context: sentenceAround(anchor) });
     card.querySelector('.ll-more')!.textContent = '✓ im Panel (öffne die Sidebar)';
   });
 

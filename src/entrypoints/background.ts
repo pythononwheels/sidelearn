@@ -48,13 +48,17 @@ export default defineBackground(() => {
     // Open the panel within the user gesture before the async work starts.
     if (tab?.windowId != null) chrome.sidePanel?.open({ windowId: tab.windowId }).catch(() => {});
     if (info.menuItemId === MENU_TRANSLATE) void runTranslate(text);
-    if (info.menuItemId === MENU_EXPLAIN) void runExplain(firstWord(text));
+    // If a phrase was selected, use it as context for the first word.
+    if (info.menuItemId === MENU_EXPLAIN) {
+      const word = firstWord(text);
+      void runExplain(word, word === text ? undefined : text);
+    }
   });
 
   browser.runtime.onMessage.addListener((msg: unknown) => {
     const m = msg as Message;
     if (m.type === 'translateToPanel') void runTranslate(m.text, m.title, m.hideSource);
-    if (m.type === 'explainToPanel') void runExplain(m.word);
+    if (m.type === 'explainToPanel') void runExplain(m.word, m.context);
     if (m.type === 'saveVocab') void captureWord(m.word, m.context);
     return false;
   });
@@ -79,14 +83,14 @@ async function runTranslate(text: string, title = 'Übersetzung', hideSource = f
   }
 }
 
-async function runExplain(word: string): Promise<void> {
+async function runExplain(word: string, context?: string): Promise<void> {
   const { learnLang, nativeLang, model, keepResults } = await getSettings();
   if (!keepResults) await clearResults();
-  void captureWord(word); // explicit explain = a study moment worth remembering
+  void captureWord(word, context); // explicit explain = a study moment worth remembering
   const id = newId();
   await pushResult({ id, kind: 'explanation', status: 'loading', title: word });
   try {
-    const explanation = await explainWord(word, learnLang, nativeLang, model);
+    const explanation = await explainWord(word, learnLang, nativeLang, model, context);
     await updateResult(id, { status: 'done', explanation });
   } catch (err) {
     await updateResult(id, { status: 'error', error: String(err) });

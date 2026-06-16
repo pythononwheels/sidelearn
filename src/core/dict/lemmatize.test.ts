@@ -12,6 +12,12 @@ describe('lemmaCandidates', () => {
     expect(lemmaCandidates('chevaux', 'fr')).toContain('cheval');
   });
 
+  it('reduces French participles to the infinitive', () => {
+    expect(lemmaCandidates('utilisant', 'fr')).toContain('utiliser'); // participe présent
+    expect(lemmaCandidates('publié', 'fr')).toContain('publier'); // participe passé
+    expect(lemmaCandidates('référencée', 'fr')).toContain('référencer');
+  });
+
   it('reduces English plurals and -ies', () => {
     expect(lemmaCandidates('cities', 'en')).toContain('city');
     expect(lemmaCandidates('dogs', 'en')).toContain('dog');

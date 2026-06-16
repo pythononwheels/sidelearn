@@ -5,7 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.5.0] — 2026-06-16
+## [0.5.1] — 2026-06-16
+
+### Changed
+- Word explanations now include the **sentence context** (hover "more" sends the
+  sentence; right-click uses the selected phrase). Fixes wrong meanings for
+  participles/inflections like "utilisant" → contextual sense instead of a
+  literal nominalization.
+- French lemmatization handles participles (`-ant`, `-é/-ée/-és/-ées` → `-er`),
+  so "utilisant" now resolves to "utiliser" in the dictionary.
 
 ### Added
 - **Action nav** in the panel: "Vokabeln üben", "Seite übersetzen", and a
