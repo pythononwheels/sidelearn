@@ -58,6 +58,27 @@ export function App() {
     setLocal(await setSettings(p));
   }
 
+  function startReview() {
+    setReview(buildSession(vocab, 10));
+  }
+
+  // Pull the active page's main text and translate it into the panel.
+  async function translatePage() {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+    const [res] = await browser.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const el = document.querySelector('article, main') ?? document.body;
+        return (el as HTMLElement).innerText.replace(/\n{3,}/g, '\n\n').trim().slice(0, 8000);
+      },
+    });
+    const text = res?.result as string | undefined;
+    if (text) {
+      void sendMessage({ type: 'translateToPanel', text, title: 'Seitenübersetzung', hideSource: true });
+    }
+  }
+
   if (!settings.onboarded) return <Onboarding initial={settings} onDone={patch} />;
 
   return (
@@ -91,6 +112,30 @@ export function App() {
       >
         {settings.inlineEnabled ? '◉ Markierung an' : '○ Markierung aus'}
       </button>
+
+      <nav class="ll-nav">
+        <button
+          type="button"
+          class="ll-navbtn"
+          disabled={!canReview(vocab)}
+          title={canReview(vocab) ? undefined : 'Merke mind. 4 Wörter'}
+          onClick={startReview}
+        >
+          Vokabeln üben
+        </button>
+        <button
+          type="button"
+          class="ll-navbtn"
+          disabled={!online}
+          title={online ? undefined : 'LM Studio offline'}
+          onClick={translatePage}
+        >
+          Seite übersetzen
+        </button>
+        <button type="button" class="ll-navbtn" disabled title="kommt bald">
+          Seiten-Quiz
+        </button>
+      </nav>
 
       {settingsOpen && (
         <section class="ll-settings">
@@ -134,11 +179,7 @@ export function App() {
 
           <details class="ll-section" open={vocab.length > 0}>
             <summary>Vokabeln ({vocab.length})</summary>
-            <VocabList
-              entries={vocab}
-              canStart={canReview(vocab)}
-              onStart={() => setReview(buildSession(vocab, 10))}
-            />
+            <VocabList entries={vocab} />
           </details>
 
           <details class="ll-section">
@@ -234,15 +275,7 @@ function optionClass(option: string, answer: string, selected: string | null): s
   return 'dim';
 }
 
-function VocabList({
-  entries,
-  canStart,
-  onStart,
-}: {
-  entries: VocabEntry[];
-  canStart: boolean;
-  onStart: () => void;
-}) {
+function VocabList({ entries }: { entries: VocabEntry[] }) {
   if (entries.length === 0) {
     return (
       <p class="ll-vocab-empty">
@@ -253,15 +286,9 @@ function VocabList({
   }
   return (
     <div class="ll-vocab">
-      <div class="ll-vocab-actions">
-        <button type="button" class="ll-practice" disabled={!canStart} onClick={onStart}>
-          ▶ Üben
-        </button>
-        <button type="button" class="ll-clearall" onClick={() => void clearVocab()}>
-          alle löschen ({entries.length})
-        </button>
-      </div>
-      {!canStart && <p class="ll-vocab-hint">Merke mind. 4 Wörter zum Üben.</p>}
+      <button type="button" class="ll-clearall" onClick={() => void clearVocab()}>
+        alle löschen ({entries.length})
+      </button>
       <ul class="ll-vocab-list">
         {entries.map((e) => (
           <li key={e.id} class="ll-vocab-item">

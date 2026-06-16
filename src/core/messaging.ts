@@ -5,7 +5,7 @@
  */
 
 export type Message =
-  | { type: 'translateToPanel'; text: string }
+  | { type: 'translateToPanel'; text: string; title?: string; hideSource?: boolean }
   | { type: 'explainToPanel'; word: string }
   | { type: 'saveVocab'; word: string; context?: string };
 

@@ -53,18 +53,24 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener((msg: unknown) => {
     const m = msg as Message;
-    if (m.type === 'translateToPanel') void runTranslate(m.text);
+    if (m.type === 'translateToPanel') void runTranslate(m.text, m.title, m.hideSource);
     if (m.type === 'explainToPanel') void runExplain(m.word);
     if (m.type === 'saveVocab') void captureWord(m.word, m.context);
     return false;
   });
 });
 
-async function runTranslate(text: string): Promise<void> {
+async function runTranslate(text: string, title = 'Übersetzung', hideSource = false): Promise<void> {
   const { learnLang, nativeLang, model, keepResults } = await getSettings();
   if (!keepResults) await clearResults();
   const id = newId();
-  await pushResult({ id, kind: 'translation', status: 'loading', title: 'Übersetzung', source: text });
+  await pushResult({
+    id,
+    kind: 'translation',
+    status: 'loading',
+    title,
+    source: hideSource ? undefined : text,
+  });
   try {
     const r = await translateParagraph(text, learnLang, nativeLang, model);
     await updateResult(id, { status: 'done', translation: r.translation });

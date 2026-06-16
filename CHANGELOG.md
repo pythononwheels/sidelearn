@@ -5,6 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-06-16
+
+### Added
+- **Action nav** in the panel: "Vokabeln üben", "Seite übersetzen", and a
+  "Seiten-Quiz" placeholder (disabled, coming soon).
+- **Seite übersetzen**: pulls the active page's main text (`<article>`/`<main>`
+  → body, capped) via scripting and translates it into the panel as a
+  "Seitenübersetzung" card.
+- "Vokabeln üben" moved from the vocab section into the nav.
+
 ## [0.4.0] — 2026-06-16
 
 ### Added
