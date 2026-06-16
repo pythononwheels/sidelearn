@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.15] — 2026-06-17
+## [0.6.16] — 2026-06-17
+
+### Fixed
+- **"Seite übersetzen" showed nothing**: a panel-triggered translate had its page
+  key resolved by the service worker's own active-tab query, which is unreliable
+  (no "current window"), so the result was stored under a key the panel wasn't
+  showing. The panel now passes its current page key explicitly, and the SW
+  fallback uses `lastFocusedWindow`.
 
 ### Added
 - **Chat is now saved per page** (`core/chatstore.ts`): the conversation persists

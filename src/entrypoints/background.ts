@@ -75,7 +75,11 @@ export default defineBackground(() => {
   browser.runtime.onMessage.addListener((msg: unknown, sender: { tab?: { url?: string } }) => {
     const m = msg as Message;
     void (async () => {
-      const key = sender.tab?.url ? pageKey(sender.tab.url) : await activeKey();
+      // Prefer the sender tab (content script), then a key the panel passed
+      // explicitly, then the active tab — the SW's own active-tab query is the
+      // least reliable, so it's the last resort.
+      const explicit = m.type === 'translateToPanel' ? m.pageKey : undefined;
+      const key = sender.tab?.url ? pageKey(sender.tab.url) : explicit || (await activeKey());
       if (m.type === 'translateToPanel') await runTranslate(key, m.text, m.title, m.hideSource);
       else if (m.type === 'explainToPanel') await runExplain(key, m.word, m.context);
       else if (m.type === 'saveVocab') await captureWord(m.word, m.context);
@@ -86,7 +90,8 @@ export default defineBackground(() => {
 
 /** Page key of the active tab — for results triggered from the panel. */
 async function activeKey(): Promise<string> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  // lastFocusedWindow is more reliable than currentWindow inside a service worker.
+  const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
   return tab?.url ? pageKey(tab.url) : 'unknown';
 }
 

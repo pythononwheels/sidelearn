@@ -220,7 +220,13 @@ export function App() {
   async function translatePage() {
     const text = await getPageText();
     if (text) {
-      void sendMessage({ type: 'translateToPanel', text, title: 'Seitenübersetzung', hideSource: true });
+      void sendMessage({
+        type: 'translateToPanel',
+        text,
+        title: 'Seitenübersetzung',
+        hideSource: true,
+        pageKey: currentKey,
+      });
     }
   }
 
