@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.5] — 2026-06-17
+## [0.6.6] — 2026-06-17
+
+### Added
+- **Underline colour adapts to dark pages**: "Auto" picks a bright underline on
+  dark backgrounds (page luminance) and the violet on light ones. Plus a colour
+  quick-pick next to the marking toggle (Auto + 5 fixed hues), saved in settings.
+  Underline also a touch thicker for visibility.
 
 ### Added
 - **Right-click a link → "Sidelearn: übersetzen" / "Wort erklären"** (context now

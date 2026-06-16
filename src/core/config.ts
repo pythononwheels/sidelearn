@@ -74,6 +74,8 @@ export interface Settings {
   model: string;
   /** Inline highlighting on the live page (the optional "Kür" layer). */
   inlineEnabled: boolean;
+  /** Underline colour for marks: 'auto' (by page brightness) or a fixed hex. */
+  markerColor: string;
   /** Keep result cards stacked (true) or only show the latest (false). */
   keepResults: boolean;
   /** False until the first-run onboarding (languages + level) is completed. */
@@ -86,9 +88,20 @@ export const DEFAULT_SETTINGS: Settings = {
   level: 'A2',
   model: DEFAULT_MODEL,
   inlineEnabled: true,
+  markerColor: 'auto',
   keepResults: true,
   onboarded: false,
 };
+
+/** Marker colour quick-pick: Auto + five fixed, dark-friendly hues. */
+export const MARKER_COLORS: ReadonlyArray<{ label: string; value: string }> = [
+  { label: 'Auto', value: 'auto' },
+  { label: 'Violett', value: '#8b78f0' },
+  { label: 'Türkis', value: '#22c0d4' },
+  { label: 'Bernstein', value: '#e8b53e' },
+  { label: 'Pink', value: '#ec5fa6' },
+  { label: 'Grün', value: '#33c995' },
+];
 
 /** Storage keys, centralized to avoid stringly-typed drift. */
 export const STORAGE_KEYS = {

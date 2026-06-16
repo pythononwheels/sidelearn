@@ -25,6 +25,7 @@ export default defineContentScript({
       clear();
       // Only mark while the panel is open — closing it removes the markings.
       if (!settings.inlineEnabled || !settings.onboarded || !panelOpen) return;
+      document.documentElement.style.setProperty('--ll-underline', underlineColor(settings.markerColor));
       await highlight(document.body, {
         learn: settings.learnLang,
         native: settings.nativeLang,
@@ -60,7 +61,7 @@ export default defineContentScript({
   },
 });
 
-/** Marker styling injected into the host page; intentionally minimal. */
+/** Marker styling injected into the host page; colour comes from --ll-underline. */
 function injectMarkerStyle(): void {
   const style = document.createElement('style');
   style.setAttribute('data-ll-ui', 'marker');
@@ -68,10 +69,33 @@ function injectMarkerStyle(): void {
     [data-ll-mark] {
       text-decoration: underline;
       text-decoration-style: dotted;
-      text-decoration-color: rgba(58, 110, 165, 0.5);
+      text-decoration-color: var(--ll-underline, rgba(107, 87, 214, 0.6));
+      text-decoration-thickness: 2px;
       text-underline-offset: 3px;
       cursor: help;
     }
   `;
   document.head.append(style);
+}
+
+/** Resolve the underline colour: a fixed hex, or auto by page brightness. */
+function underlineColor(setting: string): string {
+  if (setting && setting !== 'auto') return setting;
+  return isDarkPage() ? 'rgba(170, 150, 255, 0.95)' : 'rgba(107, 87, 214, 0.6)';
+}
+
+/** True if the page background is dark (so we need a brighter underline). */
+function isDarkPage(): boolean {
+  for (const el of [document.body, document.documentElement]) {
+    if (!el) continue;
+    const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/);
+    if (!m?.[1]) continue;
+    const parts = m[1].split(',').map((n) => parseFloat(n.trim()));
+    const r = parts[0] ?? 255;
+    const g = parts[1] ?? 255;
+    const b = parts[2] ?? 255;
+    if (parts[3] === 0) continue; // fully transparent → keep looking
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5;
+  }
+  return false;
 }

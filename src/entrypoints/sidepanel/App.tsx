@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
-import { LANG_LABELS, LANGUAGES, type Language, type Settings } from '@/core/config';
+import { LANG_LABELS, LANGUAGES, MARKER_COLORS, type Language, type Settings } from '@/core/config';
 import { getSettings, setSettings } from '@/core/settings';
 import { isReachable } from '@/core/llm/lmstudio';
 import { listModels, type ModelInfo } from '@/core/llm/models';
@@ -52,6 +52,7 @@ export function App() {
   const [quizError, setQuizError] = useState<string | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [sitesOpen, setSitesOpen] = useState(false);
+  const [colorOpen, setColorOpen] = useState(false);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -206,13 +207,50 @@ export function App() {
         </div>
       </header>
 
-      <button
-        type="button"
-        class={`ll-marktoggle ${settings.inlineEnabled ? 'on' : 'off'}`}
-        onClick={() => patch({ inlineEnabled: !settings.inlineEnabled })}
-      >
-        {settings.inlineEnabled ? '◉ Markierung an' : '○ Markierung aus'}
-      </button>
+      <div class="ll-mark-row">
+        <button
+          type="button"
+          class={`ll-marktoggle ${settings.inlineEnabled ? 'on' : 'off'}`}
+          onClick={() => patch({ inlineEnabled: !settings.inlineEnabled })}
+        >
+          {settings.inlineEnabled ? '◉ Markierung an' : '○ Markierung aus'}
+        </button>
+        <button
+          type="button"
+          class="ll-colorbtn"
+          title="Markierungsfarbe"
+          onClick={() => setColorOpen((v) => !v)}
+        >
+          {settings.markerColor === 'auto' ? (
+            <span class="ll-color-auto">A</span>
+          ) : (
+            <span class="ll-color-dot" style={{ background: settings.markerColor }} />
+          )}
+        </button>
+      </div>
+      {colorOpen && (
+        <div class="ll-palette">
+          {MARKER_COLORS.map((c) => (
+            <button
+              key={c.value}
+              type="button"
+              class={`ll-swatch ${settings.markerColor === c.value ? 'sel' : ''}`}
+              title={c.label}
+              onClick={() => {
+                void patch({ markerColor: c.value });
+                setColorOpen(false);
+              }}
+            >
+              {c.value === 'auto' ? (
+                <span class="ll-color-auto">A</span>
+              ) : (
+                <span class="ll-color-dot" style={{ background: c.value }} />
+              )}
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <nav class="ll-nav">
         <button
