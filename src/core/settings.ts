@@ -10,16 +10,19 @@ const item = storage.defineItem<Settings>(STORAGE_KEYS.settings, {
   fallback: DEFAULT_SETTINGS,
 });
 
+/** Merge stored settings over defaults so fields added later are backfilled. */
+const withDefaults = (s: Settings | null): Settings => ({ ...DEFAULT_SETTINGS, ...s });
+
 export async function getSettings(): Promise<Settings> {
-  return item.getValue();
+  return withDefaults(await item.getValue());
 }
 
 export async function setSettings(patch: Partial<Settings>): Promise<Settings> {
-  const next = { ...(await item.getValue()), ...patch };
+  const next = { ...withDefaults(await item.getValue()), ...patch };
   await item.setValue(next);
   return next;
 }
 
 export function watchSettings(cb: (s: Settings) => void): () => void {
-  return item.watch(cb);
+  return item.watch((value) => cb(withDefaults(value)));
 }

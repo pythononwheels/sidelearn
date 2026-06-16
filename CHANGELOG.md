@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.9] — 2026-06-17
+## [0.6.10] — 2026-06-17
+
+### Fixed
+- Settings added after a user's first run are now backfilled with defaults
+  (getSettings/watchSettings merge over DEFAULT_SETTINGS). Fixes the blank
+  underline-colour button (markerColor was undefined for existing users) and
+  any future new-setting gaps.
 
 ### Changed
 - **Chat improvements**: replies stream token-by-token (`chatStream`, LM Studio
