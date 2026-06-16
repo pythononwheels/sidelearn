@@ -8,9 +8,9 @@ Status: `open` · `hold` · `closed` · `archive`
   word-JSON valid & high quality ~5.8s/111tok. Model ids corrected to gemma-4.
 - [hold] **Compare e2b vs e4b** — deferred. Staying on e4b (default) for now;
   revisit the speed/quality trade-off later by loading `google/gemma-4-e2b`.
-- [open] **Real wordlists** — wire up `scripts/build-wordlists.mjs`
-  (FrequencyWords top-20k for fr/de/en/nl + FreeDict directed pairs in
-  `DICT_PAIRS`) and replace the sample data.
+- [closed] **Real wordlists** — done. Generator downloads FrequencyWords
+  (top-20k ranks, top-50k vocab) for fr/de/en/nl and parses FreeDict dictd for
+  6 directed pairs, filtered to vocab. ~7 MB committed; sources gitignored.
 
 ## Next
 

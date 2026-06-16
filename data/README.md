@@ -14,9 +14,10 @@ serves a German speaker learning French. Pairs FreeDict doesn't publish simply
 aren't bundled — at runtime the hover then shows the frequency band only and the
 "more" button falls back to the local LLM. Nothing breaks.
 
-The files committed to `src/public/data/` are **small hand-made samples** so the
-extension runs immediately after cloning. Replace them with full data via the
-generator.
+The files committed to `src/public/data/` are **real generated data** (≈7 MB
+total: top-20k frequency ranks per language + FreeDict dictionaries filtered to
+the top-50k vocabulary), so the extension works immediately after cloning.
+Regenerate them with the command below when sources update.
 
 ## Generating the full data
 

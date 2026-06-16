@@ -14,7 +14,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   paragraph translation (Stage 4).
 - Content script: conservative inline highlighter + Shadow-DOM hover card.
 - Side panel (Preact): settings, LM Studio status, paragraph translator.
-- Sample frequency/dictionary data for FR and NL so the extension runs on clone.
+- Real frequency + dictionary data (≈7 MB) generated from FrequencyWords and
+  FreeDict for fr/de/en/nl and 6 directed dictionary pairs, committed so the
+  extension works on clone.
 - Docs: technical architecture, user guide, data pipeline.
 - Model discovery via LM Studio native `/api/v0/models` (`core/llm/models.ts`):
   picker shows installed models, marks the loaded one + context size, sorts the
