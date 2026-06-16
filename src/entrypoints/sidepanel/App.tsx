@@ -12,7 +12,15 @@ import {
   watchResults,
   type PanelResult,
 } from '@/core/result';
-import { clearVocab, getVocab, removeVocab, watchVocab, type VocabEntry } from '@/core/vocab';
+import {
+  clearVocab,
+  getVocab,
+  recordReview,
+  removeVocab,
+  watchVocab,
+  type VocabEntry,
+} from '@/core/vocab';
+import { buildSession, canReview, type ReviewQuestion } from '@/core/review';
 
 /**
  * Side panel — the stable backbone.
@@ -28,6 +36,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [results, setResults] = useState<PanelResult[]>([]);
   const [vocab, setVocab] = useState<VocabEntry[]>([]);
+  const [review, setReview] = useState<ReviewQuestion[] | null>(null);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -117,22 +126,123 @@ export function App() {
         </section>
       )}
 
-      <ResultsView results={results} />
+      {review ? (
+        <Review questions={review} onExit={() => setReview(null)} />
+      ) : (
+        <>
+          <ResultsView results={results} />
 
-      <details class="ll-section" open={vocab.length > 0}>
-        <summary>Vokabeln ({vocab.length})</summary>
-        <VocabList entries={vocab} />
-      </details>
+          <details class="ll-section" open={vocab.length > 0}>
+            <summary>Vokabeln ({vocab.length})</summary>
+            <VocabList
+              entries={vocab}
+              canStart={canReview(vocab)}
+              onStart={() => setReview(buildSession(vocab, 10))}
+            />
+          </details>
 
-      <details class="ll-section">
-        <summary>Freitext übersetzen</summary>
-        <ManualTranslate />
-      </details>
+          <details class="ll-section">
+            <summary>Freitext übersetzen</summary>
+            <ManualTranslate />
+          </details>
+        </>
+      )}
     </main>
   );
 }
 
-function VocabList({ entries }: { entries: VocabEntry[] }) {
+function Review({ questions, onExit }: { questions: ReviewQuestion[]; onExit: () => void }) {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const q = questions[index];
+  if (!q) return null;
+
+  function choose(option: string) {
+    if (selected) return;
+    setSelected(option);
+    const correct = option === q!.answer;
+    if (correct) setScore((s) => s + 1);
+    void recordReview(q!.entryId, correct);
+  }
+
+  function next() {
+    if (index + 1 >= questions.length) setDone(true);
+    else {
+      setIndex(index + 1);
+      setSelected(null);
+    }
+  }
+
+  if (done) {
+    return (
+      <section class="ll-review ll-review-done">
+        <h2>Fertig!</h2>
+        <p class="ll-score">
+          {score} / {questions.length} richtig
+        </p>
+        <button type="button" onClick={onExit}>
+          Zurück
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section class="ll-review">
+      <div class="ll-review-head">
+        <span class="ll-review-progress">
+          {index + 1} / {questions.length}
+        </span>
+        <button type="button" class="ll-close" title="beenden" onClick={onExit}>
+          ×
+        </button>
+      </div>
+
+      <p class="ll-review-word">{q.word}</p>
+
+      <div class="ll-review-options">
+        {q.options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            class={`ll-option ${optionClass(opt, q.answer, selected)}`}
+            disabled={selected !== null}
+            onClick={() => choose(opt)}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+
+      {selected && (
+        <button type="button" class="ll-review-next" onClick={next}>
+          {index + 1 >= questions.length ? 'Auswerten' : 'Weiter'}
+        </button>
+      )}
+    </section>
+  );
+}
+
+/** Visual state of an option once the user has answered. */
+function optionClass(option: string, answer: string, selected: string | null): string {
+  if (!selected) return '';
+  if (option === answer) return 'correct';
+  if (option === selected) return 'wrong';
+  return 'dim';
+}
+
+function VocabList({
+  entries,
+  canStart,
+  onStart,
+}: {
+  entries: VocabEntry[];
+  canStart: boolean;
+  onStart: () => void;
+}) {
   if (entries.length === 0) {
     return (
       <p class="ll-vocab-empty">
@@ -143,9 +253,15 @@ function VocabList({ entries }: { entries: VocabEntry[] }) {
   }
   return (
     <div class="ll-vocab">
-      <button type="button" class="ll-clearall" onClick={() => void clearVocab()}>
-        alle löschen ({entries.length})
-      </button>
+      <div class="ll-vocab-actions">
+        <button type="button" class="ll-practice" disabled={!canStart} onClick={onStart}>
+          ▶ Üben
+        </button>
+        <button type="button" class="ll-clearall" onClick={() => void clearVocab()}>
+          alle löschen ({entries.length})
+        </button>
+      </div>
+      {!canStart && <p class="ll-vocab-hint">Merke mind. 4 Wörter zum Üben.</p>}
       <ul class="ll-vocab-list">
         {entries.map((e) => (
           <li key={e.id} class="ll-vocab-item">

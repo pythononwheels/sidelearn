@@ -5,6 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-06-16
+
+### Added
+- **Multiple-choice review** of captured vocabulary (`core/review.ts`, tested).
+  "▶ Üben" in the Vokabeln section starts a session: word → pick the translation,
+  4 options with distractors drawn from your other vocab (instant, no LLM),
+  correct/wrong feedback, score summary. Spaced-repetition ordering
+  (never-reviewed → wrong-last → least-recent); each answer updates the entry's
+  review history. Needs ≥4 saved words.
+
 ## [0.3.1] — 2026-06-16
 
 ### Changed

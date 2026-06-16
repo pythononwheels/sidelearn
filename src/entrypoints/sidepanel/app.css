@@ -345,6 +345,122 @@ body {
   background: var(--ll-band-c-soft);
 }
 
+.ll-vocab-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ll-practice {
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ll-accent-grad);
+  color: #fff;
+  cursor: pointer;
+}
+.ll-practice:disabled {
+  background: var(--ll-border);
+  color: var(--ll-text-muted);
+  cursor: default;
+}
+.ll-vocab-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+
+/* Review quiz ------------------------------------------------------------- */
+.ll-review {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+}
+.ll-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ll-review-progress {
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+.ll-review-word {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin: 6px 0;
+}
+.ll-review-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ll-option {
+  font: inherit;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-bg);
+  color: var(--ll-text);
+  cursor: pointer;
+}
+.ll-option:hover:not(:disabled) {
+  border-color: var(--ll-accent);
+}
+.ll-option:disabled {
+  cursor: default;
+}
+.ll-option.correct {
+  background: var(--ll-mint-soft);
+  border-color: var(--ll-mint);
+  color: var(--ll-mint);
+  font-weight: 600;
+}
+.ll-option.wrong {
+  background: var(--ll-band-c-soft);
+  border-color: var(--ll-band-c);
+  color: var(--ll-band-c);
+}
+.ll-option.dim {
+  opacity: 0.5;
+}
+.ll-review-next,
+.ll-review-done button {
+  align-self: flex-end;
+  font: inherit;
+  font-weight: 600;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ll-accent-grad);
+  color: #fff;
+  cursor: pointer;
+}
+.ll-review-done {
+  text-align: center;
+  align-items: center;
+}
+.ll-review-done h2 {
+  margin: 0;
+}
+.ll-score {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+.ll-review-done button {
+  align-self: center;
+}
+
 /* Onboarding -------------------------------------------------------------- */
 .ll-onboarding {
   gap: 14px;

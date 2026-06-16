@@ -26,9 +26,10 @@ export interface VocabEntry {
   ts: number;
   /** How often it has been looked up. */
   seen: number;
-  /** Spaced-repetition bookkeeping (used by the upcoming review feature). */
+  /** Spaced-repetition bookkeeping. */
   reviews: number;
   lastReviewed?: number;
+  lastCorrect?: boolean;
 }
 
 const MAX_VOCAB = 1000;
@@ -59,4 +60,16 @@ export async function addVocab(entry: VocabEntry): Promise<void> {
 export async function removeVocab(id: string): Promise<void> {
   const current = await item.getValue();
   await item.setValue(current.filter((e) => e.id !== id));
+}
+
+/** Record the outcome of a review question for spaced-repetition ordering. */
+export async function recordReview(id: string, correct: boolean): Promise<void> {
+  const current = await item.getValue();
+  await item.setValue(
+    current.map((e) =>
+      e.id === id
+        ? { ...e, reviews: e.reviews + 1, lastReviewed: Date.now(), lastCorrect: correct }
+        : e,
+    ),
+  );
 }
