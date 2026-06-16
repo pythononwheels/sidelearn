@@ -1,12 +1,8 @@
 /**
- * Panel results — a stack of cards the side panel renders (newest first).
- *
- * The right-click context menu (translate / explain) and the hover "more" write
- * here via the background worker; the panel watches it. Storage-backed so the
- * stack survives the panel closing and decouples producer from consumer.
- *
- * Whether new results accumulate or replace the previous one is controlled by
- * the `keepResults` setting (the caller clears first when it is off).
+ * Panel results — stacks of cards keyed by page URL, so each page keeps its own
+ * sidebar content. Navigating to a fresh page shows an empty panel; returning to
+ * a known page restores its last results. Written by the background worker,
+ * watched by the panel.
  */
 
 import { storage } from 'wxt/storage';
@@ -17,7 +13,6 @@ export interface PanelResult {
   id: string;
   kind: 'translation' | 'explanation';
   status: 'loading' | 'done' | 'error';
-  /** Heading shown on the card (the word, or "Übersetzung"). */
   title: string;
   source?: string;
   translation?: string;
@@ -25,29 +20,60 @@ export interface PanelResult {
   error?: string;
 }
 
-/** Cap the stack so storage stays bounded. */
-const MAX_RESULTS = 40;
+type ResultsByPage = Record<string, PanelResult[]>;
 
-const item = storage.defineItem<PanelResult[]>(STORAGE_KEYS.results, { fallback: [] });
+const MAX_PER_PAGE = 40;
+const MAX_PAGES = 50;
 
-export const getResults = () => item.getValue();
-export const watchResults = (cb: (r: PanelResult[]) => void) => item.watch(cb);
-export const clearResults = () => item.setValue([]);
+const item = storage.defineItem<ResultsByPage>(STORAGE_KEYS.results, { fallback: {} });
 
-/** Add a new card to the top of the stack. */
-export async function pushResult(result: PanelResult): Promise<void> {
-  const current = await item.getValue();
-  await item.setValue([result, ...current].slice(0, MAX_RESULTS));
+/** Normalize a URL to a cache key (drop the hash; keep path + query). */
+export function pageKey(url: string): string {
+  try {
+    const u = new URL(url);
+    u.hash = '';
+    return u.href;
+  } catch {
+    return url;
+  }
 }
 
-/** Patch an existing card by id (e.g. loading → done). */
-export async function updateResult(id: string, patch: Partial<PanelResult>): Promise<void> {
-  const current = await item.getValue();
-  await item.setValue(current.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+export const watchAllResults = (cb: (r: ResultsByPage) => void) => item.watch(cb);
+
+export async function getResultsFor(key: string): Promise<PanelResult[]> {
+  return (await item.getValue())[key] ?? [];
 }
 
-/** Remove a single card (the per-card ×). */
-export async function removeResult(id: string): Promise<void> {
-  const current = await item.getValue();
-  await item.setValue(current.filter((r) => r.id !== id));
+export async function pushResult(key: string, result: PanelResult): Promise<void> {
+  const all = await item.getValue();
+  const list = [result, ...(all[key] ?? [])].slice(0, MAX_PER_PAGE);
+  await item.setValue(capPages({ ...all, [key]: list }));
+}
+
+export async function updateResult(key: string, id: string, patch: Partial<PanelResult>): Promise<void> {
+  const all = await item.getValue();
+  const list = (all[key] ?? []).map((r) => (r.id === id ? { ...r, ...patch } : r));
+  await item.setValue({ ...all, [key]: list });
+}
+
+export async function removeResult(key: string, id: string): Promise<void> {
+  const all = await item.getValue();
+  const list = (all[key] ?? []).filter((r) => r.id !== id);
+  await item.setValue({ ...all, [key]: list });
+}
+
+export async function clearResults(key: string): Promise<void> {
+  const all = await item.getValue();
+  const { [key]: _drop, ...rest } = all;
+  await item.setValue(rest);
+}
+
+/** Keep at most MAX_PAGES pages, dropping the oldest-inserted keys. */
+function capPages(all: ResultsByPage): ResultsByPage {
+  const keys = Object.keys(all);
+  if (keys.length <= MAX_PAGES) return all;
+  const drop = keys.slice(0, keys.length - MAX_PAGES);
+  const copy = { ...all };
+  for (const k of drop) delete copy[k];
+  return copy;
 }

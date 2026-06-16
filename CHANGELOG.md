@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.0] — 2026-06-16
+## [0.6.1] — 2026-06-16
+
+### Added
+- **Per-page result cache**: results are keyed by page URL. A fresh page shows an
+  empty panel; returning to a known page restores its last results. The panel
+  follows tab switches and navigation (needs the `tabs` permission).
+- Result cards are **collapsible** via their title bar.
+- Tooltip on "Vokabeln üben" explaining what it does and the 4-word minimum.
 
 ### Added
 - **Seiten-Quiz**: generates a 5-question multiple-choice comprehension quiz

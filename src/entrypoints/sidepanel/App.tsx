@@ -7,9 +7,10 @@ import { listModels, type ModelInfo } from '@/core/llm/models';
 import { sendMessage } from '@/core/messaging';
 import {
   clearResults,
-  getResults,
+  getResultsFor,
+  pageKey,
   removeResult,
-  watchResults,
+  watchAllResults,
   type PanelResult,
 } from '@/core/result';
 import {
@@ -36,6 +37,7 @@ export function App() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [results, setResults] = useState<PanelResult[]>([]);
+  const [currentKey, setCurrentKey] = useState('');
   const [vocab, setVocab] = useState<VocabEntry[]>([]);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [quizLoading, setQuizLoading] = useState(false);
@@ -45,16 +47,34 @@ export function App() {
     void getSettings().then(setLocal);
     void isReachable().then(setOnline);
     void listModels().then(setModels);
-    void getResults().then(setResults);
     void getVocab().then(setVocab);
-    const offResults = watchResults(setResults);
     const offVocab = watchVocab(setVocab);
     // Signal "panel open" to the background; auto-disconnects when it closes.
     const port = browser.runtime.connect({ name: 'panel' });
+
+    // Show the active page's results; follow tab switches and navigation.
+    let key = '';
+    async function refreshKey() {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      key = tab?.url ? pageKey(tab.url) : '';
+      setCurrentKey(key);
+      setResults(await getResultsFor(key));
+    }
+    void refreshKey();
+    const onActivated = () => void refreshKey();
+    const onUpdated = (_id: number, info: { url?: string }, tab: { active?: boolean }) => {
+      if (tab.active && info.url) void refreshKey();
+    };
+    browser.tabs.onActivated.addListener(onActivated);
+    browser.tabs.onUpdated.addListener(onUpdated);
+    const offResults = watchAllResults((all) => setResults(all[key] ?? []));
+
     return () => {
-      offResults();
       offVocab();
+      offResults();
       port.disconnect();
+      browser.tabs.onActivated.removeListener(onActivated);
+      browser.tabs.onUpdated.removeListener(onUpdated);
     };
   }, []);
 
@@ -143,7 +163,7 @@ export function App() {
           type="button"
           class="ll-navbtn"
           disabled={!canReview(vocab)}
-          title={canReview(vocab) ? undefined : 'Merke mind. 4 Wörter'}
+          title="Wiederhole deine gemerkten Wörter als Multiple-Choice-Quiz (ab 4 Wörtern)."
           onClick={startReview}
         >
           Vokabeln üben
@@ -207,7 +227,7 @@ export function App() {
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
       ) : (
         <>
-          <ResultsView results={results} />
+          <ResultsView results={results} pageKey={currentKey} />
 
           <details class="ll-section" open={vocab.length > 0}>
             <summary>Vokabeln ({vocab.length})</summary>
@@ -345,7 +365,7 @@ function VocabList({ entries }: { entries: VocabEntry[] }) {
   );
 }
 
-function ResultsView({ results }: { results: PanelResult[] }) {
+function ResultsView({ results, pageKey: key }: { results: PanelResult[]; pageKey: string }) {
   if (results.length === 0) {
     return (
       <section class="ll-result ll-empty">
@@ -357,27 +377,46 @@ function ResultsView({ results }: { results: PanelResult[] }) {
   return (
     <section class="ll-results">
       {results.length > 1 && (
-        <button type="button" class="ll-clearall" onClick={() => void clearResults()}>
+        <button type="button" class="ll-clearall" onClick={() => void clearResults(key)}>
           alle löschen ({results.length})
         </button>
       )}
       {results.map((r) => (
-        <ResultCard key={r.id} result={r} onRemove={() => void removeResult(r.id)} />
+        <ResultCard key={r.id} result={r} onRemove={() => void removeResult(key, r.id)} />
       ))}
     </section>
   );
 }
 
 function ResultCard({ result, onRemove }: { result: PanelResult; onRemove: () => void }) {
+  const [collapsed, setCollapsed] = useState(false);
   return (
-    <article class="ll-result">
+    <article class={`ll-result ${collapsed ? 'collapsed' : ''}`}>
       <div class="ll-result-head">
-        <h2>{result.title}</h2>
+        <button
+          type="button"
+          class="ll-result-toggle"
+          onClick={() => setCollapsed((c) => !c)}
+          title={collapsed ? 'aufklappen' : 'zuklappen'}
+        >
+          <span class="ll-caret">{collapsed ? '▸' : '▾'}</span>
+          <h2>{result.title}</h2>
+        </button>
         <button type="button" class="ll-close" title="Karte löschen" onClick={onRemove}>
           ×
         </button>
       </div>
 
+      {collapsed ? null : (
+        <ResultBody result={result} />
+      )}
+    </article>
+  );
+}
+
+function ResultBody({ result }: { result: PanelResult }) {
+  return (
+    <>
       {result.status === 'loading' && (
         <p class="ll-muted">{result.kind === 'translation' ? 'übersetze…' : 'erkläre…'}</p>
       )}
@@ -393,7 +432,7 @@ function ResultCard({ result, onRemove }: { result: PanelResult; onRemove: () =>
       {result.status === 'done' && result.kind === 'explanation' && result.explanation && (
         <Explanation e={result.explanation} />
       )}
-    </article>
+    </>
   );
 }
 

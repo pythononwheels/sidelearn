@@ -11,7 +11,7 @@
 import type { Message } from '@/core/messaging';
 import { explainWord, translateParagraph } from '@/core/llm/prompts';
 import { getSettings } from '@/core/settings';
-import { clearResults, pushResult, updateResult } from '@/core/result';
+import { clearResults, pageKey, pushResult, updateResult } from '@/core/result';
 import { resolveWord } from '@/core/wordinfo';
 import { addVocab } from '@/core/vocab';
 import { setPanelOpen } from '@/core/panel';
@@ -48,12 +48,15 @@ export default defineBackground(() => {
     if (!text) return;
     // Open the panel within the user gesture before the async work starts.
     if (tab?.windowId != null) chrome.sidePanel?.open({ windowId: tab.windowId }).catch(() => {});
-    if (info.menuItemId === MENU_TRANSLATE) void runTranslate(text);
-    // If a phrase was selected, use it as context for the first word.
-    if (info.menuItemId === MENU_EXPLAIN) {
-      const word = firstWord(text);
-      void runExplain(word, word === text ? undefined : text);
-    }
+    void (async () => {
+      const key = tab?.url ? pageKey(tab.url) : await activeKey();
+      if (info.menuItemId === MENU_TRANSLATE) await runTranslate(key, text);
+      // If a phrase was selected, use it as context for the first word.
+      if (info.menuItemId === MENU_EXPLAIN) {
+        const word = firstWord(text);
+        await runExplain(key, word, word === text ? undefined : text);
+      }
+    })();
   });
 
   // Track side-panel open/closed via a long-lived port from the panel.
@@ -63,20 +66,34 @@ export default defineBackground(() => {
     port.onDisconnect.addListener(() => void setPanelOpen(false));
   });
 
-  browser.runtime.onMessage.addListener((msg: unknown) => {
+  browser.runtime.onMessage.addListener((msg: unknown, sender: { tab?: { url?: string } }) => {
     const m = msg as Message;
-    if (m.type === 'translateToPanel') void runTranslate(m.text, m.title, m.hideSource);
-    if (m.type === 'explainToPanel') void runExplain(m.word, m.context);
-    if (m.type === 'saveVocab') void captureWord(m.word, m.context);
+    void (async () => {
+      const key = sender.tab?.url ? pageKey(sender.tab.url) : await activeKey();
+      if (m.type === 'translateToPanel') await runTranslate(key, m.text, m.title, m.hideSource);
+      else if (m.type === 'explainToPanel') await runExplain(key, m.word, m.context);
+      else if (m.type === 'saveVocab') await captureWord(m.word, m.context);
+    })();
     return false;
   });
 });
 
-async function runTranslate(text: string, title = 'Übersetzung', hideSource = false): Promise<void> {
+/** Page key of the active tab — for results triggered from the panel. */
+async function activeKey(): Promise<string> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  return tab?.url ? pageKey(tab.url) : 'unknown';
+}
+
+async function runTranslate(
+  key: string,
+  text: string,
+  title = 'Übersetzung',
+  hideSource = false,
+): Promise<void> {
   const { learnLang, nativeLang, model, keepResults } = await getSettings();
-  if (!keepResults) await clearResults();
+  if (!keepResults) await clearResults(key);
   const id = newId();
-  await pushResult({
+  await pushResult(key, {
     id,
     kind: 'translation',
     status: 'loading',
@@ -85,23 +102,23 @@ async function runTranslate(text: string, title = 'Übersetzung', hideSource = f
   });
   try {
     const r = await translateParagraph(text, learnLang, nativeLang, model);
-    await updateResult(id, { status: 'done', translation: r.translation });
+    await updateResult(key, id, { status: 'done', translation: r.translation });
   } catch (err) {
-    await updateResult(id, { status: 'error', error: String(err) });
+    await updateResult(key, id, { status: 'error', error: String(err) });
   }
 }
 
-async function runExplain(word: string, context?: string): Promise<void> {
+async function runExplain(key: string, word: string, context?: string): Promise<void> {
   const { learnLang, nativeLang, model, keepResults } = await getSettings();
-  if (!keepResults) await clearResults();
+  if (!keepResults) await clearResults(key);
   void captureWord(word, context); // explicit explain = a study moment worth remembering
   const id = newId();
-  await pushResult({ id, kind: 'explanation', status: 'loading', title: word });
+  await pushResult(key, { id, kind: 'explanation', status: 'loading', title: word });
   try {
     const explanation = await explainWord(word, learnLang, nativeLang, model, context);
-    await updateResult(id, { status: 'done', explanation });
+    await updateResult(key, id, { status: 'done', explanation });
   } catch (err) {
-    await updateResult(id, { status: 'error', error: String(err) });
+    await updateResult(key, id, { status: 'error', error: String(err) });
   }
 }
 

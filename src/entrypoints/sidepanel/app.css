@@ -180,6 +180,24 @@ body {
   font-weight: 600;
   margin: 0;
 }
+.ll-result-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.ll-caret {
+  color: var(--ll-text-muted);
+  font-size: 11px;
+}
 .ll-close {
   border: none;
   background: none;

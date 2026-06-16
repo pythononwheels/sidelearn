@@ -33,6 +33,10 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Ideas (pipeline)
 
+- [open] **Bookmark a page** — "Seite merken" button; bookmarked pages keep their
+  result cache pinned (exempt from the MAX_PAGES eviction) and could optionally
+  pre-seed translation/quiz. Link vocab/quiz back to the page they came from.
+
 - [closed] **Vocab capture store** — done. `core/vocab.ts`: looked-up words
   remembered locally (★ merken + explain), listed in the panel.
 - [closed] **Review test** — done. Multiple-choice from captured vocab,

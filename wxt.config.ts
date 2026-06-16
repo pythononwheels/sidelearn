@@ -14,7 +14,7 @@ export default defineConfig({
     description:
       'Read foreign-language pages with inline, CEFR-aware reading help powered by a local LLM.',
     // Side panel is the stable backbone; content script adds the optional inline layer.
-    permissions: ['storage', 'sidePanel', 'activeTab', 'scripting', 'contextMenus'],
+    permissions: ['storage', 'sidePanel', 'activeTab', 'scripting', 'contextMenus', 'tabs'],
     // LM Studio's OpenAI-compatible server. Kept narrow on purpose.
     host_permissions: ['http://localhost/*', 'http://127.0.0.1/*'],
     side_panel: {
