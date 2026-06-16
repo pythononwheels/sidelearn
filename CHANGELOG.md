@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.7] — 2026-06-17
+## [0.6.8] — 2026-06-17
+
+### Added
+- **"＋ Wörter von Seite"** in the Vokabeln section: collects a level-appropriate
+  mix of vocabulary from the current page into the list — ~10 at level, 6 one
+  level up, 4 two up (frequency bands; instant, no LLM). Skips already-saved words
+  and words without a dictionary translation. `core/collect.ts` (tested).
 
 ### Changed
 - Vokabeln, Chat and **Sites are now one exclusive accordion** (collapsed by

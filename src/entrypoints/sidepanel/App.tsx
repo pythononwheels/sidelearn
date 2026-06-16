@@ -14,6 +14,7 @@ import {
   type PanelResult,
 } from '@/core/result';
 import {
+  addVocab,
   clearVocab,
   getVocab,
   recordReview,
@@ -31,6 +32,9 @@ import {
   type Bookmark,
 } from '@/core/bookmarks';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
+import { pickStudyWords, type Candidate } from '@/core/collect';
+import { resolveWord } from '@/core/wordinfo';
+import { normalize } from '@/core/difficulty/frequency';
 
 /**
  * Side panel — the stable backbone.
@@ -52,6 +56,8 @@ export function App() {
   const [quizError, setQuizError] = useState<string | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [colorOpen, setColorOpen] = useState(false);
+  const [collectBusy, setCollectBusy] = useState(false);
+  const [collectMsg, setCollectMsg] = useState<string | null>(null);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -138,6 +144,63 @@ export function App() {
       color,
       ts: Date.now(),
     });
+  }
+
+  // Pull a level-appropriate mix of words from the page into the vocab list.
+  async function collectFromPage() {
+    if (!settings || collectBusy) return;
+    setCollectMsg(null);
+    setCollectBusy(true);
+    try {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      let words: string[] = [];
+      if (tab?.id != null) {
+        try {
+          const [res] = await browser.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+              const el = document.querySelector('article, main') ?? document.body;
+              const text = (el as HTMLElement).innerText.toLowerCase();
+              const set = new Set<string>();
+              for (const w of text.match(/\p{L}[\p{L}'-]{2,}/gu) ?? []) {
+                set.add(w);
+                if (set.size >= 500) break;
+              }
+              return [...set];
+            },
+          });
+          words = (res?.result as string[]) ?? [];
+        } catch {
+          setCollectMsg('Seite nicht lesbar.');
+          return;
+        }
+      }
+      const have = new Set(vocab.map((v) => `${v.learn}:${normalize(v.text)}`));
+      const cands: Candidate[] = [];
+      for (const w of shuffle(words)) {
+        if (have.has(`${settings.learnLang}:${normalize(w)}`)) continue;
+        const info = await resolveWord(w, settings.learnLang, settings.nativeLang, settings.level);
+        const translation = info.senses[0]?.translations.slice(0, 3).join(', ');
+        if (translation) cands.push({ word: w, band: info.band, translation });
+      }
+      const picked = pickStudyWords(cands, settings.level);
+      for (const c of picked) {
+        await addVocab({
+          id: `${Date.now()}-${Math.random()}`,
+          text: c.word,
+          learn: settings.learnLang,
+          native: settings.nativeLang,
+          band: c.band,
+          translation: c.translation,
+          ts: Date.now(),
+          seen: 1,
+          reviews: 0,
+        });
+      }
+      setCollectMsg(picked.length ? `${picked.length} Wörter gesammelt` : 'Nichts Passendes gefunden.');
+    } finally {
+      setCollectBusy(false);
+    }
   }
 
   function startReview() {
@@ -332,6 +395,18 @@ export function App() {
 
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
             <summary>Vokabeln ({vocab.length})</summary>
+            <div class="ll-vocab-collect">
+              <button
+                type="button"
+                class="ll-collect-btn"
+                disabled={collectBusy}
+                title="Sammelt einen Niveau-Mix passender Wörter von dieser Seite (ohne KI)."
+                onClick={() => void collectFromPage()}
+              >
+                {collectBusy ? 'sammle…' : '＋ Wörter von Seite'}
+              </button>
+              {collectMsg && <span class="ll-collect-msg">{collectMsg}</span>}
+            </div>
             <VocabList entries={vocab} />
           </details>
 
@@ -397,6 +472,15 @@ function SitesList({ bookmarks }: { bookmarks: Bookmark[] }) {
       ))}
     </ul>
   );
+}
+
+function shuffle<T>(items: T[]): T[] {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
 }
 
 function domainOf(url: string): string {
