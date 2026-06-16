@@ -73,13 +73,35 @@ rare words still get flagged — fail-soft, never blocks reading.
 
 ## LM Studio
 
-OpenAI-compatible server, default `http://localhost:1234/v1`. Model and endpoint
-live in `core/config.ts`. Start with **Gemma 3n E2B** (fast); switch to **E4B**
-if quality is insufficient. Validate with `curl` before tuning prompts:
+Two endpoints are used:
+
+- **`POST /v1/chat/completions`** (OpenAI-compatible) — the chat API. We use
+  role-based messages (system + user); Gemma is chat-tuned, so this is the right
+  choice over the legacy `/v1/completions` (raw-prompt) API.
+- **`GET /api/v0/models`** (native REST) — richer than `/v1/models`: reports
+  `state` (loaded/not-loaded), `max_context_length`, `loaded_context_length`
+  and capabilities. Used to populate the model picker (`core/llm/models.ts`).
+
+**Streaming:** non-streaming (`stream:false`) for now — the word explanation is
+parsed as JSON anyway. Streaming is planned only for paragraph translation, to
+show text progressively in the panel.
+
+**Models:** the picker lists installed generation models, sorts our tested &
+approved ones first (`APPROVED_MODELS` in `core/config.ts` — currently
+`google/gemma-4-e2b`, `google/gemma-4-e4b`), marks the loaded one and shows its
+context size. Others can still be picked but are flagged "ungetestet". The
+chosen model id is persisted in settings and passed through every call.
+
+**Token budget:** `LM_STUDIO.maxInputTokens` (default 5000) caps input per call
+to keep latency and RAM bounded. `core/llm/tokens.ts` estimates tokens (~4 chars
+each) and `splitForBudget()` chunks oversized selections on sentence/paragraph
+boundaries; `chat()` throws if a single call still exceeds the budget.
+
+Validate with `curl` before tuning prompts:
 
 ```bash
 curl http://localhost:1234/v1/chat/completions -H "Content-Type: application/json" -d '{
-  "model": "google/gemma-3n-e2b",
+  "model": "google/gemma-4-e4b",
   "messages": [{"role":"user","content":"Translate to German: Le chat dort sur le canapé."}],
   "temperature": 0.3
 }'

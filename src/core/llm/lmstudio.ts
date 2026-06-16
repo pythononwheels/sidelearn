@@ -6,6 +6,7 @@
  */
 
 import { LM_STUDIO } from '../config';
+import { estimateTokens } from './tokens';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -13,18 +14,28 @@ export interface ChatMessage {
 }
 
 export interface ChatOptions {
+  /** Required: which model to run. Comes from user settings. */
+  model: string;
   signal?: AbortSignal;
   maxTokens?: number;
   temperature?: number;
 }
 
-export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
+export async function chat(messages: ChatMessage[], opts: ChatOptions): Promise<string> {
+  const inputTokens = messages.reduce((n, m) => n + estimateTokens(m.content), 0);
+  if (inputTokens > LM_STUDIO.maxInputTokens) {
+    throw new Error(
+      `Input ~${inputTokens} tokens exceeds budget of ${LM_STUDIO.maxInputTokens}. ` +
+        'Split the text before calling chat().',
+    );
+  }
+
   const res = await fetch(`${LM_STUDIO.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal: opts.signal,
     body: JSON.stringify({
-      model: LM_STUDIO.model,
+      model: opts.model,
       messages,
       max_tokens: opts.maxTokens ?? LM_STUDIO.maxTokens,
       temperature: opts.temperature ?? LM_STUDIO.temperature,

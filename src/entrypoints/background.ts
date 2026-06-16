@@ -11,6 +11,7 @@
 
 import type { Message, MessageResponses } from '@/core/messaging';
 import { explainWord, translateParagraph } from '@/core/llm/prompts';
+import { getSettings } from '@/core/settings';
 
 // chrome.sidePanel is Chrome-only and not in the cross-browser `browser` types.
 declare const chrome: { sidePanel?: { setPanelBehavior(o: { openPanelOnActionClick: boolean }): Promise<void> } };
@@ -28,10 +29,11 @@ export default defineBackground(() => {
 });
 
 async function handle<T extends Message>(msg: T): Promise<MessageResponses[T['type']]> {
+  const { model } = await getSettings();
   switch (msg.type) {
     case 'explainWord':
-      return explainWord(msg.word, msg.lang) as Promise<MessageResponses[T['type']]>;
+      return explainWord(msg.word, msg.lang, model) as Promise<MessageResponses[T['type']]>;
     case 'translateParagraph':
-      return translateParagraph(msg.text, msg.lang) as Promise<MessageResponses[T['type']]>;
+      return translateParagraph(msg.text, msg.lang, model) as Promise<MessageResponses[T['type']]>;
   }
 }

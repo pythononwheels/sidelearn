@@ -3,6 +3,7 @@ import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
 import { LANG_PAIRS, type Settings } from '@/core/config';
 import { getSettings, setSettings } from '@/core/settings';
 import { isReachable } from '@/core/llm/lmstudio';
+import { listModels, type ModelInfo } from '@/core/llm/models';
 import { sendMessage } from '@/core/messaging';
 
 /**
@@ -15,10 +16,12 @@ import { sendMessage } from '@/core/messaging';
 export function App() {
   const [settings, setLocal] = useState<Settings | null>(null);
   const [online, setOnline] = useState<boolean | null>(null);
+  const [models, setModels] = useState<ModelInfo[]>([]);
 
   useEffect(() => {
     void getSettings().then(setLocal);
     void isReachable().then(setOnline);
+    void listModels().then(setModels);
   }, []);
 
   if (!settings) return null;
@@ -61,6 +64,16 @@ export function App() {
           </select>
         </label>
 
+        <label>
+          Modell
+          <select value={settings.model} onChange={(e) => patch({ model: e.currentTarget.value })}>
+            {models.length === 0 && <option value={settings.model}>{settings.model}</option>}
+            {models.map((m) => (
+              <option value={m.id}>{modelLabel(m)}</option>
+            ))}
+          </select>
+        </label>
+
         <label class="ll-toggle">
           <input
             type="checkbox"
@@ -74,6 +87,17 @@ export function App() {
       <Translator lang={settings.langPair} />
     </main>
   );
+}
+
+/** Human-readable option label: id + loaded/context hints + "untested" flag. */
+function modelLabel(m: ModelInfo): string {
+  const tags: string[] = [];
+  if (m.state === 'loaded') {
+    const ctx = m.loadedContextLength ?? m.maxContextLength;
+    tags.push(`● geladen, ${Math.round(ctx / 1024)}k ctx`);
+  }
+  if (!m.approved) tags.push('ungetestet');
+  return tags.length ? `${m.id} (${tags.join(', ')})` : m.id;
 }
 
 function Translator({ lang }: { lang: Settings['langPair'] }) {

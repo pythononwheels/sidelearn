@@ -5,9 +5,10 @@
  * for the word explanation so the panel can render structured fields.
  */
 
-import type { LangPair } from '../config';
+import { LM_STUDIO, type LangPair } from '../config';
 import type { ParagraphTranslation, WordExplanation } from '../types';
 import { chat } from './lmstudio';
+import { splitForBudget } from './tokens';
 
 const LANG_NAME: Record<LangPair['source'], string> = {
   fr: 'French',
@@ -17,6 +18,7 @@ const LANG_NAME: Record<LangPair['source'], string> = {
 export async function explainWord(
   word: string,
   lang: LangPair['source'],
+  model: string,
   signal?: AbortSignal,
 ): Promise<WordExplanation> {
   const raw = await chat(
@@ -33,7 +35,7 @@ export async function explainWord(
         content: `Explain the ${LANG_NAME[lang]} word "${word}". Give a concise German meaning, 2 short example sentences in ${LANG_NAME[lang]}, up to 3 synonyms, and a one-line grammar note.`,
       },
     ],
-    { signal },
+    { model, signal },
   );
 
   const parsed = safeParse(raw);
@@ -49,19 +51,28 @@ export async function explainWord(
 export async function translateParagraph(
   text: string,
   lang: LangPair['source'],
+  model: string,
   signal?: AbortSignal,
 ): Promise<ParagraphTranslation> {
-  const translation = await chat(
-    [
-      {
-        role: 'system',
-        content: `Translate the user's ${LANG_NAME[lang]} text into natural German. Reply with the translation only — no preamble.`,
-      },
-      { role: 'user', content: text },
-    ],
-    { signal, maxTokens: 1024 },
-  );
-  return { source: text, translation };
+  // Stay within the input budget: oversized selections are translated chunk by
+  // chunk and re-joined, so latency/RAM per call stay bounded.
+  const chunks = splitForBudget(text, LM_STUDIO.maxInputTokens);
+  const parts: string[] = [];
+  for (const chunk of chunks) {
+    parts.push(
+      await chat(
+        [
+          {
+            role: 'system',
+            content: `Translate the user's ${LANG_NAME[lang]} text into natural German. Reply with the translation only — no preamble.`,
+          },
+          { role: 'user', content: chunk },
+        ],
+        { model, signal, maxTokens: 1024 },
+      ),
+    );
+  }
+  return { source: text, translation: parts.join('\n\n') };
 }
 
 interface RawExplanation {

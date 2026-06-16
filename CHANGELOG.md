@@ -16,3 +16,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - Side panel (Preact): settings, LM Studio status, paragraph translator.
 - Sample frequency/dictionary data for FR and NL so the extension runs on clone.
 - Docs: technical architecture, user guide, data pipeline.
+- Model discovery via LM Studio native `/api/v0/models` (`core/llm/models.ts`):
+  picker shows installed models, marks the loaded one + context size, sorts the
+  approved `gemma-4-e2b`/`gemma-4-e4b` first; selected model persisted in settings.
+- Input token budgeting (`core/llm/tokens.ts`, tested): per-call cap with
+  sentence/paragraph-aware chunking for paragraph translation.
+
+### Changed
+- Corrected model ids to the `gemma-4` family (verified against a live LM Studio).
+- `chat()` now takes the model explicitly and enforces the input token budget.

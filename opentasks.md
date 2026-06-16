@@ -4,8 +4,10 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Now
 
-- [open] **curl-test LM Studio** — verify Gemma 3n E2B speed & quality for
-  word explanation + paragraph translation; decide E2B vs E4B. (doc/tech/architecture.md has the curl snippet)
+- [closed] **curl-test LM Studio** — done. gemma-4-e4b: translation ~3s,
+  word-JSON valid & high quality ~5.8s/111tok. Model ids corrected to gemma-4.
+- [open] **Compare e2b vs e4b** — same prompts on `google/gemma-4-e2b` for the
+  speed/quality trade-off; set the default accordingly.
 - [open] **Real wordlists** — wire up `scripts/build-wordlists.mjs`
   (FrequencyWords + FreeDict) and replace the sample data.
 

@@ -22,17 +22,36 @@ export const LANG_PAIRS: readonly LangPair[] = [
 
 /** LM Studio exposes an OpenAI-compatible server. Defaults match its out-of-the-box setup. */
 export const LM_STUDIO = {
+  /** OpenAI-compatible base (chat/completions, models). */
   baseUrl: 'http://localhost:1234/v1',
-  /** Start fast; bump to gemma-3n-e4b if quality is insufficient (see doc/tech/architecture.md). */
-  model: 'google/gemma-3n-e2b',
+  /** Native LM Studio REST base — richer model info (context length, load state). */
+  nativeBaseUrl: 'http://localhost:1234/api/v0',
   /** Generation stays short — we explain words and translate paragraphs, not essays. */
   maxTokens: 512,
   temperature: 0.3,
+  /**
+   * Hard cap on input tokens per call. Keeps latency and RAM predictable: large
+   * inputs are split into chunks below this budget rather than sent in one shot.
+   * Tunable; see doc/tech/architecture.md.
+   */
+  maxInputTokens: 5000,
 } as const;
+
+/**
+ * Models we have tested and approved. The picker shows these (intersected with
+ * what LM Studio actually has), and prefers them as default. Other installed
+ * models can still be chosen manually but are flagged as untested.
+ */
+export const APPROVED_MODELS = ['google/gemma-4-e2b', 'google/gemma-4-e4b'] as const;
+
+/** Fallback when no approved model is loaded yet. */
+export const DEFAULT_MODEL: string = 'google/gemma-4-e4b';
 
 export interface Settings {
   langPair: LangPair['source'];
   level: CefrLevel;
+  /** Selected LM Studio model id (e.g. "google/gemma-4-e2b"). */
+  model: string;
   /** Inline highlighting on the live page (the optional "Kür" layer). */
   inlineEnabled: boolean;
 }
@@ -40,6 +59,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   langPair: 'fr',
   level: 'A2',
+  model: DEFAULT_MODEL,
   inlineEnabled: true,
 };
 
