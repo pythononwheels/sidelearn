@@ -12,12 +12,13 @@ body {
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
+/* Header ------------------------------------------------------------------ */
 .ll-panel-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
@@ -26,7 +27,11 @@ body {
   font-weight: 600;
   margin: 0;
 }
-
+.ll-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .ll-status {
   font-size: 11px;
   padding: 2px 8px;
@@ -38,20 +43,43 @@ body {
   background: var(--ll-accent-soft);
   color: var(--ll-accent);
 }
+.ll-gear {
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--ll-radius);
+  background: none;
+  color: var(--ll-text-soft);
+  cursor: pointer;
+}
+.ll-gear:hover,
+.ll-gear.active {
+  border-color: var(--ll-border);
+  color: var(--ll-text);
+}
 
+/* Settings ---------------------------------------------------------------- */
 .ll-settings {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 12px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
 }
-.ll-settings label {
+.ll-settings label,
+.ll-onboarding label {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
   color: var(--ll-text-soft);
 }
-.ll-settings select {
+.ll-settings select,
+.ll-onboarding select,
+.ll-manual textarea {
   font: inherit;
   padding: 6px 8px;
   border: 1px solid var(--ll-border);
@@ -65,6 +93,133 @@ body {
   gap: 8px !important;
 }
 
+/* Result ------------------------------------------------------------------ */
+.ll-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+}
+.ll-result.ll-empty {
+  color: var(--ll-text-soft);
+  font-size: 13px;
+}
+.ll-result.ll-empty p {
+  margin: 0 0 6px;
+}
+.ll-hint-mark {
+  text-decoration: underline dotted var(--ll-mark-underline);
+  text-underline-offset: 3px;
+}
+.ll-result-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.ll-result-head h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.ll-close {
+  border: none;
+  background: none;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ll-text-muted);
+  cursor: pointer;
+}
+.ll-close:hover {
+  color: var(--ll-text);
+}
+.ll-muted {
+  color: var(--ll-text-soft);
+  margin: 0;
+}
+.ll-error {
+  color: #b4452e;
+  margin: 0;
+}
+.ll-source {
+  margin: 0;
+  color: var(--ll-text-soft);
+  font-style: italic;
+}
+.ll-translation {
+  margin: 0;
+}
+
+/* Explanation fields */
+.ll-explanation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ll-meaning {
+  margin: 0;
+}
+.ll-examples {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ll-text-soft);
+}
+.ll-synonyms,
+.ll-grammar {
+  margin: 0;
+  font-size: 13px;
+}
+.ll-label {
+  color: var(--ll-text-soft);
+  font-size: 12px;
+}
+
+/* Manual translator (collapsible) ---------------------------------------- */
+.ll-translator {
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+}
+.ll-translator > summary {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.ll-translator > summary::-webkit-details-marker {
+  display: none;
+}
+.ll-translator > summary::before {
+  content: '▸ ';
+  color: var(--ll-text-muted);
+}
+.ll-translator[open] > summary::before {
+  content: '▾ ';
+}
+.ll-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+/* Shared accent button */
+.ll-manual button,
+.ll-onboarding button {
+  align-self: flex-start;
+  font: inherit;
+  padding: 6px 16px;
+  border: none;
+  border-radius: var(--ll-radius);
+  background: var(--ll-accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Onboarding -------------------------------------------------------------- */
 .ll-onboarding {
   gap: 14px;
 }
@@ -77,70 +232,7 @@ body {
   color: var(--ll-text-soft);
   font-size: 13px;
 }
-.ll-onboarding label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--ll-text-soft);
-}
-.ll-onboarding select {
-  font: inherit;
-  padding: 6px 8px;
-  border: 1px solid var(--ll-border);
-  border-radius: var(--ll-radius);
-  background: var(--ll-surface);
-  color: var(--ll-text);
-}
 .ll-onboarding button {
-  align-self: flex-start;
   margin-top: 4px;
-  font: inherit;
   padding: 8px 18px;
-  border: none;
-  border-radius: var(--ll-radius);
-  background: var(--ll-accent);
-  color: #fff;
-  cursor: pointer;
-}
-
-.ll-translator {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ll-translator h2 {
-  font-size: 13px;
-  font-weight: 600;
-  margin: 0;
-}
-.ll-translator textarea {
-  font: inherit;
-  padding: 8px;
-  border: 1px solid var(--ll-border);
-  border-radius: var(--ll-radius);
-  background: var(--ll-surface);
-  color: var(--ll-text);
-  resize: vertical;
-}
-.ll-translator button {
-  align-self: flex-start;
-  font: inherit;
-  padding: 6px 14px;
-  border: none;
-  border-radius: var(--ll-radius);
-  background: var(--ll-accent);
-  color: #fff;
-  cursor: pointer;
-}
-.ll-translator button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-.ll-translation {
-  margin: 0;
-  padding: 10px 12px;
-  background: var(--ll-surface);
-  border: 1px solid var(--ll-border);
-  border-radius: var(--ll-radius);
 }

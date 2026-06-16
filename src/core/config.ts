@@ -90,4 +90,6 @@ export const DEFAULT_SETTINGS: Settings = {
 /** Storage keys, centralized to avoid stringly-typed drift. */
 export const STORAGE_KEYS = {
   settings: 'local:settings',
+  /** Last LLM result shown in the panel (translation or word explanation). */
+  result: 'local:result',
 } as const;

@@ -17,10 +17,13 @@ Status: `open` · `hold` · `closed` · `archive`
 - [open] **Reader view in panel** — Readability.js extraction of the source
   text, difficulty colouring in-panel, per-paragraph translation rendered
   *beneath* each paragraph (the stable backbone fallback).
-- [open] **Stage 3 wiring to panel** — hover "more" should surface the LLM
-  explanation in the side panel (currently fire-and-acknowledge).
+- [closed] **Stage 3 wiring to panel** — done. Hover "more" + right-click
+  "Wort erklären" surface the explanation in the panel via the shared result slot.
 - [open] **Background prefetch** — on explicit "translate page", queue
   paragraphs to LM Studio and cache results.
+- [open] **Auto-open panel from hover "more"** — content-script can't open the
+  side panel (no gesture); explanation only shows if the panel is already open.
+  Consider a small toast/cue, or route hover-more through the context menu only.
 
 ## Later
 

@@ -18,14 +18,17 @@ export async function resolveWord(
 ): Promise<WordInfo> {
   const ranks = await loadRanks(learn);
   const rank = rankOf(ranks, word);
-  // Unknown rank → treat as the hardest band so rare words still get flagged.
-  const band: CefrLevel = rank === undefined ? 'C2' : rankToBand(rank);
+  // Unknown words (names, foreign words, or not in the learning language at all)
+  // are NOT flagged — flagging them turned every page into noise. Only words that
+  // are in the frequency list AND above the learner's level get highlighted.
+  const known = rank !== undefined;
+  const band: CefrLevel = known ? rankToBand(rank) : 'C2';
 
   const senses = await lookup(word, learn, native);
   return {
     word,
     band,
-    challenging: isAboveLevel(band, level),
+    challenging: known && isAboveLevel(band, level),
     senses,
   };
 }

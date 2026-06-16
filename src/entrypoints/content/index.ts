@@ -35,7 +35,7 @@ export default defineContentScript({
       el.addEventListener('mouseenter', () => {
         hoverTimer = window.setTimeout(async () => {
           const info = await resolveWord(word, settings.learnLang, settings.nativeLang, settings.level);
-          showHover(el, info, settings.learnLang, settings.nativeLang);
+          showHover(el, info);
         }, 120);
       });
       el.addEventListener('mouseleave', () => {

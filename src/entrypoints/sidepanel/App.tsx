@@ -5,23 +5,28 @@ import { getSettings, setSettings } from '@/core/settings';
 import { isReachable } from '@/core/llm/lmstudio';
 import { listModels, type ModelInfo } from '@/core/llm/models';
 import { sendMessage } from '@/core/messaging';
+import { clearResult, getResult, watchResult, type PanelResult } from '@/core/result';
 
 /**
  * Side panel — the stable backbone.
  *
- * First run shows onboarding (native language, learning language, level).
- * Afterwards: settings, LM Studio status + model picker, and a paragraph
- * translator (Stage 4). The Readability reader view lands next (opentasks.md).
+ * First run shows onboarding. Afterwards the panel is quiet: a result area that
+ * reflects the last translation/explanation (driven by right-click or hover
+ * "more"), settings tucked behind the gear, and a collapsible manual translator.
  */
 export function App() {
   const [settings, setLocal] = useState<Settings | null>(null);
   const [online, setOnline] = useState<boolean | null>(null);
   const [models, setModels] = useState<ModelInfo[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [result, setResultState] = useState<PanelResult | null>(null);
 
   useEffect(() => {
     void getSettings().then(setLocal);
     void isReachable().then(setOnline);
     void listModels().then(setModels);
+    void getResult().then(setResultState);
+    return watchResult(setResultState);
   }, []);
 
   if (!settings) return null;
@@ -36,52 +41,151 @@ export function App() {
     <main class="ll-panel">
       <header class="ll-panel-head">
         <h1>LangLearn</h1>
-        <span class={`ll-status ${online ? 'on' : 'off'}`}>
-          {online === null ? '…' : online ? 'LM Studio verbunden' : 'LM Studio offline'}
-        </span>
+        <div class="ll-head-right">
+          <span class={`ll-status ${online ? 'on' : 'off'}`}>
+            {online === null ? '…' : online ? 'verbunden' : 'offline'}
+          </span>
+          <button
+            type="button"
+            class={`ll-gear ${settingsOpen ? 'active' : ''}`}
+            title="Einstellungen"
+            onClick={() => setSettingsOpen((v) => !v)}
+          >
+            ⚙
+          </button>
+        </div>
       </header>
 
-      <section class="ll-settings">
-        <LanguagePicker
-          native={settings.nativeLang}
-          learn={settings.learnLang}
-          onChange={patch}
-        />
+      {settingsOpen && (
+        <section class="ll-settings">
+          <LanguagePicker native={settings.nativeLang} learn={settings.learnLang} onChange={patch} />
+          <label>
+            Mein Niveau
+            <select
+              value={settings.level}
+              onChange={(e) => patch({ level: e.currentTarget.value as CefrLevel })}
+            >
+              {CEFR_LEVELS.map((l) => (
+                <option value={l}>{l}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Modell
+            <select value={settings.model} onChange={(e) => patch({ model: e.currentTarget.value })}>
+              {models.length === 0 && <option value={settings.model}>{settings.model}</option>}
+              {models.map((m) => (
+                <option value={m.id}>{modelLabel(m)}</option>
+              ))}
+            </select>
+          </label>
+          <label class="ll-toggle">
+            <input
+              type="checkbox"
+              checked={settings.inlineEnabled}
+              onChange={(e) => patch({ inlineEnabled: e.currentTarget.checked })}
+            />
+            Inline-Markierung auf der Seite
+          </label>
+        </section>
+      )}
 
-        <label>
-          Mein Niveau
-          <select
-            value={settings.level}
-            onChange={(e) => patch({ level: e.currentTarget.value as CefrLevel })}
-          >
-            {CEFR_LEVELS.map((l) => (
-              <option value={l}>{l}</option>
-            ))}
-          </select>
-        </label>
+      <ResultView result={result} onClear={() => void clearResult()} />
 
-        <label>
-          Modell
-          <select value={settings.model} onChange={(e) => patch({ model: e.currentTarget.value })}>
-            {models.length === 0 && <option value={settings.model}>{settings.model}</option>}
-            {models.map((m) => (
-              <option value={m.id}>{modelLabel(m)}</option>
-            ))}
-          </select>
-        </label>
-
-        <label class="ll-toggle">
-          <input
-            type="checkbox"
-            checked={settings.inlineEnabled}
-            onChange={(e) => patch({ inlineEnabled: e.currentTarget.checked })}
-          />
-          Inline-Markierung auf der Seite
-        </label>
-      </section>
-
-      <Translator learn={settings.learnLang} native={settings.nativeLang} />
+      <details class="ll-translator">
+        <summary>Absatz übersetzen</summary>
+        <ManualTranslate />
+      </details>
     </main>
+  );
+}
+
+function ResultView({
+  result,
+  onClear,
+}: {
+  result: PanelResult | null;
+  onClear: () => void;
+}) {
+  if (!result) {
+    return (
+      <section class="ll-result ll-empty">
+        <p>Markiere Text auf der Seite, dann Rechtsklick → <b>LangLearn: übersetzen</b>.</p>
+        <p>Oder fahre über ein <span class="ll-hint-mark">unterstrichenes</span> Wort.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section class="ll-result">
+      <div class="ll-result-head">
+        <h2>{result.title}</h2>
+        <button type="button" class="ll-close" title="schließen" onClick={onClear}>
+          ×
+        </button>
+      </div>
+
+      {result.status === 'loading' && (
+        <p class="ll-muted">{result.kind === 'translation' ? 'übersetze…' : 'erkläre…'}</p>
+      )}
+      {result.status === 'error' && <p class="ll-error">Fehler: {result.error}</p>}
+
+      {result.status === 'done' && result.kind === 'translation' && (
+        <>
+          {result.source && <p class="ll-source">{result.source}</p>}
+          <p class="ll-translation">{result.translation}</p>
+        </>
+      )}
+
+      {result.status === 'done' && result.kind === 'explanation' && result.explanation && (
+        <Explanation e={result.explanation} />
+      )}
+    </section>
+  );
+}
+
+function Explanation({ e }: { e: NonNullable<PanelResult['explanation']> }) {
+  return (
+    <div class="ll-explanation">
+      <p class="ll-meaning">{e.meaning}</p>
+      {e.examples.length > 0 && (
+        <ul class="ll-examples">
+          {e.examples.map((ex) => (
+            <li>{ex}</li>
+          ))}
+        </ul>
+      )}
+      {e.synonyms.length > 0 && (
+        <p class="ll-synonyms">
+          <span class="ll-label">Synonyme:</span> {e.synonyms.join(', ')}
+        </p>
+      )}
+      {e.grammarNote && (
+        <p class="ll-grammar">
+          <span class="ll-label">Grammatik:</span> {e.grammarNote}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ManualTranslate() {
+  const [text, setText] = useState('');
+  function run() {
+    if (text.trim()) void sendMessage({ type: 'translateToPanel', text });
+  }
+  return (
+    <div class="ll-manual">
+      <textarea
+        rows={3}
+        placeholder="Text einfügen…"
+        value={text}
+        onInput={(e) => setText(e.currentTarget.value)}
+      />
+      <button type="button" onClick={run}>
+        übersetzen
+      </button>
+    </div>
   );
 }
 
@@ -138,7 +242,10 @@ function Onboarding({
         </select>
       </label>
 
-      <button type="button" onClick={() => onDone({ nativeLang: native, learnLang: learn, level, onboarded: true })}>
+      <button
+        type="button"
+        onClick={() => onDone({ nativeLang: native, learnLang: learn, level, onboarded: true })}
+      >
         Los geht’s
       </button>
     </main>
@@ -155,7 +262,9 @@ function LanguagePicker({
   onChange: (p: Partial<Settings>) => void;
 }) {
   function pickNative(value: Language) {
-    onChange(value === learn ? { nativeLang: value, learnLang: otherThan(value) } : { nativeLang: value });
+    onChange(
+      value === learn ? { nativeLang: value, learnLang: otherThan(value) } : { nativeLang: value },
+    );
   }
   return (
     <>
@@ -182,12 +291,12 @@ function LanguagePicker({
   );
 }
 
-/** First language that isn't `lang` — used to keep native ≠ learn. */
+/** First language that isn't `lang` — keeps native ≠ learn. */
 function otherThan(lang: Language): Language {
   return LANGUAGES.find((l) => l !== lang)!;
 }
 
-/** Human-readable option label: id + loaded/context hints + "untested" flag. */
+/** Option label: id + loaded/context hints + "untested" flag. */
 function modelLabel(m: ModelInfo): string {
   const tags: string[] = [];
   if (m.state === 'loaded') {
@@ -196,40 +305,4 @@ function modelLabel(m: ModelInfo): string {
   }
   if (!m.approved) tags.push('ungetestet');
   return tags.length ? `${m.id} (${tags.join(', ')})` : m.id;
-}
-
-function Translator({ learn, native }: { learn: Language; native: Language }) {
-  const [text, setText] = useState('');
-  const [out, setOut] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function run() {
-    if (!text.trim()) return;
-    setBusy(true);
-    setOut('');
-    try {
-      const res = await sendMessage({ type: 'translateParagraph', text, learn, native });
-      setOut(res.translation);
-    } catch (err) {
-      setOut(`Fehler: ${String(err)}`);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section class="ll-translator">
-      <h2>Absatz übersetzen</h2>
-      <textarea
-        rows={4}
-        placeholder="Text einfügen oder auf der Seite markieren…"
-        value={text}
-        onInput={(e) => setText(e.currentTarget.value)}
-      />
-      <button type="button" onClick={run} disabled={busy}>
-        {busy ? 'übersetze…' : 'übersetzen'}
-      </button>
-      {out && <p class="ll-translation">{out}</p>}
-    </section>
-  );
 }

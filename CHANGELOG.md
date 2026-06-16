@@ -25,6 +25,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   sentence/paragraph-aware chunking for paragraph translation.
 
 ### Changed
+- Right-click context menu on a selection: "LangLearn: übersetzen" and
+  "Wort erklären" → opens the panel and shows the result. Results now flow
+  through a shared storage slot (`core/result.ts`) that the panel renders.
+- Hover card: fixed missing background (Shadow DOM uses `:host`, not `:root`, for
+  design tokens) — now a clean white card.
+- Inline highlighting no longer flags unknown words (names/foreign words), only
+  words present in the frequency list and above the learner's level — far quieter.
+- Panel redesign: settings collapse behind a ⚙ gear (top-right), central result
+  area (translation/explanation), collapsible manual translator at the bottom.
 - Corrected model ids to the `gemma-4` family (verified against a live LM Studio).
 - `chat()` now takes the model explicitly and enforces the input token budget.
 - **Multi-language support (fr/de/en/nl)** with selectable native + learning

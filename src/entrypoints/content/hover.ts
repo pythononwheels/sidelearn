@@ -6,7 +6,6 @@
  * to the LLM via the background worker (Stage 3) and renders the result inline.
  */
 
-import type { Language } from '@/core/config';
 import { sendMessage } from '@/core/messaging';
 import type { WordInfo } from '@/core/types';
 import tokens from '@/ui/tokens.css?inline';
@@ -23,17 +22,14 @@ function ensureHost(): ShadowRoot {
   document.body.append(host);
   shadow = host.attachShadow({ mode: 'open' });
   const style = document.createElement('style');
-  style.textContent = tokens + styles;
+  // Design tokens are declared on :root, but inside a Shadow DOM :root matches
+  // nothing — the custom properties must live on :host to apply here.
+  style.textContent = tokens.replace(/:root/g, ':host') + styles;
   shadow.append(style);
   return shadow;
 }
 
-export function showHover(
-  anchor: HTMLElement,
-  info: WordInfo,
-  learn: Language,
-  native: Language,
-): void {
+export function showHover(anchor: HTMLElement, info: WordInfo): void {
   const root = ensureHost();
   root.querySelector('.ll-card')?.remove();
 
@@ -62,9 +58,8 @@ export function showHover(
   }
 
   card.querySelector('.ll-more')!.addEventListener('click', () => {
-    void sendMessage({ type: 'explainWord', word: info.word, learn, native });
-    // The side panel listens for the explanation; here we just acknowledge.
-    card.querySelector('.ll-more')!.textContent = '… an die Sidebar gesendet';
+    void sendMessage({ type: 'explainToPanel', word: info.word });
+    card.querySelector('.ll-more')!.textContent = '✓ im Panel (öffne die Sidebar)';
   });
 
   root.append(card);
