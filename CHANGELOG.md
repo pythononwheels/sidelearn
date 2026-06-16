@@ -5,7 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.11] — 2026-06-17
+## [0.6.12] — 2026-06-17
+
+### Changed
+- Chat answers **render Markdown** once streaming finishes (bold, lists,
+  headings, code; raw text while streaming) via a small safe renderer
+  (`core/markdown.ts`, HTML-escaped, tested).
+- Each message shows a **sender label** ("Du"/"Tu"/… for you, the model name for
+  the answer); the **"↦ auf <Muttersprache>"** action is now a badge.
+- Chat input is 5 rows with the send button flat beneath it.
 
 ### Changed
 - Tighter, flatter UI: chat send button moved below the textarea (right-aligned,

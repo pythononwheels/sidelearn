@@ -33,6 +33,7 @@ import {
 } from '@/core/bookmarks';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { translateParagraph } from '@/core/llm/prompts';
+import { renderMarkdown } from '@/core/markdown';
 import { pickStudyWords, type Candidate } from '@/core/collect';
 import { resolveWord } from '@/core/wordinfo';
 import { normalize } from '@/core/difficulty/frequency';
@@ -715,6 +716,9 @@ interface ChatMsg extends ChatTurn {
   translating?: boolean;
 }
 
+const YOU_LABEL: Record<Language, string> = { de: 'Du', en: 'You', fr: 'Tu', nl: 'Jij' };
+const modelShort = (model: string) => model.split('/').pop() ?? model;
+
 function Chat({
   learn,
   native,
@@ -794,26 +798,44 @@ function Chat({
             (Niveau {level}).
           </p>
         )}
-        {messages.map((m, i) => (
-          <div key={i} class={`ll-bubble-wrap ll-bubble-wrap-${m.role}`}>
-            <div class={`ll-bubble ll-bubble-${m.role}`}>{m.content || (busy ? '…' : '')}</div>
-            {m.role === 'assistant' && m.content && !busy && (
-              <button
-                type="button"
-                class="ll-translate-link"
-                disabled={m.translating}
-                onClick={() => void translateTurn(i)}
-              >
-                {m.translating ? '…' : m.translation ? '' : `↦ auf ${LANG_LABELS[native]}`}
-              </button>
-            )}
-            {m.translation && <div class="ll-bubble ll-bubble-translation">{m.translation}</div>}
-          </div>
-        ))}
+        {messages.map((m, i) => {
+          const streaming = busy && i === messages.length - 1;
+          return (
+            <div key={i} class={`ll-bubble-wrap ll-bubble-wrap-${m.role}`}>
+              <span class="ll-bubble-label">
+                {m.role === 'user' ? YOU_LABEL[native] : modelShort(model)}
+              </span>
+              {m.role === 'assistant' && !streaming ? (
+                <div
+                  class="ll-bubble ll-bubble-assistant ll-md"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }}
+                />
+              ) : (
+                <div class={`ll-bubble ll-bubble-${m.role}`}>{m.content || (streaming ? '…' : '')}</div>
+              )}
+              {m.role === 'assistant' && m.content && !streaming && !m.translation && (
+                <button
+                  type="button"
+                  class="ll-translate-badge"
+                  disabled={m.translating}
+                  onClick={() => void translateTurn(i)}
+                >
+                  {m.translating ? '…' : `↦ auf ${LANG_LABELS[native]}`}
+                </button>
+              )}
+              {m.translation && (
+                <div
+                  class="ll-bubble ll-bubble-translation ll-md"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(m.translation) }}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
       <div class="ll-chat-input">
         <textarea
-          rows={2}
+          rows={5}
           placeholder={online ? 'Frage zur Seite…' : 'LM Studio offline'}
           value={input}
           disabled={!online}
