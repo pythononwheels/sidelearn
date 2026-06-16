@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-06-16
+
+### Added
+- Lightweight per-language lemmatization for dictionary lookups: inflected words
+  (e.g. "champions", "maisons", "chevaux") now resolve to their base form, so the
+  hover shows a translation instead of "no dictionary entry". Instant, no LLM.
+
 ## [0.1.1] — 2026-06-16
 
 ### Added

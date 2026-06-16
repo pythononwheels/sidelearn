@@ -9,6 +9,7 @@
 import { dictFile, type Language } from '../config';
 import type { DictSense } from '../types';
 import { normalize } from '../difficulty/frequency';
+import { lemmaCandidates } from './lemmatize';
 
 type DictMap = Record<string, DictSense[]>;
 
@@ -37,5 +38,10 @@ export async function lookup(
   native: Language,
 ): Promise<DictSense[]> {
   const dict = await loadDict(learn, native);
-  return dict[normalize(word)] ?? [];
+  // Try the exact form first, then lemmatized fallbacks (champions → champion).
+  for (const candidate of lemmaCandidates(normalize(word), learn)) {
+    const hit = dict[candidate];
+    if (hit) return hit;
+  }
+  return [];
 }
