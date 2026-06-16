@@ -1,0 +1,6 @@
+{
+  "canapé": [{ "translations": ["Sofa", "Couch"] }],
+  "dormir": [{ "translations": ["schlafen"] }],
+  "matin": [{ "translations": ["Morgen", "Vormittag"] }],
+  "maison": [{ "translations": ["Haus"] }]
+}

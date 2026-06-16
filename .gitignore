@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+.output/
+.wxt/
+stats.html
+
+# Data — downloaded sources (regenerate via `npm run data:wordlists`).
+# The small sample files in public/data/ ARE committed so the extension runs on clone.
+data/sources/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/

@@ -1,0 +1,107 @@
+html,
+body {
+  margin: 0;
+  background: var(--ll-bg);
+  color: var(--ll-text);
+  font-family: var(--ll-font);
+  font-size: var(--ll-font-size);
+  line-height: var(--ll-line-height);
+}
+
+.ll-panel {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ll-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ll-panel-head h1 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ll-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--ll-border);
+  color: var(--ll-text-soft);
+}
+.ll-status.on {
+  background: var(--ll-accent-soft);
+  color: var(--ll-accent);
+}
+
+.ll-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ll-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+.ll-settings select {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+  color: var(--ll-text);
+}
+.ll-toggle {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+}
+
+.ll-translator {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ll-translator h2 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+.ll-translator textarea {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+  color: var(--ll-text);
+  resize: vertical;
+}
+.ll-translator button {
+  align-self: flex-start;
+  font: inherit;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--ll-radius);
+  background: var(--ll-accent);
+  color: #fff;
+  cursor: pointer;
+}
+.ll-translator button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ll-translation {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+}

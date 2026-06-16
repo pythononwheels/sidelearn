@@ -1,0 +1,58 @@
+/* Hover card — quiet, compact, lives inside the Shadow DOM. */
+.ll-card {
+  position: absolute;
+  max-width: 280px;
+  padding: 10px 12px;
+  font-family: var(--ll-font);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ll-text);
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  box-shadow: var(--ll-shadow);
+}
+
+.ll-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ll-word {
+  font-weight: 600;
+}
+
+.ll-band {
+  font-size: 11px;
+  color: var(--ll-accent);
+  background: var(--ll-accent-soft);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.ll-senses {
+  margin: 0 0 8px;
+  padding-left: 16px;
+}
+
+.ll-senses .ll-empty {
+  list-style: none;
+  margin-left: -16px;
+  color: var(--ll-text-soft);
+}
+
+.ll-more {
+  font: inherit;
+  font-size: 12px;
+  color: var(--ll-accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.ll-more:hover {
+  text-decoration: underline;
+}

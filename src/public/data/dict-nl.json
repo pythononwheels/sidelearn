@@ -1,0 +1,6 @@
+{
+  "bank": [{ "translations": ["Sofa", "Bank"] }],
+  "slapen": [{ "translations": ["schlafen"] }],
+  "ochtend": [{ "translations": ["Morgen", "Vormittag"] }],
+  "huis": [{ "translations": ["Haus"] }]
+}
