@@ -115,6 +115,25 @@ body {
 }
 
 /* Result ------------------------------------------------------------------ */
+.ll-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ll-clearall {
+  align-self: flex-end;
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: var(--ll-text-soft);
+  cursor: pointer;
+}
+.ll-clearall:hover {
+  color: var(--ll-text);
+  text-decoration: underline;
+}
 .ll-result {
   display: flex;
   flex-direction: column;

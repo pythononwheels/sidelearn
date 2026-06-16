@@ -11,7 +11,7 @@
 import type { Message } from '@/core/messaging';
 import { explainWord, translateParagraph } from '@/core/llm/prompts';
 import { getSettings } from '@/core/settings';
-import { setResult } from '@/core/result';
+import { clearResults, pushResult, updateResult } from '@/core/result';
 
 // chrome.sidePanel is Chrome-only and not in the cross-browser `browser` types.
 declare const chrome: {
@@ -58,37 +58,35 @@ export default defineBackground(() => {
 });
 
 async function runTranslate(text: string): Promise<void> {
-  const { learnLang, nativeLang, model } = await getSettings();
-  await setResult({ kind: 'translation', status: 'loading', title: 'Übersetzung', source: text });
+  const { learnLang, nativeLang, model, keepResults } = await getSettings();
+  if (!keepResults) await clearResults();
+  const id = newId();
+  await pushResult({ id, kind: 'translation', status: 'loading', title: 'Übersetzung', source: text });
   try {
     const r = await translateParagraph(text, learnLang, nativeLang, model);
-    await setResult({
-      kind: 'translation',
-      status: 'done',
-      title: 'Übersetzung',
-      source: text,
-      translation: r.translation,
-    });
+    await updateResult(id, { status: 'done', translation: r.translation });
   } catch (err) {
-    await setResult({
-      kind: 'translation',
-      status: 'error',
-      title: 'Übersetzung',
-      source: text,
-      error: String(err),
-    });
+    await updateResult(id, { status: 'error', error: String(err) });
   }
 }
 
 async function runExplain(word: string): Promise<void> {
-  const { learnLang, nativeLang, model } = await getSettings();
-  await setResult({ kind: 'explanation', status: 'loading', title: word });
+  const { learnLang, nativeLang, model, keepResults } = await getSettings();
+  if (!keepResults) await clearResults();
+  const id = newId();
+  await pushResult({ id, kind: 'explanation', status: 'loading', title: word });
   try {
     const explanation = await explainWord(word, learnLang, nativeLang, model);
-    await setResult({ kind: 'explanation', status: 'done', title: word, explanation });
+    await updateResult(id, { status: 'done', explanation });
   } catch (err) {
-    await setResult({ kind: 'explanation', status: 'error', title: word, error: String(err) });
+    await updateResult(id, { status: 'error', error: String(err) });
   }
+}
+
+let counter = 0;
+function newId(): string {
+  counter += 1;
+  return `${Date.now()}-${counter}`;
 }
 
 /** A "Wort erklären" selection should explain a single word. */

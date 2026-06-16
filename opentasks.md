@@ -25,6 +25,12 @@ Status: `open` · `hold` · `closed` · `archive`
   side panel (no gesture); explanation only shows if the panel is already open.
   Consider a small toast/cue, or route hover-more through the context menu only.
 
+## Next
+
+- [open] **Chat with page context** — turn the "Freitext" box into a chat where
+  the loaded page text (via Readability) is in context, so the user can ask
+  questions about what they're reading. Multi-turn, history in the panel.
+
 ## Later
 
 - [open] **Vocabulary collection** — store looked-up words for review.

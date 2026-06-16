@@ -5,6 +5,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-06-16
+
+### Added
+- Result cards now stack (newest first) and persist; each card has an × to
+  remove it, plus "alle löschen". New "Ergebnisse sammeln" setting (default on)
+  toggles between stacking and showing only the latest.
+
+### Changed
+- Renamed the manual box from "Absatz übersetzen" to "Freitext übersetzen"
+  (paragraph translation is covered by select + right-click).
+
 ## [0.1.2] — 2026-06-16
 
 ### Added

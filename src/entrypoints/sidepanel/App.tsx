@@ -5,7 +5,13 @@ import { getSettings, setSettings } from '@/core/settings';
 import { isReachable } from '@/core/llm/lmstudio';
 import { listModels, type ModelInfo } from '@/core/llm/models';
 import { sendMessage } from '@/core/messaging';
-import { clearResult, getResult, watchResult, type PanelResult } from '@/core/result';
+import {
+  clearResults,
+  getResults,
+  removeResult,
+  watchResults,
+  type PanelResult,
+} from '@/core/result';
 
 /**
  * Side panel — the stable backbone.
@@ -19,14 +25,14 @@ export function App() {
   const [online, setOnline] = useState<boolean | null>(null);
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [result, setResultState] = useState<PanelResult | null>(null);
+  const [results, setResults] = useState<PanelResult[]>([]);
 
   useEffect(() => {
     void getSettings().then(setLocal);
     void isReachable().then(setOnline);
     void listModels().then(setModels);
-    void getResult().then(setResultState);
-    return watchResult(setResultState);
+    void getResults().then(setResults);
+    return watchResults(setResults);
   }, []);
 
   if (!settings) return null;
@@ -87,27 +93,29 @@ export function App() {
               ))}
             </select>
           </label>
+          <label class="ll-toggle">
+            <input
+              type="checkbox"
+              checked={settings.keepResults}
+              onChange={(e) => patch({ keepResults: e.currentTarget.checked })}
+            />
+            Ergebnisse sammeln (sonst nur das letzte)
+          </label>
         </section>
       )}
 
-      <ResultView result={result} onClear={() => void clearResult()} />
+      <ResultsView results={results} />
 
       <details class="ll-translator">
-        <summary>Absatz übersetzen</summary>
+        <summary>Freitext übersetzen</summary>
         <ManualTranslate />
       </details>
     </main>
   );
 }
 
-function ResultView({
-  result,
-  onClear,
-}: {
-  result: PanelResult | null;
-  onClear: () => void;
-}) {
-  if (!result) {
+function ResultsView({ results }: { results: PanelResult[] }) {
+  if (results.length === 0) {
     return (
       <section class="ll-result ll-empty">
         <p>Markiere Text auf der Seite, dann Rechtsklick → <b>LangLearn: übersetzen</b>.</p>
@@ -115,12 +123,26 @@ function ResultView({
       </section>
     );
   }
-
   return (
-    <section class="ll-result">
+    <section class="ll-results">
+      {results.length > 1 && (
+        <button type="button" class="ll-clearall" onClick={() => void clearResults()}>
+          alle löschen ({results.length})
+        </button>
+      )}
+      {results.map((r) => (
+        <ResultCard key={r.id} result={r} onRemove={() => void removeResult(r.id)} />
+      ))}
+    </section>
+  );
+}
+
+function ResultCard({ result, onRemove }: { result: PanelResult; onRemove: () => void }) {
+  return (
+    <article class="ll-result">
       <div class="ll-result-head">
         <h2>{result.title}</h2>
-        <button type="button" class="ll-close" title="schließen" onClick={onClear}>
+        <button type="button" class="ll-close" title="Karte löschen" onClick={onRemove}>
           ×
         </button>
       </div>
@@ -140,7 +162,7 @@ function ResultView({
       {result.status === 'done' && result.kind === 'explanation' && result.explanation && (
         <Explanation e={result.explanation} />
       )}
-    </section>
+    </article>
   );
 }
 

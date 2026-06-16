@@ -74,6 +74,8 @@ export interface Settings {
   model: string;
   /** Inline highlighting on the live page (the optional "Kür" layer). */
   inlineEnabled: boolean;
+  /** Keep result cards stacked (true) or only show the latest (false). */
+  keepResults: boolean;
   /** False until the first-run onboarding (languages + level) is completed. */
   onboarded: boolean;
 }
@@ -84,12 +86,13 @@ export const DEFAULT_SETTINGS: Settings = {
   level: 'A2',
   model: DEFAULT_MODEL,
   inlineEnabled: true,
+  keepResults: true,
   onboarded: false,
 };
 
 /** Storage keys, centralized to avoid stringly-typed drift. */
 export const STORAGE_KEYS = {
   settings: 'local:settings',
-  /** Last LLM result shown in the panel (translation or word explanation). */
-  result: 'local:result',
+  /** Stack of LLM result cards shown in the panel. */
+  results: 'local:results',
 } as const;
