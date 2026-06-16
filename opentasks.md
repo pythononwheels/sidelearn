@@ -37,9 +37,8 @@ Status: `open` · `hold` · `closed` · `archive`
   remembered locally (★ merken + explain), listed in the panel.
 - [closed] **Review test** — done. Multiple-choice from captured vocab,
   distractors from other vocab, spaced-repetition ordering, score summary.
-- [open] **Page quiz** — generate a small multiple-choice quiz from the current
-  page, tuned to the user's CEFR level (vocab + comprehension). Uses page text
-  (Readability) + LLM.
+- [closed] **Page quiz** — done. 5-question MC comprehension quiz from page text
+  at CEFR level, shared Quiz UI (core/quiz.ts).
 
 ## Later
 

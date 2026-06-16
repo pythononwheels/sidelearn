@@ -393,10 +393,14 @@ body {
   color: var(--ll-text-soft);
 }
 .ll-review-word {
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 700;
+  line-height: 1.4;
   text-align: center;
   margin: 6px 0;
+}
+.ll-nav-error {
+  font-size: 12px;
 }
 .ll-review-options {
   display: flex;

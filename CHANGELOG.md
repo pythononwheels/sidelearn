@@ -5,6 +5,20 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-06-16
+
+### Added
+- **Seiten-Quiz**: generates a 5-question multiple-choice comprehension quiz
+  about the current page at the learner's CEFR level (`core/quiz.ts`, tolerant
+  JSON parse tested). Runs in the panel (direct LM Studio call) and reuses the
+  quiz UI. The vocab review and the page quiz now share one generic `Quiz`
+  component.
+
+### Changed
+- Inline marking is now tied to the side panel: **closing the panel removes the
+  markings**, reopening restores them (tracked via a runtime port). This also
+  keeps "mehr in der Sidebar" consistent — it only acts while the panel is open.
+
 ## [0.5.1] — 2026-06-16
 
 ### Changed

@@ -9,6 +9,7 @@
 
 import { resolveWord } from '@/core/wordinfo';
 import { getSettings, watchSettings } from '@/core/settings';
+import { getPanelOpen, watchPanelOpen } from '@/core/panel';
 import { clear, highlight } from './highlighter';
 import { cancelHide, scheduleHide, showHover } from './hover';
 
@@ -18,10 +19,12 @@ export default defineContentScript({
   async main() {
     injectMarkerStyle();
     let settings = await getSettings();
+    let panelOpen = await getPanelOpen();
 
     async function apply() {
       clear();
-      if (!settings.inlineEnabled || !settings.onboarded) return;
+      // Only mark while the panel is open — closing it removes the markings.
+      if (!settings.inlineEnabled || !settings.onboarded || !panelOpen) return;
       await highlight(document.body, {
         learn: settings.learnLang,
         native: settings.nativeLang,
@@ -48,6 +51,10 @@ export default defineContentScript({
     await apply();
     watchSettings((next) => {
       settings = next;
+      void apply();
+    });
+    watchPanelOpen((open) => {
+      panelOpen = open;
       void apply();
     });
   },

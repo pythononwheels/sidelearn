@@ -97,4 +97,6 @@ export const STORAGE_KEYS = {
   results: 'local:results',
   /** Captured vocabulary (looked-up words) for review. */
   vocab: 'local:vocab',
+  /** Whether the side panel is currently open (gates inline marking). */
+  panelOpen: 'local:panelOpen',
 } as const;

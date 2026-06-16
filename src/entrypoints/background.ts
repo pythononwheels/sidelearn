@@ -14,6 +14,7 @@ import { getSettings } from '@/core/settings';
 import { clearResults, pushResult, updateResult } from '@/core/result';
 import { resolveWord } from '@/core/wordinfo';
 import { addVocab } from '@/core/vocab';
+import { setPanelOpen } from '@/core/panel';
 
 // chrome.sidePanel is Chrome-only and not in the cross-browser `browser` types.
 declare const chrome: {
@@ -53,6 +54,13 @@ export default defineBackground(() => {
       const word = firstWord(text);
       void runExplain(word, word === text ? undefined : text);
     }
+  });
+
+  // Track side-panel open/closed via a long-lived port from the panel.
+  browser.runtime.onConnect.addListener((port) => {
+    if (port.name !== 'panel') return;
+    void setPanelOpen(true);
+    port.onDisconnect.addListener(() => void setPanelOpen(false));
   });
 
   browser.runtime.onMessage.addListener((msg: unknown) => {

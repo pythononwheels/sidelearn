@@ -20,7 +20,8 @@ import {
   watchVocab,
   type VocabEntry,
 } from '@/core/vocab';
-import { buildSession, canReview, type ReviewQuestion } from '@/core/review';
+import { buildSession, canReview } from '@/core/review';
+import { generatePageQuiz, type QuizQuestion } from '@/core/quiz';
 
 /**
  * Side panel — the stable backbone.
@@ -36,7 +37,9 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [results, setResults] = useState<PanelResult[]>([]);
   const [vocab, setVocab] = useState<VocabEntry[]>([]);
-  const [review, setReview] = useState<ReviewQuestion[] | null>(null);
+  const [quiz, setQuiz] = useState<QuizState | null>(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizError, setQuizError] = useState<string | null>(null);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -46,9 +49,12 @@ export function App() {
     void getVocab().then(setVocab);
     const offResults = watchResults(setResults);
     const offVocab = watchVocab(setVocab);
+    // Signal "panel open" to the background; auto-disconnects when it closes.
+    const port = browser.runtime.connect({ name: 'panel' });
     return () => {
       offResults();
       offVocab();
+      port.disconnect();
     };
   }, []);
 
@@ -59,23 +65,42 @@ export function App() {
   }
 
   function startReview() {
-    setReview(buildSession(vocab, 10));
+    const session = buildSession(vocab, 10);
+    setQuiz({
+      title: 'Vokabeln üben',
+      questions: session.map((q) => ({ prompt: q.word, options: q.options, answer: q.answer })),
+      onAnswer: (i, correct) => void recordReview(session[i]!.entryId, correct),
+    });
   }
 
   // Pull the active page's main text and translate it into the panel.
   async function translatePage() {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) return;
-    const [res] = await browser.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: () => {
-        const el = document.querySelector('article, main') ?? document.body;
-        return (el as HTMLElement).innerText.replace(/\n{3,}/g, '\n\n').trim().slice(0, 8000);
-      },
-    });
-    const text = res?.result as string | undefined;
+    const text = await getPageText();
     if (text) {
       void sendMessage({ type: 'translateToPanel', text, title: 'Seitenübersetzung', hideSource: true });
+    }
+  }
+
+  async function startPageQuiz() {
+    if (!settings) return;
+    setQuizError(null);
+    setQuizLoading(true);
+    try {
+      const text = await getPageText();
+      if (!text) throw new Error('Kein Seitentext gefunden.');
+      const questions = await generatePageQuiz(
+        text,
+        settings.learnLang,
+        settings.nativeLang,
+        settings.level,
+        settings.model,
+      );
+      if (!questions.length) throw new Error('Das Modell lieferte kein verwertbares Quiz.');
+      setQuiz({ title: 'Seiten-Quiz', questions });
+    } catch (err) {
+      setQuizError(String(err instanceof Error ? err.message : err));
+    } finally {
+      setQuizLoading(false);
     }
   }
 
@@ -132,10 +157,17 @@ export function App() {
         >
           Seite übersetzen
         </button>
-        <button type="button" class="ll-navbtn" disabled title="kommt bald">
-          Seiten-Quiz
+        <button
+          type="button"
+          class="ll-navbtn"
+          disabled={!online || quizLoading}
+          title={online ? undefined : 'LM Studio offline'}
+          onClick={startPageQuiz}
+        >
+          {quizLoading ? 'Quiz…' : 'Seiten-Quiz'}
         </button>
       </nav>
+      {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
 
       {settingsOpen && (
         <section class="ll-settings">
@@ -171,8 +203,8 @@ export function App() {
         </section>
       )}
 
-      {review ? (
-        <Review questions={review} onExit={() => setReview(null)} />
+      {quiz ? (
+        <Quiz state={quiz} onExit={() => setQuiz(null)} />
       ) : (
         <>
           <ResultsView results={results} />
@@ -192,7 +224,8 @@ export function App() {
   );
 }
 
-function Review({ questions, onExit }: { questions: ReviewQuestion[]; onExit: () => void }) {
+function Quiz({ state, onExit }: { state: QuizState; onExit: () => void }) {
+  const { title, questions, onAnswer } = state;
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -206,7 +239,7 @@ function Review({ questions, onExit }: { questions: ReviewQuestion[]; onExit: ()
     setSelected(option);
     const correct = option === q!.answer;
     if (correct) setScore((s) => s + 1);
-    void recordReview(q!.entryId, correct);
+    onAnswer?.(index, correct);
   }
 
   function next() {
@@ -235,14 +268,14 @@ function Review({ questions, onExit }: { questions: ReviewQuestion[]; onExit: ()
     <section class="ll-review">
       <div class="ll-review-head">
         <span class="ll-review-progress">
-          {index + 1} / {questions.length}
+          {title} · {index + 1} / {questions.length}
         </span>
         <button type="button" class="ll-close" title="beenden" onClick={onExit}>
           ×
         </button>
       </div>
 
-      <p class="ll-review-word">{q.word}</p>
+      <p class="ll-review-word">{q.prompt}</p>
 
       <div class="ll-review-options">
         {q.options.map((opt) => (
@@ -509,6 +542,26 @@ function LanguagePicker({
       </label>
     </>
   );
+}
+
+interface QuizState {
+  title: string;
+  questions: QuizQuestion[];
+  onAnswer?: (index: number, correct: boolean) => void;
+}
+
+/** Extract the active page's main readable text (capped) for translate/quiz. */
+async function getPageText(): Promise<string> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return '';
+  const [res] = await browser.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: () => {
+      const el = document.querySelector('article, main') ?? document.body;
+      return (el as HTMLElement).innerText.replace(/\n{3,}/g, '\n\n').trim().slice(0, 8000);
+    },
+  });
+  return (res?.result as string) ?? '';
 }
 
 /** First language that isn't `lang` — keeps native ≠ learn. */
