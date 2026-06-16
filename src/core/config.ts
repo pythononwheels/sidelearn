@@ -76,8 +76,6 @@ export interface Settings {
   inlineEnabled: boolean;
   /** Keep result cards stacked (true) or only show the latest (false). */
   keepResults: boolean;
-  /** Adapt the panel body colors to the currently loaded page. */
-  adaptToPage: boolean;
   /** False until the first-run onboarding (languages + level) is completed. */
   onboarded: boolean;
 }
@@ -89,7 +87,6 @@ export const DEFAULT_SETTINGS: Settings = {
   model: DEFAULT_MODEL,
   inlineEnabled: true,
   keepResults: true,
-  adaptToPage: true,
   onboarded: false,
 };
 
@@ -98,8 +95,6 @@ export const STORAGE_KEYS = {
   settings: 'local:settings',
   /** Stack of LLM result cards shown in the panel. */
   results: 'local:results',
-  /** Palette extracted from the active page, for adaptive panel theming. */
-  pageTheme: 'local:pageTheme',
   /** Captured vocabulary (looked-up words) for review. */
   vocab: 'local:vocab',
 } as const;

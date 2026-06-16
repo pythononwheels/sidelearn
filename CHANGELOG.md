@@ -5,6 +5,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-06-16
+
+### Changed
+- Header reworked: no purple bar. `FR → DE` and the level are small badges,
+  LM-Studio status badge stays, gear is larger and plain (no badge).
+
+### Removed
+- Page-adaptive panel theming (made cards unreadable — the card surfaces didn't
+  follow the page colours). Removed for now; revisit with proper card-contrast
+  derivation. (`core/theme.ts`, `content/pagetheme.ts`, the `adaptToPage` setting.)
+
 ## [0.3.0] — 2026-06-16
 
 ### Added

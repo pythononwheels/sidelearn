@@ -44,6 +44,11 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Later
 
+- [open] **Page-adaptive theming (revisit)** — removed in 0.3.1 because card
+  surfaces didn't follow page colours (unreadable). Bring back only with proper
+  per-surface contrast derivation (cards/badges must adapt too). Code is in git
+  history at 0.2.0–0.3.0.
+
 - [open] **Vocabulary collection** — store looked-up words for review.
 - [open] **Caching layer** — IndexedDB cache for explanations/translations.
 - [open] **FLELex refinement** for French CEFR banding.

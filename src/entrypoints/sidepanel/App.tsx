@@ -12,7 +12,6 @@ import {
   watchResults,
   type PanelResult,
 } from '@/core/result';
-import { getPageTheme, watchPageTheme, type PageTheme } from '@/core/theme';
 import { clearVocab, getVocab, removeVocab, watchVocab, type VocabEntry } from '@/core/vocab';
 
 /**
@@ -28,7 +27,6 @@ export function App() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [results, setResults] = useState<PanelResult[]>([]);
-  const [pageTheme, setPageThemeState] = useState<PageTheme | null>(null);
   const [vocab, setVocab] = useState<VocabEntry[]>([]);
 
   useEffect(() => {
@@ -36,22 +34,14 @@ export function App() {
     void isReachable().then(setOnline);
     void listModels().then(setModels);
     void getResults().then(setResults);
-    void getPageTheme().then(setPageThemeState);
     void getVocab().then(setVocab);
     const offResults = watchResults(setResults);
-    const offTheme = watchPageTheme(setPageThemeState);
     const offVocab = watchVocab(setVocab);
     return () => {
       offResults();
-      offTheme();
       offVocab();
     };
   }, []);
-
-  // Apply (or clear) the page-adaptive palette as CSS variables on :root.
-  useEffect(() => {
-    applyTheme(settings?.adaptToPage ? pageTheme : null);
-  }, [pageTheme, settings?.adaptToPage]);
 
   if (!settings) return null;
 
@@ -64,9 +54,12 @@ export function App() {
   return (
     <main class="ll-panel">
       <header class="ll-panel-head">
-        <span class="ll-context">
-          {settings.learnLang.toUpperCase()} → {settings.nativeLang.toUpperCase()} · {settings.level}
-        </span>
+        <div class="ll-head-left">
+          <span class="ll-badge">
+            {settings.learnLang.toUpperCase()} → {settings.nativeLang.toUpperCase()}
+          </span>
+          <span class="ll-badge">{settings.level}</span>
+        </div>
         <div class="ll-head-right">
           <span class={`ll-status ${online ? 'on' : 'off'}`} title="LM Studio">
             {online === null ? '…' : online ? '● LM Studio' : '○ LM Studio'}
@@ -120,14 +113,6 @@ export function App() {
               onChange={(e) => patch({ keepResults: e.currentTarget.checked })}
             />
             Ergebnisse sammeln (sonst nur das letzte)
-          </label>
-          <label class="ll-toggle">
-            <input
-              type="checkbox"
-              checked={settings.adaptToPage}
-              onChange={(e) => patch({ adaptToPage: e.currentTarget.checked })}
-            />
-            An die Seitenfarben anpassen
           </label>
         </section>
       )}
@@ -381,22 +366,6 @@ function LanguagePicker({
       </label>
     </>
   );
-}
-
-/** Apply (or clear) the page-derived palette as CSS variables on :root. */
-function applyTheme(theme: PageTheme | null): void {
-  const root = document.documentElement.style;
-  const vars: Record<string, string | undefined> = {
-    '--ll-bg': theme?.bg,
-    '--ll-surface': theme?.surface,
-    '--ll-border': theme?.border,
-    '--ll-text': theme?.text,
-    '--ll-text-soft': theme?.textSoft,
-  };
-  for (const [key, value] of Object.entries(vars)) {
-    if (value) root.setProperty(key, value);
-    else root.removeProperty(key);
-  }
 }
 
 /** First language that isn't `lang` — keeps native ≠ learn. */

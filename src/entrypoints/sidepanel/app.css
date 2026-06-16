@@ -21,45 +21,50 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  /* Full-bleed brand bar in our colour, independent of page-adaptive body. */
-  margin: -14px -16px 2px;
-  padding: 12px 14px;
-  background: var(--ll-accent-grad);
-  color: #fff;
 }
-.ll-context {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #fff;
+.ll-head-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ll-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--ll-accent-soft);
+  color: var(--ll-accent);
+  white-space: nowrap;
 }
 .ll-head-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .ll-status {
   font-size: 11px;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: var(--ll-border);
+  color: var(--ll-text-soft);
   white-space: nowrap;
 }
+.ll-status.on {
+  background: var(--ll-mint-soft);
+  color: var(--ll-mint);
+}
 .ll-gear {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
-  padding: 5px 8px;
-  border: 1px solid transparent;
-  border-radius: 9px;
+  padding: 2px;
+  border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ll-text-soft);
   cursor: pointer;
 }
 .ll-gear:hover,
 .ll-gear.active {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  color: var(--ll-accent);
 }
 
 /* Marking on/off toggle --------------------------------------------------- */
