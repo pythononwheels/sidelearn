@@ -27,8 +27,8 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Next
 
-- [open] **Chat with page context** — turn the "Freitext" box into a multi-turn
-  chat with the page text in context (approved; build next).
+- [closed] **Chat with page context** — done (0.6.3). "Chat zur Seite":
+  multi-turn, page text in context, resets per page.
 
 ## Ideas (pipeline)
 

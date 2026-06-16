@@ -30,6 +30,7 @@ import {
   watchBookmarks,
   type Bookmark,
 } from '@/core/bookmarks';
+import { askAboutPage, type ChatTurn } from '@/core/chat';
 
 /**
  * Side panel — the stable backbone.
@@ -287,8 +288,14 @@ export function App() {
           </details>
 
           <details class="ll-section">
-            <summary>Freitext übersetzen</summary>
-            <ManualTranslate />
+            <summary>Chat zur Seite</summary>
+            <Chat
+              key={currentKey}
+              learn={settings.learnLang}
+              native={settings.nativeLang}
+              model={settings.model}
+              online={!!online}
+            />
           </details>
 
           <button type="button" class="ll-sites-btn" onClick={() => setSitesOpen(true)}>
@@ -572,22 +579,79 @@ function Explanation({ e }: { e: NonNullable<PanelResult['explanation']> }) {
   );
 }
 
-function ManualTranslate() {
-  const [text, setText] = useState('');
-  function run() {
-    if (text.trim()) void sendMessage({ type: 'translateToPanel', text });
+function Chat({
+  learn,
+  native,
+  model,
+  online,
+}: {
+  learn: Language;
+  native: Language;
+  model: string;
+  online: boolean;
+}) {
+  const [pageText, setPageText] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatTurn[]>([]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function send() {
+    const q = input.trim();
+    if (!q || busy) return;
+    setInput('');
+    setBusy(true);
+    const history = messages;
+    setMessages([...history, { role: 'user', content: q }]);
+    try {
+      let ctx = pageText;
+      if (ctx === null) {
+        ctx = await getPageText();
+        setPageText(ctx);
+      }
+      const reply = await askAboutPage(ctx, history, q, learn, native, model);
+      setMessages([...history, { role: 'user', content: q }, { role: 'assistant', content: reply }]);
+    } catch (err) {
+      setMessages([
+        ...history,
+        { role: 'user', content: q },
+        { role: 'assistant', content: `Fehler: ${String(err)}` },
+      ]);
+    } finally {
+      setBusy(false);
+    }
   }
+
   return (
-    <div class="ll-manual">
-      <textarea
-        rows={3}
-        placeholder="Text einfügen…"
-        value={text}
-        onInput={(e) => setText(e.currentTarget.value)}
-      />
-      <button type="button" onClick={run}>
-        übersetzen
-      </button>
+    <div class="ll-chat">
+      {messages.length === 0 && (
+        <p class="ll-chat-hint">
+          Frag etwas zur Seite — z.B. „Worum geht es hier?" oder „Übersetze den ersten Absatz."
+        </p>
+      )}
+      {messages.map((m, i) => (
+        <div key={i} class={`ll-bubble ll-bubble-${m.role}`}>
+          {m.content}
+        </div>
+      ))}
+      {busy && <div class="ll-bubble ll-bubble-assistant ll-muted">…</div>}
+      <div class="ll-chat-input">
+        <textarea
+          rows={2}
+          placeholder={online ? 'Frage zur Seite…' : 'LM Studio offline'}
+          value={input}
+          disabled={!online}
+          onInput={(e) => setInput(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              void send();
+            }
+          }}
+        />
+        <button type="button" onClick={() => void send()} disabled={!online || busy}>
+          Senden
+        </button>
+      </div>
     </div>
   );
 }

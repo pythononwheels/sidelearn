@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.2] — 2026-06-16
+## [0.6.3] — 2026-06-16
+
+### Changed
+- "Freitext übersetzen" is now **"Chat zur Seite"**: a multi-turn chat with the
+  page text in context (`core/chat.ts`). Ask about the article, request
+  translations, etc. Runs in the panel; page text + history capped to the input
+  budget; the chat resets per page. Replaces the one-shot translate box.
 
 ### Added
 - **Bookmarks + Sites view**: a ☆/★ toggle in the action bar remembers the
