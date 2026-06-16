@@ -20,6 +20,12 @@ body {
   flex-direction: column;
   gap: 12px;
 }
+/* Chat full view: panel fills the viewport so the chat can split into a
+   scrolling message area + a pinned input. */
+.ll-panel.ll-full {
+  height: 100vh;
+  overflow: hidden;
+}
 
 /* Header ------------------------------------------------------------------ */
 .ll-panel-head {
@@ -345,14 +351,26 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 0 12px 12px;
+  flex: 1;
+  min-height: 0;
+}
+.ll-chatview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ll-chatview-head h2 {
+  margin: 0;
+  font-size: 15px;
 }
 .ll-chat-messages {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 50vh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  padding-right: 4px;
 }
 .ll-chat-hint {
   margin: 0;

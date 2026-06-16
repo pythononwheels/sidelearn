@@ -58,6 +58,7 @@ export function App() {
   const [quizError, setQuizError] = useState<string | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [colorOpen, setColorOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
 
@@ -248,7 +249,7 @@ export function App() {
   if (!settings.onboarded) return <Onboarding initial={settings} onDone={patch} />;
 
   return (
-    <main class="ll-panel">
+    <main class={`ll-panel ${chatOpen ? 'll-full' : ''}`}>
       <header class="ll-panel-head">
         <div class="ll-head-left">
           <span class="ll-badge">
@@ -271,6 +272,8 @@ export function App() {
         </div>
       </header>
 
+      {!chatOpen && (
+      <>
       <div class="ll-mark-row">
         <button
           type="button"
@@ -352,8 +355,19 @@ export function App() {
         >
           {quizLoading ? 'Quiz…' : 'Seiten-Quiz'}
         </button>
+        <button
+          type="button"
+          class="ll-navbtn"
+          disabled={!online}
+          title={online ? undefined : 'LM Studio offline'}
+          onClick={() => setChatOpen(true)}
+        >
+          Chat
+        </button>
       </nav>
       {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
+      </>
+      )}
 
       {settingsOpen && (
         <section class="ll-settings">
@@ -389,7 +403,17 @@ export function App() {
         </section>
       )}
 
-      {quiz ? (
+      {chatOpen ? (
+        <Chat
+          key={currentKey}
+          learn={settings.learnLang}
+          native={settings.nativeLang}
+          level={settings.level}
+          model={settings.model}
+          online={!!online}
+          onExit={() => setChatOpen(false)}
+        />
+      ) : quiz ? (
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
       ) : (
         <>
@@ -410,18 +434,6 @@ export function App() {
               {collectMsg && <span class="ll-collect-msg">{collectMsg}</span>}
             </div>
             <VocabList entries={vocab} />
-          </details>
-
-          <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
-            <summary>Chat zur Seite</summary>
-            <Chat
-              key={currentKey}
-              learn={settings.learnLang}
-              native={settings.nativeLang}
-              level={settings.level}
-              model={settings.model}
-              online={!!online}
-            />
           </details>
 
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
@@ -725,12 +737,14 @@ function Chat({
   level,
   model,
   online,
+  onExit,
 }: {
   learn: Language;
   native: Language;
   level: CefrLevel;
   model: string;
   online: boolean;
+  onExit: () => void;
 }) {
   const [pageText, setPageText] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -791,6 +805,12 @@ function Chat({
 
   return (
     <div class="ll-chat">
+      <div class="ll-chatview-head">
+        <h2>Chat zur Seite</h2>
+        <button type="button" class="ll-close" title="schließen" onClick={onExit}>
+          ×
+        </button>
+      </div>
       <div class="ll-chat-messages" ref={listRef}>
         {messages.length === 0 && (
           <p class="ll-chat-hint">

@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.13] — 2026-06-17
+## [0.6.14] — 2026-06-17
+
+### Changed
+- **Chat is now a full-height view** (opened via the new "Chat" action button):
+  the panel fills the viewport, the title stays at the top, the message area
+  scrolls in the middle, and the input + send stay pinned at the bottom. The
+  marking row and action nav hide while chatting for more room; × closes it.
+  Chat is no longer an accordion section.
 
 ### Fixed
 - Chat textarea overflowed the panel (width:100% + padding without border-box).
