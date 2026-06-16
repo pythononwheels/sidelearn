@@ -13,6 +13,10 @@ import styles from './hover.css?inline';
 
 let host: HTMLDivElement | null = null;
 let shadow: ShadowRoot | null = null;
+let hideTimer: number | undefined;
+
+/** Grace period so the cursor can travel from the word into the card. */
+const HIDE_DELAY = 280;
 
 function ensureHost(): ShadowRoot {
   if (shadow) return shadow;
@@ -30,11 +34,15 @@ function ensureHost(): ShadowRoot {
 }
 
 export function showHover(anchor: HTMLElement, info: WordInfo): void {
+  cancelHide();
   const root = ensureHost();
   root.querySelector('.ll-card')?.remove();
 
   const card = document.createElement('div');
   card.className = 'll-card';
+  // Keep the card open while the cursor is over it; hide shortly after leaving.
+  card.addEventListener('mouseenter', cancelHide);
+  card.addEventListener('mouseleave', () => scheduleHide());
   card.innerHTML = `
     <div class="ll-head"><span class="ll-word"></span><span class="ll-band"></span></div>
     <ul class="ll-senses"></ul>
@@ -66,12 +74,23 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
   position(card, anchor);
 }
 
-export function hideHover(): void {
-  shadow?.querySelector('.ll-card')?.remove();
+/** Hide after a short grace period (cancellable by re-entering word or card). */
+export function scheduleHide(): void {
+  cancelHide();
+  hideTimer = window.setTimeout(() => {
+    shadow?.querySelector('.ll-card')?.remove();
+  }, HIDE_DELAY);
+}
+
+export function cancelHide(): void {
+  if (hideTimer !== undefined) {
+    window.clearTimeout(hideTimer);
+    hideTimer = undefined;
+  }
 }
 
 function position(card: HTMLElement, anchor: HTMLElement): void {
   const rect = anchor.getBoundingClientRect();
-  card.style.top = `${rect.bottom + window.scrollY + 6}px`;
+  card.style.top = `${rect.bottom + window.scrollY + 4}px`;
   card.style.left = `${rect.left + window.scrollX}px`;
 }

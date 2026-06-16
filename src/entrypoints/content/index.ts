@@ -10,7 +10,7 @@
 import { resolveWord } from '@/core/wordinfo';
 import { getSettings, watchSettings } from '@/core/settings';
 import { clear, highlight } from './highlighter';
-import { hideHover, showHover } from './hover';
+import { cancelHide, scheduleHide, showHover } from './hover';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -33,6 +33,7 @@ export default defineContentScript({
     function attachHover(el: HTMLElement, word: string) {
       let hoverTimer: number | undefined;
       el.addEventListener('mouseenter', () => {
+        cancelHide();
         hoverTimer = window.setTimeout(async () => {
           const info = await resolveWord(word, settings.learnLang, settings.nativeLang, settings.level);
           showHover(el, info);
@@ -40,7 +41,7 @@ export default defineContentScript({
       });
       el.addEventListener('mouseleave', () => {
         window.clearTimeout(hoverTimer);
-        hideHover();
+        scheduleHide();
       });
     }
 
