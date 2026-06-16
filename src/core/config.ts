@@ -114,4 +114,6 @@ export const STORAGE_KEYS = {
   panelOpen: 'local:panelOpen',
   /** Bookmarked pages shown in the "Sites" view. */
   bookmarks: 'local:bookmarks',
+  /** Per-page chat history. */
+  chats: 'local:chats',
 } as const;

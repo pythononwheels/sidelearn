@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.14] — 2026-06-17
+## [0.6.15] — 2026-06-17
+
+### Added
+- **Chat is now saved per page** (`core/chatstore.ts`): the conversation persists
+  when you close and reopen the chat, scoped to the page URL like the result cache.
+
+### Changed
+- Clicking the chat **title** also closes the chat (not just the ×).
 
 ### Changed
 - **Chat is now a full-height view** (opened via the new "Chat" action button):

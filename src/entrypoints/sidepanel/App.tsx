@@ -32,6 +32,7 @@ import {
   type Bookmark,
 } from '@/core/bookmarks';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
+import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
 import { renderMarkdown } from '@/core/markdown';
 import { pickStudyWords, type Candidate } from '@/core/collect';
@@ -406,6 +407,7 @@ export function App() {
       {chatOpen ? (
         <Chat
           key={currentKey}
+          pageKey={currentKey}
           learn={settings.learnLang}
           native={settings.nativeLang}
           level={settings.level}
@@ -732,6 +734,7 @@ const YOU_LABEL: Record<Language, string> = { de: 'Du', en: 'You', fr: 'Tu', nl:
 const modelShort = (model: string) => model.split('/').pop() ?? model;
 
 function Chat({
+  pageKey: key,
   learn,
   native,
   level,
@@ -739,6 +742,7 @@ function Chat({
   online,
   onExit,
 }: {
+  pageKey: string;
   learn: Language;
   native: Language;
   level: CefrLevel;
@@ -750,7 +754,26 @@ function Chat({
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Load this page's saved conversation on open.
+  useEffect(() => {
+    void getChat(key).then((m) => {
+      setMessages(m);
+      setLoaded(true);
+    });
+  }, [key]);
+
+  // Persist after each completed turn (not on every streaming token).
+  useEffect(() => {
+    if (loaded && !busy) {
+      void setChat(
+        key,
+        messages.map((m) => ({ role: m.role, content: m.content, translation: m.translation })),
+      );
+    }
+  }, [messages, busy, loaded, key]);
 
   useEffect(() => {
     const el = listRef.current;
@@ -806,7 +829,9 @@ function Chat({
   return (
     <div class="ll-chat">
       <div class="ll-chatview-head">
-        <h2>Chat zur Seite</h2>
+        <button type="button" class="ll-chatview-title" title="schließen" onClick={onExit}>
+          ▾ Chat zur Seite
+        </button>
         <button type="button" class="ll-close" title="schließen" onClick={onExit}>
           ×
         </button>

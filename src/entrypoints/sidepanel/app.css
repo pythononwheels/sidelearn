@@ -359,9 +359,18 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.ll-chatview-head h2 {
-  margin: 0;
+.ll-chatview-title {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
   font-size: 15px;
+  font-weight: 600;
+  color: var(--ll-text);
+  cursor: pointer;
+}
+.ll-chatview-title:hover {
+  color: var(--ll-accent);
 }
 .ll-chat-messages {
   display: flex;
