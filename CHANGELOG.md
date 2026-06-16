@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-06-16
+
 ### Added
 - Initial project scaffold (WXT + TypeScript + Preact + Vitest).
 - Central config (`core/config.ts`) and design tokens (`ui/tokens.css`).
