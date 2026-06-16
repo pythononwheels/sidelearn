@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-06-16
+
+### Changed
+- Header no longer duplicates Chrome's own side-panel title bar: the brand bar
+  now shows the learning context (e.g. `FR → DE · A2`) instead of repeating the
+  name/logo. LM status reads "LM Studio"; the gear is larger.
+
 ## [0.2.0] — 2026-06-16
 
 ### Changed

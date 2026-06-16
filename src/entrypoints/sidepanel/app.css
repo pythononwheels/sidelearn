@@ -27,55 +27,38 @@ body {
   background: var(--ll-accent-grad);
   color: #fff;
 }
-.ll-brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.ll-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
+.ll-context {
   font-size: 14px;
-  font-weight: 800;
-  color: #fff;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.22);
-}
-.ll-panel-head h1 {
-  font-size: 16px;
   font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   color: #fff;
 }
 .ll-head-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .ll-status {
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
+  white-space: nowrap;
 }
 .ll-gear {
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 5px 8px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 9px;
   background: none;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
 }
 .ll-gear:hover,
 .ll-gear.active {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
 

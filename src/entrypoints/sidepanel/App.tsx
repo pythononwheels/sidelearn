@@ -59,13 +59,12 @@ export function App() {
   return (
     <main class="ll-panel">
       <header class="ll-panel-head">
-        <div class="ll-brand">
-          <span class="ll-logo" aria-hidden="true">S</span>
-          <h1>Sidelearn</h1>
-        </div>
+        <span class="ll-context">
+          {settings.learnLang.toUpperCase()} → {settings.nativeLang.toUpperCase()} · {settings.level}
+        </span>
         <div class="ll-head-right">
           <span class={`ll-status ${online ? 'on' : 'off'}`} title="LM Studio">
-            {online === null ? '…' : online ? '● LM' : '○ LM'}
+            {online === null ? '…' : online ? '● LM Studio' : '○ LM Studio'}
           </span>
           <button
             type="button"
