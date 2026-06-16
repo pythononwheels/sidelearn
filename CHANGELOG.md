@@ -25,3 +25,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ### Changed
 - Corrected model ids to the `gemma-4` family (verified against a live LM Studio).
 - `chat()` now takes the model explicitly and enforces the input token budget.
+- **Multi-language support (fr/de/en/nl)** with selectable native + learning
+  language. First-run onboarding asks native language, learning language and
+  level. Dictionaries are now directed (`dict-<learn>-<native>.json`); frequency
+  lists are per language (`freq-<learn>.json`). Prompts adapt explanation
+  language to the native language. Missing dictionary pairs fail soft.

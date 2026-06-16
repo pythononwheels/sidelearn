@@ -7,18 +7,35 @@
 
 import type { CefrLevel } from './difficulty/banding';
 
-export interface LangPair {
-  /** Language being learned, ISO 639-1. */
-  readonly source: 'fr' | 'nl';
-  /** Language explanations/translations are rendered in. */
-  readonly target: 'de';
-  readonly label: string;
+/** Supported languages (ISO 639-1). Any can be native or learning language. */
+export const LANGUAGES = ['fr', 'de', 'en', 'nl'] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+/** Endonym labels for the UI (each language in its own name). */
+export const LANG_LABELS: Record<Language, string> = {
+  fr: 'Français',
+  de: 'Deutsch',
+  en: 'English',
+  nl: 'Nederlands',
+};
+
+/** English names, used inside LLM prompts. */
+export const LANG_NAMES_EN: Record<Language, string> = {
+  fr: 'French',
+  de: 'German',
+  en: 'English',
+  nl: 'Dutch',
+};
+
+/** Directed dictionary data file name: learning → native. */
+export function dictFile(learn: Language, native: Language): string {
+  return `dict-${learn}-${native}.json`;
 }
 
-export const LANG_PAIRS: readonly LangPair[] = [
-  { source: 'fr', target: 'de', label: 'Französisch → Deutsch' },
-  { source: 'nl', target: 'de', label: 'Niederländisch → Deutsch' },
-] as const;
+/** Frequency data file name (per learning language). */
+export function freqFile(learn: Language): string {
+  return `freq-${learn}.json`;
+}
 
 /** LM Studio exposes an OpenAI-compatible server. Defaults match its out-of-the-box setup. */
 export const LM_STUDIO = {
@@ -48,19 +65,26 @@ export const APPROVED_MODELS = ['google/gemma-4-e2b', 'google/gemma-4-e4b'] as c
 export const DEFAULT_MODEL: string = 'google/gemma-4-e4b';
 
 export interface Settings {
-  langPair: LangPair['source'];
+  /** The user's native language — explanations & translations are rendered in it. */
+  nativeLang: Language;
+  /** The language being learned — the page is read in it. */
+  learnLang: Language;
   level: CefrLevel;
   /** Selected LM Studio model id (e.g. "google/gemma-4-e2b"). */
   model: string;
   /** Inline highlighting on the live page (the optional "Kür" layer). */
   inlineEnabled: boolean;
+  /** False until the first-run onboarding (languages + level) is completed. */
+  onboarded: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  langPair: 'fr',
+  nativeLang: 'de',
+  learnLang: 'fr',
   level: 'A2',
   model: DEFAULT_MODEL,
   inlineEnabled: true,
+  onboarded: false,
 };
 
 /** Storage keys, centralized to avoid stringly-typed drift. */

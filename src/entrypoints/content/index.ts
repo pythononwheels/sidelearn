@@ -21,9 +21,10 @@ export default defineContentScript({
 
     async function apply() {
       clear();
-      if (!settings.inlineEnabled) return;
+      if (!settings.inlineEnabled || !settings.onboarded) return;
       await highlight(document.body, {
-        lang: settings.langPair,
+        learn: settings.learnLang,
+        native: settings.nativeLang,
         level: settings.level,
         onMarkCreated: attachHover,
       });
@@ -33,8 +34,8 @@ export default defineContentScript({
       let hoverTimer: number | undefined;
       el.addEventListener('mouseenter', () => {
         hoverTimer = window.setTimeout(async () => {
-          const info = await resolveWord(word, settings.langPair, settings.level);
-          showHover(el, info, settings.langPair);
+          const info = await resolveWord(word, settings.learnLang, settings.nativeLang, settings.level);
+          showHover(el, info, settings.learnLang, settings.nativeLang);
         }, 120);
       });
       el.addEventListener('mouseleave', () => {

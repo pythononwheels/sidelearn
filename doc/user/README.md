@@ -1,8 +1,9 @@
 # LangLearn — User Guide
 
-LangLearn helps you read web pages in a language you're learning (French or
-Dutch) with German reading aids. Everything runs **locally** — the AI lives on
-your own machine via [LM Studio](https://lmstudio.ai), nothing is sent to the cloud.
+LangLearn helps you read web pages in a language you're learning (French, German,
+English or Dutch) with reading aids in your own native language. Everything runs
+**locally** — the AI lives on your own machine via [LM Studio](https://lmstudio.ai),
+nothing is sent to the cloud.
 
 ## Setup
 
@@ -17,8 +18,9 @@ your own machine via [LM Studio](https://lmstudio.ai), nothing is sent to the cl
 ## Using it
 
 1. Click the LangLearn toolbar icon to open the side panel.
-2. Pick your **language** (Französisch / Niederländisch) and your **level**
-   (A1–C2). Words harder than your level get marked on the page.
+2. On first run, pick your **native language**, the **language you're learning**
+   and your **level** (A1–C2). You can change these any time in the panel.
+   Words harder than your level get marked on the page.
 3. **Hover** a marked word → a small card shows its level and translation.
 4. Click **"mehr in der Sidebar"** for a fuller explanation (examples,
    synonyms, grammar) — this asks the local model.

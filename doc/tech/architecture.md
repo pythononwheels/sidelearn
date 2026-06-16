@@ -1,8 +1,13 @@
 # Architecture
 
 LangLearn is a Manifest V3 browser extension that helps you read pages in a
-language you are learning (FR/NL) with German reading aids, powered entirely by
-a **local** LLM (LM Studio). Nothing leaves your machine.
+language you are learning with reading aids in your native language, powered
+entirely by a **local** LLM (LM Studio). Nothing leaves your machine.
+
+**Languages:** fr, de, en, nl. Native and learning language are both chosen at
+onboarding (native ≠ learn); explanations/translations are rendered in the native
+language. Frequency lists are per language; dictionaries are directed
+(learning → native).
 
 ## Design principle
 
@@ -15,8 +20,8 @@ only invoked on explicit user action — reading and hovering stay instant.
 
 | Stage | Trigger | Source | LLM? | Latency |
 |------:|---------|--------|:----:|---------|
-| 1 | word detected on load | frequency band (`data/freq-<lang>.json`) | no | instant |
-| 2 | hover over a word | dictionary (`data/dict-<lang>.json`) | no | instant |
+| 1 | word detected on load | frequency band (`data/freq-<learn>.json`) | no | instant |
+| 2 | hover over a word | dictionary (`data/dict-<learn>-<native>.json`) | no | instant |
 | 3 | "more" in the hover card | LM Studio → side panel | yes | on-demand |
 | 4 | select a paragraph | LM Studio → side panel | yes | on-demand |
 

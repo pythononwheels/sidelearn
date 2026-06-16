@@ -9,19 +9,19 @@
  * which the caller treats as "not challenging" — fail-soft, never blocks reading.
  */
 
-import type { LangPair } from '../config';
+import { freqFile, type Language } from '../config';
 
 type RankMap = Record<string, number>;
 
-const cache = new Map<LangPair['source'], RankMap>();
+const cache = new Map<Language, RankMap>();
 
-export async function loadRanks(lang: LangPair['source']): Promise<RankMap> {
+export async function loadRanks(lang: Language): Promise<RankMap> {
   const cached = cache.get(lang);
   if (cached) return cached;
 
   let map: RankMap = {};
   try {
-    const url = browser.runtime.getURL(`/data/freq-${lang}.json` as never);
+    const url = browser.runtime.getURL(`/data/${freqFile(lang)}` as never);
     const res = await fetch(url);
     if (res.ok) map = (await res.json()) as RankMap;
   } catch {

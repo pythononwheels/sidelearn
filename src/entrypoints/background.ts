@@ -32,8 +32,12 @@ async function handle<T extends Message>(msg: T): Promise<MessageResponses[T['ty
   const { model } = await getSettings();
   switch (msg.type) {
     case 'explainWord':
-      return explainWord(msg.word, msg.lang, model) as Promise<MessageResponses[T['type']]>;
+      return explainWord(msg.word, msg.learn, msg.native, model) as Promise<
+        MessageResponses[T['type']]
+      >;
     case 'translateParagraph':
-      return translateParagraph(msg.text, msg.lang, model) as Promise<MessageResponses[T['type']]>;
+      return translateParagraph(msg.text, msg.learn, msg.native, model) as Promise<
+        MessageResponses[T['type']]
+      >;
   }
 }

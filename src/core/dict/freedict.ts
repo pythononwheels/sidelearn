@@ -6,31 +6,36 @@
  * `{ headword: DictSense[] }` map. Loaded lazily; missing data fails soft.
  */
 
-import type { LangPair } from '../config';
+import { dictFile, type Language } from '../config';
 import type { DictSense } from '../types';
 import { normalize } from '../difficulty/frequency';
 
 type DictMap = Record<string, DictSense[]>;
 
-const cache = new Map<LangPair['source'], DictMap>();
+const cache = new Map<string, DictMap>();
 
-async function loadDict(lang: LangPair['source']): Promise<DictMap> {
-  const cached = cache.get(lang);
+async function loadDict(learn: Language, native: Language): Promise<DictMap> {
+  const key = `${learn}-${native}`;
+  const cached = cache.get(key);
   if (cached) return cached;
 
   let map: DictMap = {};
   try {
-    const url = browser.runtime.getURL(`/data/dict-${lang}.json` as never);
+    const url = browser.runtime.getURL(`/data/${dictFile(learn, native)}` as never);
     const res = await fetch(url);
     if (res.ok) map = (await res.json()) as DictMap;
   } catch {
-    // No dictionary bundled yet — hover falls back to frequency band only.
+    // No dictionary for this pair — hover falls back to band only; "more" uses the LLM.
   }
-  cache.set(lang, map);
+  cache.set(key, map);
   return map;
 }
 
-export async function lookup(word: string, lang: LangPair['source']): Promise<DictSense[]> {
-  const dict = await loadDict(lang);
+export async function lookup(
+  word: string,
+  learn: Language,
+  native: Language,
+): Promise<DictSense[]> {
+  const dict = await loadDict(learn, native);
   return dict[normalize(word)] ?? [];
 }

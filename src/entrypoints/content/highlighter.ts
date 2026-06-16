@@ -10,7 +10,7 @@
  */
 
 import type { CefrLevel } from '@/core/difficulty/banding';
-import type { LangPair } from '@/core/config';
+import type { Language } from '@/core/config';
 import { resolveWord } from '@/core/wordinfo';
 
 const MARK_ATTR = 'data-ll-mark';
@@ -19,7 +19,8 @@ const SKIP_TAGS = new Set([
 ]);
 
 export interface HighlightOptions {
-  lang: LangPair['source'];
+  learn: Language;
+  native: Language;
   level: CefrLevel;
   onMarkCreated: (el: HTMLElement, word: string) => void;
 }
@@ -67,7 +68,7 @@ async function processNode(node: Text, opts: HighlightOptions): Promise<void> {
       frag.append(token);
       continue;
     }
-    const info = await resolveWord(token, opts.lang, opts.level);
+    const info = await resolveWord(token, opts.learn, opts.native, opts.level);
     if (!info.challenging) {
       frag.append(token);
       continue;

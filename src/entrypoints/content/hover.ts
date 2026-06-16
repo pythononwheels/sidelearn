@@ -6,7 +6,7 @@
  * to the LLM via the background worker (Stage 3) and renders the result inline.
  */
 
-import type { LangPair } from '@/core/config';
+import type { Language } from '@/core/config';
 import { sendMessage } from '@/core/messaging';
 import type { WordInfo } from '@/core/types';
 import tokens from '@/ui/tokens.css?inline';
@@ -28,7 +28,12 @@ function ensureHost(): ShadowRoot {
   return shadow;
 }
 
-export function showHover(anchor: HTMLElement, info: WordInfo, lang: LangPair['source']): void {
+export function showHover(
+  anchor: HTMLElement,
+  info: WordInfo,
+  learn: Language,
+  native: Language,
+): void {
   const root = ensureHost();
   root.querySelector('.ll-card')?.remove();
 
@@ -57,7 +62,7 @@ export function showHover(anchor: HTMLElement, info: WordInfo, lang: LangPair['s
   }
 
   card.querySelector('.ll-more')!.addEventListener('click', () => {
-    void sendMessage({ type: 'explainWord', word: info.word, lang });
+    void sendMessage({ type: 'explainWord', word: info.word, learn, native });
     // The side panel listens for the explanation; here we just acknowledge.
     card.querySelector('.ll-more')!.textContent = '… an die Sidebar gesendet';
   });

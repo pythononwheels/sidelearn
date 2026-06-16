@@ -5,12 +5,12 @@
  * stay in one place instead of being re-declared at every call site.
  */
 
-import type { LangPair } from './config';
+import type { Language } from './config';
 import type { ParagraphTranslation, WordExplanation } from './types';
 
 export type Message =
-  | { type: 'explainWord'; word: string; lang: LangPair['source'] }
-  | { type: 'translateParagraph'; text: string; lang: LangPair['source'] };
+  | { type: 'explainWord'; word: string; learn: Language; native: Language }
+  | { type: 'translateParagraph'; text: string; learn: Language; native: Language };
 
 export interface MessageResponses {
   explainWord: WordExplanation;

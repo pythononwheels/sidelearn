@@ -65,6 +65,45 @@ body {
   gap: 8px !important;
 }
 
+.ll-onboarding {
+  gap: 14px;
+}
+.ll-onboarding h1 {
+  font-size: 18px;
+  margin: 0;
+}
+.ll-onboarding .ll-intro {
+  margin: 0;
+  color: var(--ll-text-soft);
+  font-size: 13px;
+}
+.ll-onboarding label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+.ll-onboarding select {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+  color: var(--ll-text);
+}
+.ll-onboarding button {
+  align-self: flex-start;
+  margin-top: 4px;
+  font: inherit;
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--ll-radius);
+  background: var(--ll-accent);
+  color: #fff;
+  cursor: pointer;
+}
+
 .ll-translator {
   display: flex;
   flex-direction: column;

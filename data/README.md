@@ -1,14 +1,20 @@
 # Data
 
-LangLearn needs two local datasets per language, bundled into the extension and
-fetched at runtime from `public/data/`:
+LangLearn supports four languages (fr, de, en, nl); native and learning language
+are chosen at onboarding. Two kinds of dataset are bundled and fetched at runtime
+from `src/public/data/`:
 
 | File | Purpose | Stage |
 |------|---------|------:|
-| `freq-<lang>.json` | `{ word: rank }` — frequency rank → CEFR band | 1 |
-| `dict-<lang>.json`  | `{ headword: DictSense[] }` — bilingual senses | 2 |
+| `freq-<learn>.json` | `{ word: rank }` — frequency rank → CEFR band (one per language) | 1 |
+| `dict-<learn>-<native>.json` | `{ headword: DictSense[] }` — directed bilingual senses | 2 |
 
-The files committed to `public/data/` are **small hand-made samples** so the
+Dictionaries are **directed** (learning → native), so e.g. `dict-fr-de.json`
+serves a German speaker learning French. Pairs FreeDict doesn't publish simply
+aren't bundled — at runtime the hover then shows the frequency band only and the
+"more" button falls back to the local LLM. Nothing breaks.
+
+The files committed to `src/public/data/` are **small hand-made samples** so the
 extension runs immediately after cloning. Replace them with full data via the
 generator.
 
@@ -24,9 +30,11 @@ source files go to `data/sources/` (gitignored).
 ### Sources & licenses
 
 - **Frequency** — [hermitdave/FrequencyWords](https://github.com/hermitdave/FrequencyWords)
-  (OpenSubtitles frequency lists, CC-BY-SA). FR and NL both available.
-- **Dictionary** — [FreeDict](https://freedict.org/) `fra-deu` / `nld-deu`
-  (GPL / CC). Parsed from the `.dict`/`.index` format.
+  (OpenSubtitles frequency lists, CC-BY-SA). fr/de/en/nl all available; we bundle
+  the top `TOP_N` (default 20k) per language.
+- **Dictionary** — [FreeDict](https://freedict.org/) directed pairs (e.g.
+  `fra-deu`, `eng-deu`, `nld-deu`, `deu-eng`…) (GPL / CC). Parsed from the
+  `.dict`/`.index` format. See `DICT_PAIRS` in the generator.
 - **Future (FR only)** — [FLELex](http://cental.uclouvain.be/flelex/) for a
   proper CEFR-graded French lexicon (research use).
 

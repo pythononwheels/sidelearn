@@ -5,34 +5,32 @@
  * for the word explanation so the panel can render structured fields.
  */
 
-import { LM_STUDIO, type LangPair } from '../config';
+import { LANG_NAMES_EN, LM_STUDIO, type Language } from '../config';
 import type { ParagraphTranslation, WordExplanation } from '../types';
 import { chat } from './lmstudio';
 import { splitForBudget } from './tokens';
 
-const LANG_NAME: Record<LangPair['source'], string> = {
-  fr: 'French',
-  nl: 'Dutch',
-};
-
 export async function explainWord(
   word: string,
-  lang: LangPair['source'],
+  learn: Language,
+  native: Language,
   model: string,
   signal?: AbortSignal,
 ): Promise<WordExplanation> {
+  const learnName = LANG_NAMES_EN[learn];
+  const nativeName = LANG_NAMES_EN[native];
   const raw = await chat(
     [
       {
         role: 'system',
         content:
-          'You help a German speaker learn a foreign language. Answer ONLY with minified JSON, ' +
+          `You help a ${nativeName} speaker learn ${learnName}. Answer ONLY with minified JSON, ` +
           'no markdown, matching: {"meaning":string,"examples":string[],"synonyms":string[],"grammarNote":string}. ' +
-          'All explanatory text (meaning, grammarNote) must be in German. Keep examples in the source language.',
+          `All explanatory text (meaning, grammarNote) must be in ${nativeName}. Keep examples in ${learnName}.`,
       },
       {
         role: 'user',
-        content: `Explain the ${LANG_NAME[lang]} word "${word}". Give a concise German meaning, 2 short example sentences in ${LANG_NAME[lang]}, up to 3 synonyms, and a one-line grammar note.`,
+        content: `Explain the ${learnName} word "${word}". Give a concise ${nativeName} meaning, 2 short example sentences in ${learnName}, up to 3 synonyms, and a one-line grammar note.`,
       },
     ],
     { model, signal },
@@ -50,10 +48,13 @@ export async function explainWord(
 
 export async function translateParagraph(
   text: string,
-  lang: LangPair['source'],
+  learn: Language,
+  native: Language,
   model: string,
   signal?: AbortSignal,
 ): Promise<ParagraphTranslation> {
+  const learnName = LANG_NAMES_EN[learn];
+  const nativeName = LANG_NAMES_EN[native];
   // Stay within the input budget: oversized selections are translated chunk by
   // chunk and re-joined, so latency/RAM per call stay bounded.
   const chunks = splitForBudget(text, LM_STUDIO.maxInputTokens);
@@ -64,7 +65,7 @@ export async function translateParagraph(
         [
           {
             role: 'system',
-            content: `Translate the user's ${LANG_NAME[lang]} text into natural German. Reply with the translation only — no preamble.`,
+            content: `Translate the user's ${learnName} text into natural ${nativeName}. Reply with the translation only — no preamble.`,
           },
           { role: 'user', content: chunk },
         ],

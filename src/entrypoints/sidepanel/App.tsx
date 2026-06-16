@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
-import { LANG_PAIRS, type Settings } from '@/core/config';
+import { LANG_LABELS, LANGUAGES, type Language, type Settings } from '@/core/config';
 import { getSettings, setSettings } from '@/core/settings';
 import { isReachable } from '@/core/llm/lmstudio';
 import { listModels, type ModelInfo } from '@/core/llm/models';
@@ -9,9 +9,9 @@ import { sendMessage } from '@/core/messaging';
 /**
  * Side panel — the stable backbone.
  *
- * MVP scope: settings (language / level / inline toggle), LM Studio status,
- * and a paragraph translator (Stage 4) to exercise the LLM path end-to-end.
- * The Readability-based reader view lands next (see opentasks.md).
+ * First run shows onboarding (native language, learning language, level).
+ * Afterwards: settings, LM Studio status + model picker, and a paragraph
+ * translator (Stage 4). The Readability reader view lands next (opentasks.md).
  */
 export function App() {
   const [settings, setLocal] = useState<Settings | null>(null);
@@ -30,6 +30,8 @@ export function App() {
     setLocal(await setSettings(p));
   }
 
+  if (!settings.onboarded) return <Onboarding initial={settings} onDone={patch} />;
+
   return (
     <main class="ll-panel">
       <header class="ll-panel-head">
@@ -40,17 +42,11 @@ export function App() {
       </header>
 
       <section class="ll-settings">
-        <label>
-          Sprache
-          <select
-            value={settings.langPair}
-            onChange={(e) => patch({ langPair: e.currentTarget.value as Settings['langPair'] })}
-          >
-            {LANG_PAIRS.map((p) => (
-              <option value={p.source}>{p.label}</option>
-            ))}
-          </select>
-        </label>
+        <LanguagePicker
+          native={settings.nativeLang}
+          learn={settings.learnLang}
+          onChange={patch}
+        />
 
         <label>
           Mein Niveau
@@ -84,9 +80,111 @@ export function App() {
         </label>
       </section>
 
-      <Translator lang={settings.langPair} />
+      <Translator learn={settings.learnLang} native={settings.nativeLang} />
     </main>
   );
+}
+
+function Onboarding({
+  initial,
+  onDone,
+}: {
+  initial: Settings;
+  onDone: (p: Partial<Settings>) => void;
+}) {
+  const [native, setNative] = useState<Language>(initial.nativeLang);
+  const [learn, setLearn] = useState<Language>(
+    initial.learnLang === initial.nativeLang ? otherThan(initial.nativeLang) : initial.learnLang,
+  );
+  const [level, setLevel] = useState<CefrLevel>(initial.level);
+
+  function pickNative(value: Language) {
+    setNative(value);
+    if (value === learn) setLearn(otherThan(value));
+  }
+
+  return (
+    <main class="ll-panel ll-onboarding">
+      <h1>Willkommen bei LangLearn</h1>
+      <p class="ll-intro">
+        Lies Webseiten in deiner Lernsprache — schwere Wörter werden markiert und
+        lokal erklärt. Stell kurz dein Profil ein:
+      </p>
+
+      <label>
+        Meine Muttersprache
+        <select value={native} onChange={(e) => pickNative(e.currentTarget.value as Language)}>
+          {LANGUAGES.map((l) => (
+            <option value={l}>{LANG_LABELS[l]}</option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        Ich lerne
+        <select value={learn} onChange={(e) => setLearn(e.currentTarget.value as Language)}>
+          {LANGUAGES.filter((l) => l !== native).map((l) => (
+            <option value={l}>{LANG_LABELS[l]}</option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        Mein Niveau
+        <select value={level} onChange={(e) => setLevel(e.currentTarget.value as CefrLevel)}>
+          {CEFR_LEVELS.map((l) => (
+            <option value={l}>{l}</option>
+          ))}
+        </select>
+      </label>
+
+      <button type="button" onClick={() => onDone({ nativeLang: native, learnLang: learn, level, onboarded: true })}>
+        Los geht’s
+      </button>
+    </main>
+  );
+}
+
+function LanguagePicker({
+  native,
+  learn,
+  onChange,
+}: {
+  native: Language;
+  learn: Language;
+  onChange: (p: Partial<Settings>) => void;
+}) {
+  function pickNative(value: Language) {
+    onChange(value === learn ? { nativeLang: value, learnLang: otherThan(value) } : { nativeLang: value });
+  }
+  return (
+    <>
+      <label>
+        Muttersprache
+        <select value={native} onChange={(e) => pickNative(e.currentTarget.value as Language)}>
+          {LANGUAGES.map((l) => (
+            <option value={l}>{LANG_LABELS[l]}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Ich lerne
+        <select
+          value={learn}
+          onChange={(e) => onChange({ learnLang: e.currentTarget.value as Language })}
+        >
+          {LANGUAGES.filter((l) => l !== native).map((l) => (
+            <option value={l}>{LANG_LABELS[l]}</option>
+          ))}
+        </select>
+      </label>
+    </>
+  );
+}
+
+/** First language that isn't `lang` — used to keep native ≠ learn. */
+function otherThan(lang: Language): Language {
+  return LANGUAGES.find((l) => l !== lang)!;
 }
 
 /** Human-readable option label: id + loaded/context hints + "untested" flag. */
@@ -100,7 +198,7 @@ function modelLabel(m: ModelInfo): string {
   return tags.length ? `${m.id} (${tags.join(', ')})` : m.id;
 }
 
-function Translator({ lang }: { lang: Settings['langPair'] }) {
+function Translator({ learn, native }: { learn: Language; native: Language }) {
   const [text, setText] = useState('');
   const [out, setOut] = useState('');
   const [busy, setBusy] = useState(false);
@@ -110,7 +208,7 @@ function Translator({ lang }: { lang: Settings['langPair'] }) {
     setBusy(true);
     setOut('');
     try {
-      const res = await sendMessage({ type: 'translateParagraph', text, lang });
+      const res = await sendMessage({ type: 'translateParagraph', text, learn, native });
       setOut(res.translation);
     } catch (err) {
       setOut(`Fehler: ${String(err)}`);
