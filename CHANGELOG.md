@@ -5,7 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.21] — 2026-06-17
+## [0.6.22] — 2026-06-17
+
+### Fixed
+- Spanish lemmatization now resolves **-ir verb** participles/gerunds
+  (`vivido`/`viviendo` → vivir, `subido` → subir), not just -ar/-er. Verified
+  against the es→de dictionary.
 
 ### Added
 - **Spanish** (es) as a fifth language: frequency list + dictionaries

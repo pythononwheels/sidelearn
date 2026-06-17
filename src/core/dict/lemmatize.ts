@@ -51,9 +51,15 @@ export function lemmaCandidates(word: string, lang: Language): string[] {
       break;
     case 'es':
       if (ends('ando')) add(word.slice(0, -4) + 'ar'); // gerund → infinitive
-      if (ends('iendo')) add(word.slice(0, -5) + 'er');
+      if (ends('iendo')) {
+        add(word.slice(0, -5) + 'er'); // comiendo → comer / -ir verbs too
+        add(word.slice(0, -5) + 'ir');
+      }
       if (ends('ado')) add(word.slice(0, -3) + 'ar'); // participle → infinitive
-      if (ends('ido')) add(word.slice(0, -3) + 'er');
+      if (ends('ido')) {
+        add(word.slice(0, -3) + 'er'); // comido → comer
+        add(word.slice(0, -3) + 'ir'); // vivido → vivir
+      }
       if (ends('es')) add(word.slice(0, -2)); // plural -es → singular (flores → flor)
       if (ends('s')) add(word.slice(0, -1)); // plural -s
       break;
