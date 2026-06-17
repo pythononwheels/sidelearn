@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.34] — 2026-06-17
+## [0.6.35] — 2026-06-17
+
+### Changed
+- Replaced the "Neues Ergebnis" banner: a new translation/explanation now **opens
+  the Ergebnisse view automatically** to show it. "Übersetzungen (N)" is an entry
+  in the section list (like Vokabeln/Sites) that opens the view; removed the
+  separate nav button and the banner.
 
 ### Changed
 - **Results moved into a full-screen "Ergebnisse" view** (card per word/sentence/

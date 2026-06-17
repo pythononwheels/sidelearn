@@ -66,8 +66,8 @@ export function App() {
   const [resultsOpen, setResultsOpen] = useState(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
-  const [newResultNotice, setNewResultNotice] = useState(false);
   const prevResultLen = useRef(0);
+  const resultsReady = useRef(false);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -121,14 +121,21 @@ export function App() {
     };
   }, []);
 
-  // A new result lives in the Ergebnisse view; if it's not open, show a banner.
+  // When a new result is created, open the Ergebnisse view to show it.
   useEffect(() => {
-    if (results.length > prevResultLen.current && !resultsOpen) setNewResultNotice(true);
+    if (!resultsReady.current) {
+      resultsReady.current = true;
+      prevResultLen.current = results.length;
+      return;
+    }
+    if (results.length > prevResultLen.current) {
+      setChatOpen(false);
+      setReviewChooser(false);
+      setQuiz(null);
+      setResultsOpen(true);
+    }
     prevResultLen.current = results.length;
-  }, [results, resultsOpen]);
-  useEffect(() => {
-    if (resultsOpen) setNewResultNotice(false);
-  }, [resultsOpen]);
+  }, [results]);
 
   if (!settings) return null;
 
@@ -343,15 +350,6 @@ export function App() {
         </div>
       </header>
 
-      {newResultNotice && !resultsOpen && (
-        <div class="ll-notice">
-          <span>Neues Ergebnis.</span>
-          <button type="button" onClick={() => showOnly('results')}>
-            anzeigen
-          </button>
-        </div>
-      )}
-
       {!fullscreen && (
       <>
       <div class="ll-mark-row">
@@ -444,14 +442,6 @@ export function App() {
         >
           Chat
         </button>
-        <button
-          type="button"
-          class="ll-navbtn"
-          disabled={results.length === 0}
-          onClick={() => showOnly('results')}
-        >
-          Ergebnisse ({results.length})
-        </button>
       </nav>
       {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
       </>
@@ -522,6 +512,15 @@ export function App() {
         <ResultsView results={results} pageKey={currentKey} onExit={() => setResultsOpen(false)} />
       ) : (
         <>
+          <button
+            type="button"
+            class="ll-section ll-section-open"
+            disabled={results.length === 0}
+            onClick={() => showOnly('results')}
+          >
+            <span class="ll-section-caret">▸</span> Übersetzungen ({results.length})
+          </button>
+
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
             <summary>Vokabeln ({vocab.length})</summary>
             <div class="ll-vocab-collect">

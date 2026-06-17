@@ -442,6 +442,23 @@ body {
 .ll-section[open] > summary::before {
   content: '▾ ';
 }
+.ll-section-open {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  color: var(--ll-text);
+  cursor: pointer;
+}
+.ll-section-open:disabled {
+  color: var(--ll-text-muted);
+  cursor: default;
+}
+.ll-section-caret {
+  color: var(--ll-text-muted);
+}
 /* Chat ------------------------------------------------------------------- */
 .ll-chat {
   display: flex;
