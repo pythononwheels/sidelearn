@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.26] — 2026-06-17
+## [0.6.27] — 2026-06-17
+
+### Added
+- **Proper-noun stoplist** (`names.json`, 6045 names): the highlighter no longer
+  marks names (John, Paris, María, …) that have no translation. Built from
+  Wiktionary proper nouns (pos="name") across all five languages, filtered to the
+  frequency lists (`npm run data:names` + `merge-names`). 52 KB.
 
 ### Added
 - Wiktionary inflection maps for **all languages**: forms-fr/nl/de/en (joining

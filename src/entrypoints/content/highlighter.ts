@@ -37,6 +37,8 @@ export interface HighlightOptions {
   level: CefrLevel;
   /** Only mark words that have a dictionary entry. */
   requireDict: boolean;
+  /** Proper nouns to never mark (John, Paris, …). */
+  names: Set<string>;
   onMarkCreated: (el: HTMLElement, word: string) => void;
 }
 
@@ -83,7 +85,7 @@ async function processNode(node: Text, opts: HighlightOptions): Promise<void> {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i] ?? '';
     const isWord = i % 2 === 1; // odd indices are captured words
-    if (!isWord || token.length < 3) {
+    if (!isWord || token.length < 3 || opts.names.has(token.toLowerCase())) {
       frag.append(token);
       continue;
     }

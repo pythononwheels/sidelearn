@@ -1,6 +1,6 @@
 {
   "name": "sidelearn",
-  "version": "0.6.26",
+  "version": "0.6.27",
   "description": "Read foreign-language web pages with inline, CEFR-aware reading help powered by a local LLM (LM Studio).",
   "license": "MIT",
   "type": "module",
@@ -17,7 +17,9 @@
     "data:wordlists": "node scripts/build-wordlists.mjs",
     "data:gaps": "node scripts/build-gaps.mjs",
     "data:gloss": "node scripts/merge-gloss.mjs",
-    "data:forms": "node scripts/build-forms.mjs"
+    "data:forms": "node scripts/build-forms.mjs",
+    "data:names": "node scripts/build-names.mjs",
+    "data:names-merge": "node scripts/merge-names.mjs"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.1",

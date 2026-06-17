@@ -10,6 +10,7 @@
 import { resolveWord } from '@/core/wordinfo';
 import { getSettings, watchSettings } from '@/core/settings';
 import { getPanelOpen, watchPanelOpen } from '@/core/panel';
+import { loadNames } from '@/core/names';
 import { clear, highlight } from './highlighter';
 import { cancelHide, scheduleHide, showHover } from './hover';
 
@@ -20,6 +21,7 @@ export default defineContentScript({
     injectMarkerStyle();
     let settings = await getSettings();
     let panelOpen = await getPanelOpen();
+    const names = await loadNames();
 
     async function apply() {
       clear();
@@ -31,6 +33,7 @@ export default defineContentScript({
         native: settings.nativeLang,
         level: settings.level,
         requireDict: settings.markOnlyWithDict,
+        names,
         onMarkCreated: attachHover,
       });
     }
