@@ -64,7 +64,13 @@ export function activeStreak(state: DailyState | null, date: Date): number {
 export async function ensureToday(learn: Language, date: Date, count: number): Promise<DailyState> {
   const today = dateKey(date);
   const prev = await item.getValue();
-  if (prev && prev.dateKey === today && prev.lang === learn && prev.articles.length >= count) {
+  if (
+    prev &&
+    prev.dateKey === today &&
+    prev.lang === learn &&
+    Array.isArray(prev.articles) &&
+    prev.articles.length >= count
+  ) {
     return prev;
   }
   const articles = await fetchDailyArticles(learn, date, count);

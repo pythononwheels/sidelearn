@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.54] — 2026-06-17
+
+### Fixed
+- **Daily card vanished after the mini-lesson-set change.** A pre-existing daily
+  state from before (single `article` field) made `ensureToday` throw on the new
+  `articles[]` shape, leaving the learn view empty. It now guards against the old
+  shape and refetches the set.
+
 ## [0.6.53] — 2026-06-17
 
 ### Changed
