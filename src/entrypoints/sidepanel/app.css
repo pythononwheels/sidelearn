@@ -755,6 +755,46 @@ body {
   color: var(--ll-text-soft);
 }
 
+/* Review mode chooser ----------------------------------------------------- */
+.ll-chooser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--ll-surface);
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+}
+.ll-chooser .ll-result-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.ll-chooser-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-bg);
+  color: var(--ll-text);
+  cursor: pointer;
+  font: inherit;
+}
+.ll-chooser-btn:hover,
+.ll-chooser-btn.sel {
+  border-color: var(--ll-accent);
+  background: var(--ll-accent-soft);
+}
+.ll-chooser-label {
+  font-weight: 600;
+}
+.ll-chooser-hint {
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+
 /* Review quiz ------------------------------------------------------------- */
 .ll-review {
   display: flex;

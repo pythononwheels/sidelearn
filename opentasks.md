@@ -42,9 +42,9 @@ Status: `open` · `hold` · `closed` · `archive`
   distractors from other vocab, spaced-repetition ordering, score summary.
 - [closed] **Page quiz** — done. 5-question MC comprehension quiz from page text
   at CEFR level, shared Quiz UI (core/quiz.ts).
-- [open] **Vocab quiz sentence modes** — beyond word→translation: (a) cloze from
-  page sentences (1–2 blanks, no LLM) and (b) LLM sentences mixing known vocab +
-  new words. Reuse the Quiz UI.
+- [open] **Vocab quiz: LLM sentence mode** — cloze (no-LLM) + Wörter + Mix done
+  (0.6.20). Still to add: LLM-generated sentences mixing known vocab + new words
+  (with "start with words, prepare sentences in background" for latency).
 
 ## Later
 

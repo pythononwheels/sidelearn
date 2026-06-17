@@ -22,7 +22,8 @@ import {
   watchVocab,
   type VocabEntry,
 } from '@/core/vocab';
-import { buildSession, canReview } from '@/core/review';
+import { buildSession, canReview, selectForReview } from '@/core/review';
+import { buildClozeQuestions } from '@/core/cloze';
 import { generatePageQuiz, type QuizQuestion } from '@/core/quiz';
 import {
   addBookmark,
@@ -60,6 +61,7 @@ export function App() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [colorOpen, setColorOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [reviewChooser, setReviewChooser] = useState(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [newResultNotice, setNewResultNotice] = useState(false);
@@ -220,12 +222,44 @@ export function App() {
     }
   }
 
-  function startReview() {
-    const session = buildSession(vocab, 10);
+  async function startReview(mode: Settings['reviewMode']) {
+    setReviewChooser(false);
+    if (!settings) return;
+    void patch({ reviewMode: mode });
+
+    type Item = { q: QuizQuestion; id: string | undefined };
+    const wordItems: Item[] = buildSession(vocab, 10).map((q) => ({
+      q: { prompt: q.word, options: q.options, answer: q.answer },
+      id: q.entryId,
+    }));
+
+    let clozeItems: Item[] = [];
+    if (mode !== 'words') {
+      const text = await getPageText();
+      const ordered = selectForReview(vocab, 20).map((e) => e.text);
+      clozeItems = buildClozeQuestions(text, ordered, vocab.map((e) => e.text)).map((q) => ({
+        q,
+        id: vocab.find((e) => normalize(e.text) === normalize(q.answer))?.id,
+      }));
+    }
+
+    const items =
+      mode === 'words'
+        ? wordItems
+        : mode === 'sentences'
+          ? clozeItems.length
+            ? clozeItems
+            : wordItems
+          : interleave(wordItems, clozeItems);
+
+    if (!items.length) return;
     setQuiz({
-      title: 'Vokabeln üben',
-      questions: session.map((q) => ({ prompt: q.word, options: q.options, answer: q.answer })),
-      onAnswer: (i, correct) => void recordReview(session[i]!.entryId, correct),
+      title: mode === 'words' ? 'Vokabeln' : mode === 'sentences' ? 'Sätze' : 'Mix',
+      questions: items.map((i) => i.q),
+      onAnswer: (idx, correct) => {
+        const id = items[idx]?.id;
+        if (id) void recordReview(id, correct);
+      },
     });
   }
 
@@ -368,8 +402,8 @@ export function App() {
           type="button"
           class="ll-navbtn"
           disabled={!canReview(vocab)}
-          title="Wiederhole deine gemerkten Wörter als Multiple-Choice-Quiz (ab 4 Wörtern)."
-          onClick={startReview}
+          title="Üben: Wörter, Sätze (Lückentext) oder Mix (ab 4 Wörtern)."
+          onClick={() => setReviewChooser(true)}
         >
           Vokabeln üben
         </button>
@@ -439,7 +473,13 @@ export function App() {
         </section>
       )}
 
-      {chatOpen ? (
+      {reviewChooser ? (
+        <ReviewChooser
+          current={settings.reviewMode}
+          onPick={(m) => void startReview(m)}
+          onCancel={() => setReviewChooser(false)}
+        />
+      ) : chatOpen ? (
         <Chat
           key={currentKey}
           pageKey={currentKey}
@@ -615,6 +655,53 @@ function Quiz({ state, onExit }: { state: QuizState; onExit: () => void }) {
           {index + 1 >= questions.length ? 'Auswerten' : 'Weiter'}
         </button>
       )}
+    </section>
+  );
+}
+
+function interleave<T>(a: T[], b: T[]): T[] {
+  const out: T[] = [];
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    if (a[i]) out.push(a[i]!);
+    if (b[i]) out.push(b[i]!);
+  }
+  return out;
+}
+
+function ReviewChooser({
+  current,
+  onPick,
+  onCancel,
+}: {
+  current: Settings['reviewMode'];
+  onPick: (mode: Settings['reviewMode']) => void;
+  onCancel: () => void;
+}) {
+  const modes: { value: Settings['reviewMode']; label: string; hint: string }[] = [
+    { value: 'words', label: 'Wörter', hint: 'Wort → Übersetzung' },
+    { value: 'sentences', label: 'Sätze', hint: 'Lückentext von der Seite' },
+    { value: 'mix', label: 'Mix', hint: 'Wörter + Sätze' },
+  ];
+  return (
+    <section class="ll-chooser">
+      <div class="ll-result-head">
+        <h2>Üben</h2>
+        <button type="button" class="ll-close" title="schließen" onClick={onCancel}>
+          ×
+        </button>
+      </div>
+      {modes.map((m) => (
+        <button
+          key={m.value}
+          type="button"
+          class={`ll-chooser-btn ${current === m.value ? 'sel' : ''}`}
+          onClick={() => onPick(m.value)}
+        >
+          <span class="ll-chooser-label">{m.label}</span>
+          <span class="ll-chooser-hint">{m.hint}</span>
+        </button>
+      ))}
     </section>
   );
 }

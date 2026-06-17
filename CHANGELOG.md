@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.19] — 2026-06-17
+## [0.6.20] — 2026-06-17
+
+### Added
+- **Review modes**: clicking "Vokabeln üben" now opens a chooser — **Wörter**
+  (word → translation), **Sätze** (cloze: real page sentences with a blank, fill
+  from your vocab; no LLM — `core/cloze.ts`, tested), or **Mix** (interleaved).
+  The last choice is remembered. Answers in any mode update the word's review
+  history.
 
 ### Fixed
 - Inline marks no longer break flex/grid layouts (e.g. lemonde.fr): text nodes

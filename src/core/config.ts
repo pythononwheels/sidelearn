@@ -78,6 +78,8 @@ export interface Settings {
   markerColor: string;
   /** Keep result cards stacked (true) or only show the latest (false). */
   keepResults: boolean;
+  /** Last-used review mode. */
+  reviewMode: 'words' | 'sentences' | 'mix';
   /** False until the first-run onboarding (languages + level) is completed. */
   onboarded: boolean;
 }
@@ -90,6 +92,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inlineEnabled: true,
   markerColor: 'auto',
   keepResults: true,
+  reviewMode: 'words',
   onboarded: false,
 };
 
