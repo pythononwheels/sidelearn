@@ -5,6 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.50] — 2026-06-17
+
+### Changed
+- **Leaner, airier learn view.** Erfolge is no longer a big card in the flow —
+  it's now a small round **trophy badge in the header** (with the streak count);
+  clicking it opens a lighter, dismissible Erfolge panel. The daily-challenge
+  card is flatter (plain surface instead of the heavy violet fill) with slimmer
+  buttons, and spacing is more generous throughout.
+
 ## [0.6.49] — 2026-06-17
 
 ### Changed

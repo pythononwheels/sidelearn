@@ -1012,17 +1012,17 @@ body {
 
 /* Daily challenge --------------------------------------------------------- */
 .ll-daily {
-  margin: 4px 0 2px;
-  padding: 12px;
+  margin: 2px 0;
+  padding: 16px;
   border: 1px solid var(--ll-border);
   border-radius: var(--ll-radius);
-  background: var(--ll-accent-soft);
+  background: var(--ll-surface);
 }
 .ll-daily-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 .ll-daily-eyebrow {
   display: inline-flex;
@@ -1094,15 +1094,15 @@ body {
 .ll-daily-actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 .ll-daily-read,
 .ll-daily-done {
   flex: 1;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-radius: var(--ll-radius-sm);
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
@@ -1115,8 +1115,8 @@ body {
   background: var(--ll-accent-strong);
 }
 .ll-daily-done {
-  background: var(--ll-surface);
-  color: var(--ll-text);
+  background: var(--ll-bg);
+  color: var(--ll-text-soft);
   border-color: var(--ll-border);
 }
 .ll-daily-done:hover:not(:disabled) {
@@ -1143,8 +1143,8 @@ body {
 
 /* Progress / "Erfolge" card ---------------------------------------------- */
 .ll-prog {
-  margin: 8px 0 2px;
-  padding: 12px;
+  margin: 2px 0;
+  padding: 16px;
   border: 1px solid var(--ll-border);
   border-radius: var(--ll-radius);
   background: var(--ll-surface);
@@ -1152,23 +1152,30 @@ body {
 .ll-prog-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
-}
-.ll-prog.collapsed .ll-prog-head {
-  margin-bottom: 0;
+  margin-bottom: 14px;
 }
 .ll-prog-title {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  margin-right: auto;
   font-size: 12px;
   font-weight: 700;
   color: var(--ll-text-soft);
   letter-spacing: 0.02em;
+}
+.ll-prog-close {
+  border: none;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ll-text-muted);
   cursor: pointer;
-  user-select: none;
+  padding: 0 2px;
+}
+.ll-prog-close:hover {
+  color: var(--ll-text);
 }
 .ll-prog-title svg {
   color: #d9a52e;
@@ -1204,14 +1211,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 14px 4px;
+  gap: 4px;
+  padding: 16px 4px;
   border-radius: var(--ll-radius-sm);
-  background: var(--ll-accent-soft);
+  background: var(--ll-bg);
 }
 .ll-prog-num {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 26px;
+  font-weight: 700;
   line-height: 1;
   color: var(--ll-accent-strong);
 }
@@ -1403,4 +1410,27 @@ body {
 .ll-home-continue:hover {
   background: var(--ll-accent);
   color: #fff;
+}
+
+/* Trophy badge in the header -------------------------------------------- */
+.ll-trophy {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 7px;
+  border: 1px solid var(--ll-border);
+  border-radius: 999px;
+  background: var(--ll-surface);
+  color: #d9a52e;
+  cursor: pointer;
+}
+.ll-trophy:hover,
+.ll-trophy.active {
+  border-color: #d9a52e;
+  background: var(--ll-bg);
+}
+.ll-trophy-streak {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ll-text-soft);
 }
