@@ -61,17 +61,36 @@ export default defineContentScript({
   },
 });
 
-/** Marker styling injected into the host page; colour comes from --ll-underline. */
+/**
+ * Marker styling injected into the host page. We aggressively reset the mark so
+ * the site's own `span` rules (display:inline-block, margins, font-size:0 tricks)
+ * can't apply and break the text flow — only our underline remains.
+ */
 function injectMarkerStyle(): void {
   const style = document.createElement('style');
   style.setAttribute('data-ll-ui', 'marker');
   style.textContent = `
     [data-ll-mark] {
-      text-decoration: underline;
-      text-decoration-style: dotted;
-      text-decoration-color: var(--ll-underline, rgba(107, 87, 214, 0.6));
-      text-decoration-thickness: 2px;
-      text-underline-offset: 3px;
+      display: inline !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      float: none !important;
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      max-width: none !important;
+      vertical-align: baseline !important;
+      font: inherit !important;
+      color: inherit !important;
+      letter-spacing: inherit !important;
+      word-spacing: inherit !important;
+      white-space: inherit !important;
+      text-decoration: underline dotted var(--ll-underline, rgba(107, 87, 214, 0.6)) !important;
+      text-decoration-thickness: 2px !important;
+      text-underline-offset: 3px !important;
       cursor: help;
     }
   `;

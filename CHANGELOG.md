@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.16] — 2026-06-17
+## [0.6.17] — 2026-06-17
+
+### Fixed
+- Inline marks broke the layout on some sites (e.g. lemonde.fr) whose own `span`
+  CSS (inline-block, margins, font-size tricks) applied to our wrapper spans.
+  Marks are now hardened with `!important` resets (inline, no margin/padding,
+  baseline, inherited font/spacing) so only our underline shows.
 
 ### Fixed
 - **"Seite übersetzen" showed nothing**: a panel-triggered translate had its page
