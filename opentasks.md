@@ -32,6 +32,13 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Ideas (pipeline)
 
+- [open] **Daily Challenge & Progress** — daily "Artikel des Tages" from the
+  Wikipedia featured feed (`mostread` is universal across fr/de/en/nl/es; `tfa`
+  only de/en), difficulty-tagged, with read/done/streak + a start-of-panel stats
+  card (new vocab 7d/30d/all, quiz accuracy) and optional "einfachere Sprache"
+  side-by-side. Concept: `doc/tech/daily-challenge.md`. First non-localhost
+  network call → opt-in setting + onboarding/privacy note.
+
 - [closed] **Bookmark a page + Sites view** — done (0.6.2). Follow-ups: pin
   bookmarked pages' result cache (exempt from eviction); link vocab/quiz back to
   the source page; optional pre-seed for bookmarked pages.
