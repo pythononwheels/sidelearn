@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.28] — 2026-06-17
+
+### Added
+- es→de hand-gloss batch 002 (~190 entries): real high-frequency words missed by
+  FreeDict + Wiktionary-forms (salvar, precio, venganza, suéltame, equivocas, …).
+  Residual non-name gap 3437 → 3106.
+
 ## [0.6.27] — 2026-06-17
 
 ### Added
