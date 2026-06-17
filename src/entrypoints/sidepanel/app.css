@@ -1326,3 +1326,81 @@ body {
   opacity: 0.5;
   cursor: default;
 }
+
+/* Surf: compact page-action icon row ------------------------------------- */
+.ll-actions-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.ll-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 58px;
+  padding: 8px 4px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
+  color: var(--ll-text-soft);
+  cursor: pointer;
+}
+.ll-action span {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+.ll-action svg {
+  color: var(--ll-accent);
+}
+.ll-action:hover:not(:disabled) {
+  border-color: var(--ll-accent);
+  color: var(--ll-text);
+}
+.ll-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ll-action.on {
+  background: var(--ll-accent-soft);
+  border-color: transparent;
+  color: var(--ll-accent);
+}
+.ll-action.on svg {
+  color: var(--ll-accent-strong);
+}
+
+/* Landing footer: streak + continue ------------------------------------- */
+.ll-home-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 0 2px;
+}
+.ll-home-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ll-text-soft);
+}
+.ll-home-continue {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ll-accent-soft);
+  color: var(--ll-accent-strong);
+  cursor: pointer;
+}
+.ll-home-continue:hover {
+  background: var(--ll-accent);
+  color: #fff;
+}

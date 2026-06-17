@@ -5,6 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.49] — 2026-06-17
+
+### Changed
+- **Surf page actions are now a compact icon row** (Merken / Übersetzen / Quiz /
+  Chat) with SVG icons + tiny labels, instead of stacked text buttons — much
+  leaner. Bookmark shows a filled star when the page is saved; Quiz shows the
+  spinner while generating.
+- **Landing footer**: when relevant, the mode chooser shows a subtle 🔥 streak
+  and a "Lektion fortsetzen →" shortcut if today's lesson is in progress.
+
 ## [0.6.48] — 2026-06-17
 
 ### Changed

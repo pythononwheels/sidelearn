@@ -75,6 +75,49 @@ export function HomeIcon({ class: cls, size = 16 }: IconProps) {
   );
 }
 
+/** Star — bookmark (filled when active). */
+export function StarIcon({ class: cls, size = 16, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg class={cls} {...svgProps(size)} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M11.5 2.6a.6.6 0 0 1 1 0l2.5 5.1 5.6.8a.6.6 0 0 1 .3 1l-4 4 1 5.6a.6.6 0 0 1-.9.6L12 17.6l-5 2.7a.6.6 0 0 1-.9-.6l1-5.6-4-4a.6.6 0 0 1 .3-1l5.6-.8z" />
+    </svg>
+  );
+}
+
+/** Languages — translate page. */
+export function LanguagesIcon({ class: cls, size = 16 }: IconProps) {
+  return (
+    <svg class={cls} {...svgProps(size)}>
+      <path d="m5 8 6 6" />
+      <path d="m4 14 6-6 2-3" />
+      <path d="M2 5h12" />
+      <path d="M7 2h1" />
+      <path d="m22 22-5-10-5 10" />
+      <path d="M14 18h6" />
+    </svg>
+  );
+}
+
+/** Question mark in a circle — quiz. */
+export function QuizIcon({ class: cls, size = 16 }: IconProps) {
+  return (
+    <svg class={cls} {...svgProps(size)}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+/** Speech bubble — chat. */
+export function ChatIcon({ class: cls, size = 16 }: IconProps) {
+  return (
+    <svg class={cls} {...svgProps(size)}>
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+    </svg>
+  );
+}
+
 /** Trophy — achievements. */
 export function TrophyIcon({ class: cls, size = 16 }: IconProps) {
   return (

@@ -54,7 +54,18 @@ import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
 import { renderMarkdown } from '@/core/markdown';
-import { BookIcon, CompassIcon, FlameIcon, HomeIcon, TargetIcon, TrophyIcon } from '@/ui/icons';
+import {
+  BookIcon,
+  ChatIcon,
+  CompassIcon,
+  FlameIcon,
+  HomeIcon,
+  LanguagesIcon,
+  QuizIcon,
+  StarIcon,
+  TargetIcon,
+  TrophyIcon,
+} from '@/ui/icons';
 import { pickStudyWords, type Candidate } from '@/core/collect';
 import { resolveWord } from '@/core/wordinfo';
 import { normalize } from '@/core/difficulty/frequency';
@@ -543,41 +554,45 @@ export function App() {
         </div>
       )}
 
-      <nav class="ll-nav">
+      <nav class="ll-actions-row">
         <button
           type="button"
-          class={`ll-star ${isBookmarked ? 'on' : ''}`}
+          class={`ll-action ${isBookmarked ? 'on' : ''}`}
           title={isBookmarked ? 'Seite gemerkt — entfernen' : 'Seite merken'}
           onClick={() => void toggleBookmark()}
         >
-          {isBookmarked ? '★' : '☆'}
+          <StarIcon size={18} filled={isBookmarked} />
+          <span>Merken</span>
         </button>
         <button
           type="button"
-          class="ll-navbtn"
+          class="ll-action"
           disabled={!online}
-          title={online ? undefined : 'LM Studio offline'}
+          title={online ? 'Ganze Seite übersetzen' : 'LM Studio offline'}
           onClick={translatePage}
         >
-          Seite übersetzen
+          <LanguagesIcon size={18} />
+          <span>Übersetzen</span>
         </button>
         <button
           type="button"
-          class="ll-navbtn"
+          class="ll-action"
           disabled={!online || quizLoading}
-          title={online ? undefined : 'LM Studio offline'}
+          title={online ? 'Verständnis-Quiz zur Seite' : 'LM Studio offline'}
           onClick={startPageQuiz}
         >
-          {quizLoading ? <Dots /> : 'Seiten-Quiz'}
+          {quizLoading ? <Dots /> : <QuizIcon size={18} />}
+          <span>Quiz</span>
         </button>
         <button
           type="button"
-          class="ll-navbtn"
+          class="ll-action"
           disabled={!online}
-          title={online ? undefined : 'LM Studio offline'}
+          title={online ? 'Chat zur Seite' : 'LM Studio offline'}
           onClick={() => showOnly('chat')}
         >
-          Chat
+          <ChatIcon size={18} />
+          <span>Chat</span>
         </button>
       </nav>
       {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
@@ -666,6 +681,21 @@ export function App() {
             <span class="ll-mode-name">Surfen</span>
             <span class="ll-mode-sub">Echte Seiten lesen — mit Hilfe</span>
           </button>
+          {(activeStreak(daily, new Date()) > 0 ||
+            (daily?.article && isOpenedToday(daily, new Date()) && !isDoneToday(daily, new Date()))) && (
+            <div class="ll-home-foot">
+              {activeStreak(daily, new Date()) > 0 && (
+                <span class="ll-home-streak" title="Tage in Folge mit erledigter Challenge">
+                  <FlameIcon class="ll-ic-flame" size={13} /> {activeStreak(daily, new Date())} Tage Streak
+                </span>
+              )}
+              {daily?.article && isOpenedToday(daily, new Date()) && !isDoneToday(daily, new Date()) && (
+                <button type="button" class="ll-home-continue" onClick={() => void openLesson()}>
+                  Lektion fortsetzen →
+                </button>
+              )}
+            </div>
+          )}
         </section>
       ) : mode === 'learn' ? (
         <>
