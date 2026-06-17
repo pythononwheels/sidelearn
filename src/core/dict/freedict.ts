@@ -17,6 +17,23 @@ type GlossMap = Record<string, string[]>;
 
 const cache = new Map<string, DictMap>();
 const glossCache = new Map<string, GlossMap>();
+/** inflected form → lemma, from Wiktionary (per learning language). */
+const formsCache = new Map<Language, Record<string, string>>();
+
+async function loadForms(learn: Language): Promise<Record<string, string>> {
+  const cached = formsCache.get(learn);
+  if (cached) return cached;
+  let map: Record<string, string> = {};
+  try {
+    const url = browser.runtime.getURL(`/data/forms-${learn}.json` as never);
+    const res = await fetch(url);
+    if (res.ok) map = (await res.json()) as Record<string, string>;
+  } catch {
+    // No forms map for this language yet.
+  }
+  formsCache.set(learn, map);
+  return map;
+}
 
 async function loadGloss(learn: Language, native: Language): Promise<GlossMap> {
   const key = `${learn}-${native}`;
@@ -57,17 +74,23 @@ export async function lookup(
   learn: Language,
   native: Language,
 ): Promise<DictSense[]> {
-  const candidates = lemmaCandidates(normalize(word), learn);
-  // 1) FreeDict (curated). Try exact form first, then lemmatized fallbacks.
+  const base = normalize(word);
+  const rule = lemmaCandidates(base, learn); // exact form + rule-based lemmas
   const dict = await loadDict(learn, native);
-  for (const candidate of candidates) {
-    const hit = dict[candidate];
-    if (hit) return hit;
-  }
-  // 2) Supplementary glossary for frequency words FreeDict doesn't cover.
   const gloss = await loadGloss(learn, native);
-  for (const candidate of candidates) {
-    const hit = gloss[candidate];
+
+  // 1) FreeDict on the exact form / rule-derived lemmas.
+  for (const c of rule) if (dict[c]) return dict[c];
+  // 2) Hand glossary (curated; wins over the Wiktionary auto-mapping).
+  for (const c of rule) {
+    const hit = gloss[c];
+    if (hit?.length) return [{ translations: hit }];
+  }
+  // 3) Wiktionary inflection → lemma (e.g. tengo→tener), then FreeDict/gloss.
+  const lemma = (await loadForms(learn))[base];
+  if (lemma) {
+    if (dict[lemma]) return dict[lemma];
+    const hit = gloss[lemma];
     if (hit?.length) return [{ translations: hit }];
   }
   return [];

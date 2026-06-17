@@ -5,7 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.24] — 2026-06-17
+## [0.6.25] — 2026-06-17
+
+### Added
+- **Wiktionary inflection map** (`forms-<learn>.json`): resolves inflected words
+  to their lemma (tengo→tener, está→estar, dijiste→decir) and translates them via
+  the existing FreeDict dictionary. Built at build time by streaming the Kaikki
+  Wiktextract (`npm run data:forms`); the ~1 GB extract never ships — only a tiny
+  map (es: 238 KB). Covers ~52% of the Spanish gap automatically (no hand work),
+  the rest being mostly proper names. Lookup order: FreeDict → hand gloss →
+  Wiktionary-form → FreeDict, so curated entries win.
 
 ### Added
 - **Supplementary glossary** for frequency words FreeDict doesn't cover: hover
