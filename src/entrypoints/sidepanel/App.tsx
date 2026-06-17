@@ -227,6 +227,15 @@ export function App() {
     const next = await markOpenedToday(new Date());
     if (next) setDaily(next);
   }
+  async function openLesson() {
+    const a = daily?.article;
+    if (!a) return;
+    const q = new URLSearchParams({ lang: a.lang, title: a.title, url: a.url });
+    if (a.thumbnail) q.set('thumb', a.thumbnail);
+    void browser.tabs.create({ url: browser.runtime.getURL(`/lesson.html?${q}` as never) });
+    const next = await markOpenedToday(new Date());
+    if (next) setDaily(next);
+  }
   async function completeDaily() {
     const next = await markDoneToday(new Date());
     if (next) setDaily(next);
@@ -574,6 +583,7 @@ export function App() {
           opened={isOpenedToday(daily, new Date())}
           done={isDoneToday(daily, new Date())}
           streak={activeStreak(daily, new Date())}
+          onLesson={() => void openLesson()}
           onOpen={() => void openDaily()}
           onDone={() => void completeDaily()}
         />
@@ -719,6 +729,7 @@ function DailyCard({
   opened,
   done,
   streak,
+  onLesson,
   onOpen,
   onDone,
 }: {
@@ -728,6 +739,7 @@ function DailyCard({
   opened: boolean;
   done: boolean;
   streak: number;
+  onLesson: () => void;
   onOpen: () => void;
   onDone: () => void;
 }) {
@@ -760,8 +772,8 @@ function DailyCard({
         </div>
       </div>
       <div class="ll-daily-actions">
-        <button type="button" class="ll-daily-read" onClick={onOpen}>
-          {opened ? 'Nochmal lesen →' : 'Lesen →'}
+        <button type="button" class="ll-daily-read" onClick={onLesson}>
+          {opened ? 'Lektion fortsetzen →' : 'Lektion lesen →'}
         </button>
         {opened && (
           <button
@@ -774,6 +786,9 @@ function DailyCard({
           </button>
         )}
       </div>
+      <button type="button" class="ll-daily-wiki" onClick={onOpen}>
+        ↗ auf Wikipedia öffnen
+      </button>
     </section>
   );
 }

@@ -56,6 +56,42 @@ function toArticle(p: FeedPage, lang: Language): DailyArticle | null {
 }
 
 /**
+ * Fetch an article's full body as clean plain-text paragraphs (Action API,
+ * `prop=extracts&explaintext`). Section headers and stray short lines are
+ * dropped — we keep substantial sentences for the lesson reader. Returns [] on
+ * failure; the caller can fall back to the summary extract.
+ */
+export async function fetchArticleParagraphs(lang: Language, title: string): Promise<string[]> {
+  const params = new URLSearchParams({
+    action: 'query',
+    prop: 'extracts',
+    explaintext: '1',
+    exsectionformat: 'plain',
+    redirects: '1',
+    format: 'json',
+    origin: '*',
+    titles: title,
+  });
+  try {
+    const res = await fetch(`https://${lang}.wikipedia.org/w/api.php?${params}`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      query?: { pages?: Record<string, { extract?: string }> };
+    };
+    const pages = data.query?.pages ?? {};
+    const extract = Object.values(pages)[0]?.extract ?? '';
+    return extract
+      .split(/\n+/)
+      .map((s) => s.trim())
+      // keep real paragraphs: long enough and with sentence punctuation
+      // (drops headings like "Biographie", "Notes et références").
+      .filter((s) => s.length >= 40 && /[.!?…]/.test(s));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Fetch the day's challenge article for `lang`. Returns `null` on any failure
  * (offline, no feed for the date, unexpected shape) — the caller hides the card.
  */

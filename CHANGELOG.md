@@ -5,6 +5,27 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.47] — 2026-06-17
+
+### Added
+- **Lern-App-Modus (Tageslektion) — phase A.** A dedicated full-page Sidelearn
+  surface (`lesson.html`, its own appier style) that turns the daily Wikipedia
+  article into a guided reading lesson: paragraphs are revealed **one at a time**,
+  level-adapted (simplified in the learning language), with the next paragraph
+  prepared in the background while you read. "Gelesen ✓" advances; "Original
+  zeigen" reveals the source text; Wikipedia is credited (logo-mark + CC BY-SA
+  link). Progress and content are remembered in a new lesson store
+  (`local:lessons`) so a lesson resumes where you left off.
+- Launched from the daily-challenge card: **"Lektion lesen →"** is now the
+  primary action (opens the app page); a small "↗ auf Wikipedia öffnen" keeps the
+  raw page available.
+
+### Notes
+- New: `entrypoints/lesson/` (page), `core/lessons.ts` (store),
+  `wikifeed.fetchArticleParagraphs` (full plain-text body via Action API),
+  reuses `simplifyParagraph` + the `local:simplify` cache. Phase B (per-paragraph
+  vocab extraction + end-of-lesson quiz, tied into Erfolge/streak) is next.
+
 ## [0.6.46] — 2026-06-17
 
 ### Added

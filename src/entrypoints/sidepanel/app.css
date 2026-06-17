@@ -1126,6 +1126,20 @@ body {
   color: #2f9e6b;
   cursor: default;
 }
+.ll-daily-wiki {
+  margin-top: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ll-text-soft);
+  cursor: pointer;
+  text-align: center;
+}
+.ll-daily-wiki:hover {
+  color: var(--ll-accent-strong);
+}
 
 /* Progress / "Erfolge" card ---------------------------------------------- */
 .ll-prog {

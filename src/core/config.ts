@@ -137,4 +137,6 @@ export const STORAGE_KEYS = {
   daily: 'local:daily',
   /** Cached per-page simplified paragraphs (level-adapted reading aid). */
   simplify: 'local:simplify',
+  /** Learn-app-mode lessons: worked-through daily articles + their content. */
+  lessons: 'local:lessons',
 } as const;
