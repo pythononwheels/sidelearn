@@ -9,7 +9,7 @@
  */
 
 import type { Message } from '@/core/messaging';
-import { explainWord, translateParagraph } from '@/core/llm/prompts';
+import { explainWord, translateParagraph, translateWord } from '@/core/llm/prompts';
 import { getSettings } from '@/core/settings';
 import { clearResults, pageKey, pushResult, updateResult } from '@/core/result';
 import { resolveWord } from '@/core/wordinfo';
@@ -107,17 +107,44 @@ async function activeKey(): Promise<string> {
 async function runTranslate(
   key: string,
   text: string,
-  title = 'Übersetzung',
+  title?: string,
   hideSource = false,
 ): Promise<void> {
-  const { learnLang, nativeLang, model, keepResults } = await getSettings();
+  const { learnLang, nativeLang, level, model, keepResults } = await getSettings();
   if (!keepResults) await clearResults(key);
+  const trimmed = text.trim();
+  const single = trimmed.length > 0 && trimmed.length <= 30 && !/\s/.test(trimmed);
   const id = newId();
+
+  if (single) {
+    // Reuse what we already have (dict/gloss/Wiktionary-forms) — no LLM, instant.
+    const info = await resolveWord(trimmed, learnLang, nativeLang, level);
+    if (info.senses[0]?.translations.length) {
+      await pushResult(key, {
+        id,
+        kind: 'translation',
+        status: 'done',
+        title: trimmed,
+        translation: info.senses[0].translations.slice(0, 4).join(', '),
+      });
+      return;
+    }
+    await pushResult(key, { id, kind: 'translation', status: 'loading', title: trimmed });
+    try {
+      const t = await translateWord(trimmed, learnLang, nativeLang, model);
+      await updateResult(key, id, { status: 'done', translation: t });
+    } catch (err) {
+      await updateResult(key, id, { status: 'error', error: String(err) });
+    }
+    return;
+  }
+
+  const heading = title ?? (trimmed.length <= 48 ? trimmed : trimmed.slice(0, 48) + '…');
   await pushResult(key, {
     id,
     kind: 'translation',
     status: 'loading',
-    title,
+    title: heading,
     source: hideSource ? undefined : text,
   });
   try {

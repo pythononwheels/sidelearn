@@ -5,7 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.32] — 2026-06-17
+## [0.6.33] — 2026-06-17
+
+### Changed
+- Translating a **single word** now: titles the card with the word (not
+  "Übersetzung"); reuses the local dictionary/glossary/Wiktionary-forms first
+  (instant, no LLM) and only calls the model for unknown words — with a proper
+  single-word prompt (fixes "stupeur" → garbage). Re-translating the same word
+  replaces its card instead of stacking duplicates. Phrase cards are titled with
+  the (truncated) source.
 
 ### Changed
 - Vocab list CEFR badges are now neutral (light grey) instead of coloured, for a

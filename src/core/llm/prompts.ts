@@ -52,6 +52,28 @@ export async function explainWord(
   };
 }
 
+/** Translate a single word: a few concise target-language meanings, no prose. */
+export async function translateWord(
+  word: string,
+  learn: Language,
+  native: Language,
+  model: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  return chat(
+    [
+      {
+        role: 'system',
+        content:
+          `Translate the ${LANG_NAMES_EN[learn]} word into ${LANG_NAMES_EN[native]}. ` +
+          `Reply with up to 3 ${LANG_NAMES_EN[native]} translations, comma-separated, nothing else.`,
+      },
+      { role: 'user', content: word },
+    ],
+    { model, signal, maxTokens: 60 },
+  );
+}
+
 export async function translateParagraph(
   text: string,
   learn: Language,

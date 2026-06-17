@@ -46,9 +46,9 @@ export async function getResultsFor(key: string): Promise<PanelResult[]> {
 
 export async function pushResult(key: string, result: PanelResult): Promise<void> {
   const all = await item.getValue();
-  // Don't stack duplicate explanations of the same word — replace the old card.
+  // Don't stack duplicates of the same word/title and kind — replace the old card.
   const existing = (all[key] ?? []).filter(
-    (r) => !(result.kind === 'explanation' && r.kind === 'explanation' && r.title === result.title),
+    (r) => !(r.kind === result.kind && r.title === result.title),
   );
   const list = [result, ...existing].slice(0, MAX_PER_PAGE);
   await item.setValue(capPages({ ...all, [key]: list }));
