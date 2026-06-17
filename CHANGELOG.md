@@ -5,7 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.23] — 2026-06-17
+## [0.6.24] — 2026-06-17
+
+### Added
+- **Supplementary glossary** for frequency words FreeDict doesn't cover: hover
+  now falls back to `gloss-<learn>-<native>.json` so far more marked words get an
+  instant translation. Hand-authored shards in `data/gloss/<pair>/` are merged
+  (`npm run data:gloss`); `npm run data:gaps` lists the words still missing.
+- First Spanish→German glossary batch: ~286 high-frequency conjugated verb forms
+  and function words (está, tengo, vamos, hay, del, …) that FreeDict lacks.
 
 ### Added
 - Setting **"Nur Wörter mit Wörterbuch-Eintrag markieren"** (default off): when on,
