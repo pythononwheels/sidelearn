@@ -15,6 +15,8 @@ export interface DailyState {
   /** Learning language the article was fetched for. */
   lang: Language;
   article: DailyArticle | null;
+  /** Last day the article was opened via "Lesen" (gates the done button). */
+  openedDateKey?: string;
   /** Last day the challenge was marked done. */
   doneDateKey?: string;
   /** Consecutive completed days, as of doneDateKey. */
@@ -45,6 +47,11 @@ export function isDoneToday(state: DailyState | null, date: Date): boolean {
   return !!state && state.doneDateKey === dateKey(date);
 }
 
+/** True when today's article has been opened (via "Lesen"). */
+export function isOpenedToday(state: DailyState | null, date: Date): boolean {
+  return !!state && state.openedDateKey === dateKey(date);
+}
+
 /** The live streak to display: kept alive only if done today or yesterday. */
 export function activeStreak(state: DailyState | null, date: Date): number {
   if (!state || !state.doneDateKey) return 0;
@@ -70,9 +77,21 @@ export async function ensureToday(learn: Language, date: Date): Promise<DailySta
     dateKey: today,
     lang: learn,
     article,
+    openedDateKey: prev?.openedDateKey,
     doneDateKey: prev?.doneDateKey,
     streak: prev?.streak ?? 0,
   };
+  await item.setValue(next);
+  return next;
+}
+
+/** Record that today's article was opened — unlocks the done button. */
+export async function markOpenedToday(date: Date): Promise<DailyState | null> {
+  const prev = await item.getValue();
+  if (!prev) return null;
+  const today = dateKey(date);
+  if (prev.openedDateKey === today) return prev;
+  const next: DailyState = { ...prev, openedDateKey: today };
   await item.setValue(next);
   return next;
 }

@@ -1107,32 +1107,86 @@ body {
   cursor: default;
 }
 
-/* Start-card stats -------------------------------------------------------- */
-.ll-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin: 6px 0 2px;
+/* Progress / "Erfolge" card ---------------------------------------------- */
+.ll-prog {
+  margin: 8px 0 2px;
+  padding: 12px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-surface);
 }
-.ll-stat {
+.ll-prog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ll-prog-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ll-text-soft);
+  letter-spacing: 0.02em;
+}
+.ll-prog-tabs {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--ll-bg);
+  border: 1px solid var(--ll-border);
+}
+.ll-prog-tab {
+  padding: 3px 10px;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ll-text-soft);
+  cursor: pointer;
+}
+.ll-prog-tab.sel {
+  background: var(--ll-accent);
+  color: #fff;
+}
+.ll-prog-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ll-prog-val {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
-  border: 1px solid var(--ll-border);
+  gap: 3px;
+  padding: 14px 4px;
   border-radius: var(--ll-radius-sm);
-  background: var(--ll-surface);
+  background: var(--ll-accent-soft);
 }
-.ll-stat-num {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ll-accent-strong);
+.ll-prog-num {
+  font-size: 28px;
+  font-weight: 800;
   line-height: 1;
+  color: var(--ll-accent-strong);
 }
-.ll-stat-lbl {
-  font-size: 10px;
+.ll-prog-lbl {
+  font-size: 11px;
   color: var(--ll-text-soft);
+}
+.ll-prog-foot {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ll-prog-chip {
+  flex: 1;
   text-align: center;
-  line-height: 1.2;
+  padding: 6px 8px;
+  border-radius: var(--ll-radius-sm);
+  border: 1px solid var(--ll-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ll-text-soft);
+  white-space: nowrap;
 }

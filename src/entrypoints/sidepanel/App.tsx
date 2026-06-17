@@ -38,12 +38,18 @@ import {
   activeStreak,
   ensureToday,
   isDoneToday,
+  isOpenedToday,
   markDoneToday,
+  markOpenedToday,
   watchDaily,
   type DailyState,
 } from '@/core/daily';
-import { computeStats, type LearnStats } from '@/core/stats';
-import { estimateDifficulty, difficultyLabel, type DifficultyTag } from '@/core/difficulty/estimate';
+import { computeStats, type LearnStats, type Period } from '@/core/stats';
+import {
+  estimateDifficulty,
+  difficultyLabel,
+  type DifficultyEstimate,
+} from '@/core/difficulty/estimate';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
@@ -80,7 +86,7 @@ export function App() {
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [daily, setDaily] = useState<DailyState | null>(null);
-  const [dailyTag, setDailyTag] = useState<DifficultyTag | null>(null);
+  const [dailyEst, setDailyEst] = useState<DifficultyEstimate | null>(null);
   const [stats, setStats] = useState<LearnStats | null>(null);
   const prevResultLen = useRef(0);
   const resultsReady = useRef(false);
@@ -187,7 +193,7 @@ export function App() {
   useEffect(() => {
     if (!settings?.dailyChallenge) {
       setDaily(null);
-      setDailyTag(null);
+      setDailyEst(null);
       return;
     }
     let cancelled = false;
@@ -198,9 +204,9 @@ export function App() {
       setDaily(state);
       if (state.article?.extract) {
         const est = await estimateDifficulty(state.article.extract, learnLang, level);
-        if (!cancelled) setDailyTag(est.tag);
+        if (!cancelled) setDailyEst(est);
       } else {
-        setDailyTag(null);
+        setDailyEst(null);
       }
     })();
     const off = watchDaily((s) => {
@@ -214,8 +220,11 @@ export function App() {
 
   if (!settings) return null;
 
-  function openDaily() {
-    if (daily?.article?.url) void browser.tabs.create({ url: daily.article.url });
+  async function openDaily() {
+    if (!daily?.article?.url) return;
+    void browser.tabs.create({ url: daily.article.url });
+    const next = await markOpenedToday(new Date());
+    if (next) setDaily(next);
   }
   async function completeDaily() {
     const next = await markDoneToday(new Date());
@@ -546,15 +555,18 @@ export function App() {
       {settings.dailyChallenge && daily?.article && (
         <DailyCard
           article={daily.article}
-          tag={dailyTag}
+          est={dailyEst}
           level={settings.level}
+          opened={isOpenedToday(daily, new Date())}
           done={isDoneToday(daily, new Date())}
           streak={activeStreak(daily, new Date())}
-          onOpen={openDaily}
+          onOpen={() => void openDaily()}
           onDone={() => void completeDaily()}
         />
       )}
-      {stats && (stats.vocab.all > 0 || stats.review.answered > 0) && <StatsCard stats={stats} />}
+      {stats && (stats.all.added > 0 || stats.answered > 0) && (
+        <StatsCard stats={stats} streak={activeStreak(daily, new Date())} />
+      )}
       </>
       )}
 
@@ -688,28 +700,33 @@ function onSectionToggle(e: Event) {
 /** Daily-challenge card: today's Wikipedia article + read / done / streak. */
 function DailyCard({
   article,
-  tag,
+  est,
   level,
+  opened,
   done,
   streak,
   onOpen,
   onDone,
 }: {
   article: { title: string; extract: string; thumbnail?: string };
-  tag: DifficultyTag | null;
+  est: DifficultyEstimate | null;
   level: CefrLevel;
+  opened: boolean;
   done: boolean;
   streak: number;
   onOpen: () => void;
   onDone: () => void;
 }) {
   const teaser = article.extract.replace(/\s+/g, ' ').trim().slice(0, 130);
+  const tagTitle = est
+    ? `≈ ${Math.round(est.aboveShare * 100)} % der bekannten Wörter über ${level} (von ${est.sample} geprüft)`
+    : undefined;
   return (
     <section class="ll-daily">
       <div class="ll-daily-top">
         <span class="ll-daily-eyebrow">🎯 Tägliche Challenge</span>
         {streak > 0 && (
-          <span class="ll-daily-streak" title="Tage in Folge">
+          <span class="ll-daily-streak" title="Tage in Folge mit erledigter Challenge">
             🔥 {streak}
           </span>
         )}
@@ -719,47 +736,78 @@ function DailyCard({
         <div class="ll-daily-text">
           <h3 class="ll-daily-title">{article.title}</h3>
           {teaser && <p class="ll-daily-teaser">{teaser}…</p>}
-          {tag && <span class={`ll-daily-tag t-${tag}`}>{difficultyLabel(tag, level)}</span>}
+          {est && (
+            <span class={`ll-daily-tag t-${est.tag}`} title={tagTitle}>
+              {difficultyLabel(est.tag, level)}
+            </span>
+          )}
         </div>
       </div>
       <div class="ll-daily-actions">
         <button type="button" class="ll-daily-read" onClick={onOpen}>
-          Lesen →
+          {opened ? 'Nochmal lesen →' : 'Lesen →'}
         </button>
-        <button
-          type="button"
-          class={`ll-daily-done ${done ? 'is-done' : ''}`}
-          disabled={done}
-          onClick={onDone}
-        >
-          {done ? '✓ erledigt' : 'erledigt ✓'}
-        </button>
+        {opened && (
+          <button
+            type="button"
+            class={`ll-daily-done ${done ? 'is-done' : ''}`}
+            disabled={done}
+            onClick={onDone}
+          >
+            {done ? '✓ erledigt' : 'erledigt ✓'}
+          </button>
+        )}
       </div>
     </section>
   );
 }
 
-/** Compact progress strip on the home view. */
-function StatsCard({ stats }: { stats: LearnStats }) {
-  const acc =
-    stats.review.answered > 0 ? `${Math.round(stats.review.accuracy * 100)}%` : '–';
+const PERIOD_TABS: ReadonlyArray<{ key: Period; label: string }> = [
+  { key: 'week', label: '7 Tage' },
+  { key: 'month', label: '30 Tage' },
+  { key: 'all', label: 'Gesamt' },
+];
+
+/** Progress card: period switcher + two headline values, streak & accuracy. */
+function StatsCard({ stats, streak }: { stats: LearnStats; streak: number }) {
+  const [period, setPeriod] = useState<Period>('week');
+  const p = stats[period];
+  const acc = stats.answered > 0 ? `${Math.round(stats.accuracy * 100)}%` : '–';
   return (
-    <section class="ll-stats">
-      <div class="ll-stat">
-        <span class="ll-stat-num">{stats.vocab.week}</span>
-        <span class="ll-stat-lbl">Vokabeln 7 T.</span>
+    <section class="ll-prog">
+      <div class="ll-prog-head">
+        <span class="ll-prog-title">🏆 Erfolge</span>
+        <div class="ll-prog-tabs" role="tablist">
+          {PERIOD_TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              class={`ll-prog-tab ${period === t.key ? 'sel' : ''}`}
+              aria-selected={period === t.key}
+              onClick={() => setPeriod(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div class="ll-stat">
-        <span class="ll-stat-num">{stats.vocab.month}</span>
-        <span class="ll-stat-lbl">30 T.</span>
+      <div class="ll-prog-values">
+        <div class="ll-prog-val">
+          <span class="ll-prog-num">{p.added}</span>
+          <span class="ll-prog-lbl">neue Vokabeln</span>
+        </div>
+        <div class="ll-prog-val">
+          <span class="ll-prog-num">{p.reviewed}</span>
+          <span class="ll-prog-lbl">Wörter geübt</span>
+        </div>
       </div>
-      <div class="ll-stat">
-        <span class="ll-stat-num">{stats.vocab.all}</span>
-        <span class="ll-stat-lbl">gesamt</span>
-      </div>
-      <div class="ll-stat" title={`${stats.review.correct}/${stats.review.answered} richtig`}>
-        <span class="ll-stat-num">{acc}</span>
-        <span class="ll-stat-lbl">Übungsquote</span>
+      <div class="ll-prog-foot">
+        <span class="ll-prog-chip" title="Tage in Folge mit erledigter Challenge">
+          🔥 {streak} Tage Streak
+        </span>
+        <span class="ll-prog-chip" title={`${stats.correct}/${stats.answered} richtig beantwortet`}>
+          🎯 {acc} Übungsquote
+        </span>
       </div>
     </section>
   );

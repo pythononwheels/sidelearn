@@ -5,6 +5,22 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.43] — 2026-06-17
+
+### Changed
+- **Daily challenge: "erledigt ✓" appears only after "Lesen".** The done button
+  is gated on actually opening the article today (tracked per day); before that
+  the read button spans the card, and afterwards it reads "Nochmal lesen →".
+- **Difficulty tag is now explained on hover.** The tag carries a tooltip like
+  "≈ 47 % der bekannten Wörter über A2 (von 73 geprüft)", so the
+  "leicht/passt/anspruchsvoll" rating is transparent (frequency-rank share above
+  the user's level).
+- **Reworked the progress card into "🏆 Erfolge"** with a 7 Tage · 30 Tage ·
+  Gesamt tab switcher showing two headline values per period (neue Vokabeln,
+  Wörter geübt), plus a 🔥 streak chip (consecutive days the daily challenge was
+  completed) and an overall 🎯 Übungsquote. Per-period values use existing
+  timestamps (`ts`, `lastReviewed`).
+
 ## [0.6.42] — 2026-06-17
 
 ### Added
