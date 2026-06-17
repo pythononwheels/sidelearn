@@ -5,6 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Tooling
+- **Playwright E2E harness** (`tests/e2e/`) that loads the built MV3 extension
+  (`launchPersistentContext` + `--load-extension`) and drives the real side panel
+  via its `chrome-extension://…/sidepanel.html` URL. A seeded smoke suite covers
+  the regressions we hit by hand: opens on the Lernen/Surfen chooser, Lernen
+  shows the daily card, reload returns to the chooser, Surfen shows the tools.
+  Run with `npm run e2e:install` (once) then `npm run test:e2e`. Storage is
+  seeded through the service worker, so the smoke run needs neither Wikipedia nor
+  LM Studio.
+
 ## [0.6.58] — 2026-06-18
 
 ### Changed
