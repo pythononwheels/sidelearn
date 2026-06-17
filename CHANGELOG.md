@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.17] — 2026-06-17
+## [0.6.18] — 2026-06-17
+
+### Fixed
+- New explanations/translations triggered while the **quiz or chat full-screen
+  view is open** were invisible (stacked behind it). A banner now appears
+  ("Neues Ergebnis im Panel → anzeigen") that closes the full-screen view.
+- Repeated "mehr in der Sidebar" on the same word no longer stacks duplicate
+  explanation cards — the existing card is replaced.
 
 ### Fixed
 - Inline marks broke the layout on some sites (e.g. lemonde.fr) whose own `span`

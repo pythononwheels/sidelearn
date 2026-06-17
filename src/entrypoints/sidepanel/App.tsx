@@ -62,6 +62,8 @@ export function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
+  const [newResultNotice, setNewResultNotice] = useState(false);
+  const prevResultLen = useRef(0);
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -109,6 +111,17 @@ export function App() {
       browser.tabs.onUpdated.removeListener(onUpdated);
     };
   }, []);
+
+  // While a full-screen view (quiz/chat) is open, a new result can't be seen —
+  // surface a banner instead of silently stacking it behind the takeover.
+  const fullscreen = quiz !== null || chatOpen;
+  useEffect(() => {
+    if (fullscreen && results.length > prevResultLen.current) setNewResultNotice(true);
+    prevResultLen.current = results.length;
+  }, [results, fullscreen]);
+  useEffect(() => {
+    if (!fullscreen) setNewResultNotice(false);
+  }, [fullscreen]);
 
   if (!settings) return null;
 
@@ -278,6 +291,22 @@ export function App() {
           </button>
         </div>
       </header>
+
+      {fullscreen && newResultNotice && (
+        <div class="ll-notice">
+          <span>Neues Ergebnis im Panel.</span>
+          <button
+            type="button"
+            onClick={() => {
+              setQuiz(null);
+              setChatOpen(false);
+              setNewResultNotice(false);
+            }}
+          >
+            anzeigen
+          </button>
+        </div>
+      )}
 
       {!chatOpen && (
       <>
