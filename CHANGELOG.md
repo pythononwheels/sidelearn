@@ -5,7 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.35] — 2026-06-17
+## [0.6.36] — 2026-06-17
+
+### Changed
+- **Übersetzungen is now an inline accordion** (above Vokabeln), just like
+  Vokabeln/Sites — no more full-screen Ergebnisse view. A new result auto-expands
+  it (and collapses the others).
+- **Click a vocabulary word** to fetch richer info from the LLM (meaning,
+  example sentences, synonyms, grammar), using the word's saved sentence as
+  context. The explanation appears in the Übersetzungen section.
 
 ### Changed
 - Replaced the "Neues Ergebnis" banner: a new translation/explanation now **opens

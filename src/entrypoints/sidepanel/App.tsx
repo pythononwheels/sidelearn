@@ -63,7 +63,7 @@ export function App() {
   const [colorOpen, setColorOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [reviewChooser, setReviewChooser] = useState(false);
-  const [resultsOpen, setResultsOpen] = useState(false);
+  const [resultsExpanded, setResultsExpanded] = useState(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const prevResultLen = useRef(0);
@@ -129,10 +129,11 @@ export function App() {
       return;
     }
     if (results.length > prevResultLen.current) {
+      // Exit any full view and expand the inline Übersetzungen section.
       setChatOpen(false);
       setReviewChooser(false);
       setQuiz(null);
-      setResultsOpen(true);
+      setResultsExpanded(true);
     }
     prevResultLen.current = results.length;
   }, [results]);
@@ -140,13 +141,12 @@ export function App() {
   if (!settings) return null;
 
   /** Open exactly one full-view (others close). */
-  const showOnly = (v: 'chat' | 'results' | 'chooser' | 'none') => {
+  const showOnly = (v: 'chat' | 'chooser' | 'none') => {
     setChatOpen(v === 'chat');
-    setResultsOpen(v === 'results');
     setReviewChooser(v === 'chooser');
     setQuiz(null);
   };
-  const fullscreen = chatOpen || quiz !== null || reviewChooser || resultsOpen;
+  const fullscreen = chatOpen || quiz !== null || reviewChooser;
 
   async function patch(p: Partial<Settings>) {
     setLocal(await setSettings(p));
@@ -246,7 +246,6 @@ export function App() {
   async function startReview(mode: Settings['reviewMode']) {
     setReviewChooser(false);
     setChatOpen(false);
-    setResultsOpen(false);
     if (!settings) return;
     void patch({ reviewMode: mode });
 
@@ -297,7 +296,6 @@ export function App() {
         hideSource: true,
         pageKey: currentKey,
       });
-      showOnly('results');
     }
   }
 
@@ -508,18 +506,20 @@ export function App() {
         />
       ) : quiz ? (
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
-      ) : resultsOpen ? (
-        <ResultsView results={results} pageKey={currentKey} onExit={() => setResultsOpen(false)} />
       ) : (
         <>
-          <button
-            type="button"
-            class="ll-section ll-section-open"
-            disabled={results.length === 0}
-            onClick={() => showOnly('results')}
+          <details
+            class="ll-section"
+            name="ll-acc"
+            open={resultsExpanded}
+            onToggle={(e) => {
+              setResultsExpanded(e.currentTarget.open);
+              onSectionToggle(e);
+            }}
           >
-            <span class="ll-section-caret">▸</span> Übersetzungen ({results.length})
-          </button>
+            <summary>Übersetzungen ({results.length})</summary>
+            <ResultsList results={results} pageKey={currentKey} />
+          </details>
 
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
             <summary>Vokabeln ({vocab.length})</summary>
@@ -759,7 +759,14 @@ function VocabList({ entries }: { entries: VocabEntry[] }) {
               {e.band ?? ''}
             </span>
             <span class="ll-vocab-main">
-              <span class="ll-vocab-word">{e.text}</span>
+              <button
+                type="button"
+                class="ll-vocab-word"
+                title="Mehr Infos & Beispiele (KI)"
+                onClick={() => void sendMessage({ type: 'explainToPanel', word: e.text, context: e.context })}
+              >
+                {e.text}
+              </button>
               {e.translation && <span class="ll-vocab-trans">— {e.translation}</span>}
             </span>
             <button
@@ -798,41 +805,24 @@ function FullHeader({
   );
 }
 
-function ResultsView({
-  results,
-  pageKey: key,
-  onExit,
-}: {
-  results: PanelResult[];
-  pageKey: string;
-  onExit: () => void;
-}) {
+function ResultsList({ results, pageKey: key }: { results: PanelResult[]; pageKey: string }) {
+  if (results.length === 0) {
+    return (
+      <p class="ll-vocab-empty">
+        Noch keine Übersetzungen. Markiere Text → Rechtsklick → <b>Sidelearn: übersetzen</b>, fahre
+        über ein <span class="ll-hint-mark">unterstrichenes</span> Wort, oder klick eine Vokabel an.
+      </p>
+    );
+  }
   return (
-    <section class="ll-fullview">
-      <FullHeader
-        title="Ergebnisse"
-        extra={
-          results.length > 0 ? (
-            <button type="button" class="ll-clearall" onClick={() => void clearResults(key)}>
-              alle löschen
-            </button>
-          ) : undefined
-        }
-        onExit={onExit}
-      />
-      <div class="ll-fullview-body">
-        {results.length === 0 ? (
-          <p class="ll-vocab-empty">
-            Noch keine Ergebnisse. Markiere Text → Rechtsklick → <b>Sidelearn: übersetzen</b>, oder
-            fahre über ein <span class="ll-hint-mark">unterstrichenes</span> Wort und klick „mehr".
-          </p>
-        ) : (
-          results.map((r) => (
-            <ResultCard key={r.id} result={r} onRemove={() => void removeResult(key, r.id)} />
-          ))
-        )}
-      </div>
-    </section>
+    <div class="ll-results-body">
+      <button type="button" class="ll-clearall" onClick={() => void clearResults(key)}>
+        alle löschen
+      </button>
+      {results.map((r) => (
+        <ResultCard key={r.id} result={r} onRemove={() => void removeResult(key, r.id)} />
+      ))}
+    </div>
   );
 }
 
