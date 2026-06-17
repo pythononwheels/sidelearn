@@ -5,6 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.30] — 2026-06-17
+
+### Changed
+- Vocab list aligned: the CEFR band now sits in a fixed left column, so words and
+  translations line up cleanly (instead of badges jumping per word length).
+
 ## [0.6.29] — 2026-06-17
 
 ### Added

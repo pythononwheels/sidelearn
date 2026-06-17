@@ -739,11 +739,16 @@ function VocabList({ entries }: { entries: VocabEntry[] }) {
       <ul class="ll-vocab-list">
         {entries.map((e) => (
           <li key={e.id} class="ll-vocab-item">
-            <div class="ll-vocab-main">
+            <span
+              class={e.band ? 'll-vocab-band' : 'll-vocab-band-empty'}
+              data-band={e.band?.[0] ?? ''}
+            >
+              {e.band ?? ''}
+            </span>
+            <span class="ll-vocab-main">
               <span class="ll-vocab-word">{e.text}</span>
-              {e.band && <span class="ll-vocab-band" data-band={e.band[0]}>{e.band}</span>}
               {e.translation && <span class="ll-vocab-trans">— {e.translation}</span>}
-            </div>
+            </span>
             <button
               type="button"
               class="ll-close"

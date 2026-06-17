@@ -597,10 +597,13 @@ body {
   gap: 7px;
 }
 .ll-vocab-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
   align-items: baseline;
-  justify-content: space-between;
   gap: 8px;
+}
+.ll-vocab-band-empty {
+  display: inline-block;
 }
 .ll-vocab-main {
   display: flex;
@@ -616,7 +619,7 @@ body {
   flex: 0 0 auto;
 }
 .ll-vocab-band {
-  flex: 0 0 auto;
+  justify-self: start;
 }
 .ll-vocab-trans {
   flex: 1;
