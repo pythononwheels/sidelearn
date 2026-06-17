@@ -96,23 +96,36 @@ export async function fetchArticleParagraphs(lang: Language, title: string): Pro
  * (offline, no feed for the date, unexpected shape) — the caller hides the card.
  */
 export async function fetchDailyArticle(lang: Language, date: Date): Promise<DailyArticle | null> {
-  const y = date.getFullYear();
+  return (await fetchDailyArticles(lang, date, 1))[0] ?? null;
+}
+
+/** Fetch up to `count` distinct articles for the day's challenge set. */
+export async function fetchDailyArticles(
+  lang: Language,
+  date: Date,
+  count: number,
+): Promise<DailyArticle[]> {
   const url =
     `https://${lang}.wikipedia.org/api/rest_v1/feed/featured/` +
-    `${y}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
+    `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
   try {
     const res = await fetch(url, { headers: { accept: 'application/json' } });
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = (await res.json()) as FeaturedFeed;
     const candidates: FeedPage[] = [];
     if (data.tfa) candidates.push(data.tfa);
     if (data.mostread?.articles?.length) candidates.push(...data.mostread.articles);
+    const out: DailyArticle[] = [];
+    const seen = new Set<string>();
     for (const p of candidates) {
       const a = toArticle(p, lang);
-      if (a) return a;
+      if (!a || seen.has(a.url)) continue;
+      seen.add(a.url);
+      out.push(a);
+      if (out.length >= count) break;
     }
-    return null;
+    return out;
   } catch {
-    return null;
+    return [];
   }
 }

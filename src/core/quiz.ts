@@ -48,6 +48,35 @@ export async function generatePageQuiz(
   return quiz;
 }
 
+/**
+ * One comprehension question (3 options) about a single paragraph — used by the
+ * lesson app after each paragraph. Returns null if the model output is unusable.
+ */
+export async function generateParagraphQuestion(
+  text: string,
+  learn: Language,
+  level: CefrLevel,
+  model: string,
+): Promise<QuizQuestion | null> {
+  const learnName = LANG_NAMES_EN[learn];
+  const raw = await chat(
+    [
+      {
+        role: 'system',
+        content:
+          `Create exactly ONE reading-comprehension question about the user's ${learnName} text, ` +
+          `for a CEFR ${level} learner. Output ONLY minified JSON, no markdown, matching ` +
+          '{"questions":[{"q":string,"options":[string,string,string],"correct":number}]}. ' +
+          `Write q and the 3 options in ${learnName}; "correct" is the 0-based index. The ` +
+          'question must be answerable from the text.',
+      },
+      { role: 'user', content: text },
+    ],
+    { model, maxTokens: 400, temperature: 0.4 },
+  );
+  return parseQuiz(raw)[0] ?? null;
+}
+
 type Rec = Record<string, unknown>;
 
 /**

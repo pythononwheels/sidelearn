@@ -1,23 +1,23 @@
 /**
- * Daily-challenge state: the article picked for today, whether it's done, and a
- * streak of consecutive completed days. Cached per calendar day so we fetch the
- * Wikipedia feed at most once a day (and refetch if the learning language
- * changes). Streak survives across days; `done` resets each new day.
+ * Daily-challenge state: a small set of articles picked for today, plus a streak
+ * of consecutive completed days. Cached per calendar day so we fetch the
+ * Wikipedia feed at most once a day (and refetch if the learning language or set
+ * size changes). Completion is derived from the lesson store; the streak is
+ * credited once all of the day's articles are finished.
  */
 
 import { storage } from 'wxt/storage';
 import { STORAGE_KEYS, type Language } from './config';
-import { fetchDailyArticle, type DailyArticle } from './wikifeed';
+import { fetchDailyArticles, type DailyArticle } from './wikifeed';
 
 export interface DailyState {
-  /** Calendar day (local) the cached article belongs to: 'YYYY-MM-DD'. */
+  /** Calendar day (local) the cached set belongs to: 'YYYY-MM-DD'. */
   dateKey: string;
-  /** Learning language the article was fetched for. */
+  /** Learning language the set was fetched for. */
   lang: Language;
-  article: DailyArticle | null;
-  /** Last day the article was opened via "Lesen" (gates the done button). */
-  openedDateKey?: string;
-  /** Last day the challenge was marked done. */
+  /** The day's mini-lesson articles. */
+  articles: DailyArticle[];
+  /** Last day the challenge (all articles) was completed. */
   doneDateKey?: string;
   /** Consecutive completed days, as of doneDateKey. */
   streak: number;
@@ -47,11 +47,6 @@ export function isDoneToday(state: DailyState | null, date: Date): boolean {
   return !!state && state.doneDateKey === dateKey(date);
 }
 
-/** True when today's article has been opened (via "Lesen"). */
-export function isOpenedToday(state: DailyState | null, date: Date): boolean {
-  return !!state && state.openedDateKey === dateKey(date);
-}
-
 /** The live streak to display: kept alive only if done today or yesterday. */
 export function activeStreak(state: DailyState | null, date: Date): number {
   if (!state || !state.doneDateKey) return 0;
@@ -62,36 +57,24 @@ export function activeStreak(state: DailyState | null, date: Date): number {
 }
 
 /**
- * Ensure `state` holds today's article for `learn`, fetching if the day rolled
- * over or the language changed. Preserves streak/doneDateKey. Returns the
- * (possibly refetched) state; the article may be null on a network failure.
+ * Ensure `state` holds today's article set for `learn`, fetching if the day
+ * rolled over, the language changed, or fewer than `count` articles are cached.
+ * Preserves streak/doneDateKey. Articles may be empty on a network failure.
  */
-export async function ensureToday(learn: Language, date: Date): Promise<DailyState> {
+export async function ensureToday(learn: Language, date: Date, count: number): Promise<DailyState> {
   const today = dateKey(date);
   const prev = await item.getValue();
-  if (prev && prev.dateKey === today && prev.lang === learn && prev.article) {
+  if (prev && prev.dateKey === today && prev.lang === learn && prev.articles.length >= count) {
     return prev;
   }
-  const article = await fetchDailyArticle(learn, date);
+  const articles = await fetchDailyArticles(learn, date, count);
   const next: DailyState = {
     dateKey: today,
     lang: learn,
-    article,
-    openedDateKey: prev?.openedDateKey,
+    articles,
     doneDateKey: prev?.doneDateKey,
     streak: prev?.streak ?? 0,
   };
-  await item.setValue(next);
-  return next;
-}
-
-/** Record that today's article was opened — unlocks the done button. */
-export async function markOpenedToday(date: Date): Promise<DailyState | null> {
-  const prev = await item.getValue();
-  if (!prev) return null;
-  const today = dateKey(date);
-  if (prev.openedDateKey === today) return prev;
-  const next: DailyState = { ...prev, openedDateKey: today };
   await item.setValue(next);
   return next;
 }

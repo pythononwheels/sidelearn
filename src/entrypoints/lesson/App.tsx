@@ -16,6 +16,7 @@ import { loadRanks, rankOf } from '@/core/difficulty/frequency';
 import { getSettings } from '@/core/settings';
 import { fetchArticleParagraphs } from '@/core/wikifeed';
 import { explainWord, simplifyParagraph, translateParagraph } from '@/core/llm/prompts';
+import { generateParagraphQuestion, type QuizQuestion } from '@/core/quiz';
 import { resolveWord } from '@/core/wordinfo';
 import { loadNames } from '@/core/names';
 import { addVocab } from '@/core/vocab';
@@ -73,6 +74,12 @@ export function App() {
   const [ranks, setRanks] = useState<RankMap | null>(null);
   const [names, setNames] = useState<Set<string>>(new Set());
   const [pop, setPop] = useState<Pop | null>(null);
+  const [qs, setQs] = useState<(QuizQuestion | null | undefined)[]>([]);
+  const [quizIdx, setQuizIdx] = useState<number | null>(null);
+  const [answer, setAnswer] = useState<number | null>(null);
+  const [score, setScore] = useState({ answered: 0, correct: 0 });
+  const qInflight = useRef<Set<number>>(new Set());
+  const extracted = useRef<Set<number>>(new Set());
 
   const mounted = useRef(true);
   const inflight = useRef<Set<number>>(new Set());
@@ -104,8 +111,10 @@ export function App() {
         startedTs.current = existing.startedTs;
         setParas(existing.paragraphs.map((p) => p.original));
         setSims(existing.paragraphs.map((p) => p.simplified));
+        setQs(new Array(existing.paragraphs.length).fill(undefined));
         setVisible(Math.max(1, existing.progress));
         setCompleted(!!existing.completed);
+        setScore({ answered: existing.quizAnswered ?? 0, correct: existing.quizCorrect ?? 0 });
       } else {
         const ps = await fetchArticleParagraphs(params.lang, params.title);
         if (!mounted.current) return;
@@ -115,6 +124,7 @@ export function App() {
         }
         setParas(ps);
         setSims(new Array(ps.length).fill(undefined));
+        setQs(new Array(ps.length).fill(undefined));
       }
 
       void estimateDifficulty(
@@ -169,6 +179,31 @@ export function App() {
     })();
   }, [paras, sims, visible, level, model]);
 
+  // Generate the comprehension question for the current paragraph in the
+  // background, so it's ready when the user presses "Gelesen".
+  useEffect(() => {
+    if (!paras || level === null) return;
+    const i = visible - 1;
+    if (i < 0 || qs[i] !== undefined || sims[i] === undefined) return;
+    if (qInflight.current.has(i)) return;
+    qInflight.current.add(i);
+    const simText = typeof sims[i] === 'string' && sims[i] !== 'error' ? (sims[i] as string) : paras[i]!;
+    void (async () => {
+      let q: QuizQuestion | null = null;
+      try {
+        q = await generateParagraphQuestion(simText, params!.lang, level, model);
+      } catch {
+        q = null;
+      }
+      if (!mounted.current) return;
+      setQs((prev) => {
+        const n = prev.slice();
+        n[i] = q;
+        return n;
+      });
+    })();
+  }, [paras, sims, qs, visible, level, model]);
+
   // Persist progress + simplified content as it changes.
   useEffect(() => {
     if (!paras || level === null) return;
@@ -188,14 +223,61 @@ export function App() {
       startedTs: startedTs.current,
       updatedTs: Date.now(),
       completed,
+      quizAnswered: score.answered,
+      quizCorrect: score.correct,
     };
     void saveLesson(lesson);
-  }, [sims, visible, completed, paras, level]);
+  }, [sims, visible, completed, paras, level, score]);
 
   function advance() {
     if (!paras) return;
     if (visible < paras.length) setVisible((v) => v + 1);
     else setCompleted(true);
+  }
+
+  // "Gelesen": collect a few new words, then show this paragraph's MC question
+  // (if ready) before moving on.
+  function onReadCurrent() {
+    const i = visible - 1;
+    if (!extracted.current.has(i)) {
+      extracted.current.add(i);
+      void extractVocab(i);
+    }
+    if (qs[i] && answer === null) setQuizIdx(i);
+    else advance();
+  }
+
+  async function extractVocab(i: number) {
+    if (!ranks || level === null || !paras) return;
+    const original = paras[i]!;
+    const seen = new Set<string>();
+    const picks: Array<{ tok: string; rank: number }> = [];
+    for (const tok of original.split(/[^\p{L}]+/u)) {
+      if (tok.length < 4) continue;
+      const low = tok.toLowerCase();
+      if (seen.has(low) || names.has(low)) continue;
+      const rank = rankOf(ranks, tok);
+      if (rank === undefined || !isAboveLevel(rankToBand(rank), level)) continue;
+      seen.add(low);
+      picks.push({ tok, rank });
+    }
+    picks.sort((a, b) => b.rank - a.rank); // rarest first
+    for (const { tok } of picks.slice(0, 3)) {
+      const info = await resolveWord(tok, params!.lang, native, level);
+      if (!info.senses.length) continue; // only words we can actually translate
+      void addVocab({
+        id: newId(),
+        text: info.word,
+        learn: params!.lang,
+        native,
+        band: info.band,
+        translation: info.senses[0]!.translations.slice(0, 3).join(', '),
+        context: original.slice(0, 200),
+        ts: Date.now(),
+        seen: 1,
+        reviews: 0,
+      });
+    }
   }
 
   function openWord(word: string, el: HTMLElement) {
@@ -273,7 +355,8 @@ export function App() {
               sim={sims[i]}
               showOriginal={showOriginal}
               current={i === lastIdx && !completed}
-              onRead={advance}
+              readable={quizIdx === null}
+              onRead={onReadCurrent}
               isLast={i === total - 1}
               ranks={ranks}
               names={names}
@@ -281,13 +364,36 @@ export function App() {
               onWord={openWord}
             />
           ))}
+          {quizIdx !== null && qs[quizIdx] && (
+            <ParaQuiz
+              q={qs[quizIdx]!}
+              answer={answer}
+              isLast={quizIdx === total - 1}
+              onAnswer={(idx) => {
+                if (answer !== null) return;
+                setAnswer(idx);
+                const ok = qs[quizIdx]!.options[idx] === qs[quizIdx]!.answer;
+                setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
+              }}
+              onNext={() => {
+                setQuizIdx(null);
+                setAnswer(null);
+                advance();
+              }}
+            />
+          )}
         </article>
 
         {completed && (
           <section class="lz-done">
             <h2>Geschafft! 🎉</h2>
             <p>Du hast alle {total} Absätze gelesen.</p>
-            <p class="lz-soon">Quiz &amp; Vokabeln zu dieser Lektion kommen als Nächstes.</p>
+            {score.answered > 0 && (
+              <p class="lz-done-score">
+                Quiz: {score.correct} / {score.answered} richtig
+              </p>
+            )}
+            <p class="lz-soon">Neue Vokabeln aus dieser Lektion findest du im Lernen-Tab.</p>
           </section>
         )}
 
@@ -477,6 +583,7 @@ function Para({
   sim,
   showOriginal,
   current,
+  readable,
   onRead,
   isLast,
   ranks,
@@ -488,6 +595,7 @@ function Para({
   sim: Sim;
   showOriginal: boolean;
   current: boolean;
+  readable: boolean;
   onRead: () => void;
   isLast: boolean;
   ranks: RankMap | null;
@@ -508,9 +616,56 @@ function Para({
       {showOriginal && sim !== undefined && sim !== 'error' && (
         <p class="lz-original">{original}</p>
       )}
-      {current && text !== undefined && (
+      {current && readable && text !== undefined && (
         <button type="button" class="lz-read-btn" onClick={onRead}>
           {isLast ? 'Fertig ✓' : 'Gelesen ✓'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** A single multiple-choice question shown after a paragraph. */
+function ParaQuiz({
+  q,
+  answer,
+  isLast,
+  onAnswer,
+  onNext,
+}: {
+  q: QuizQuestion;
+  answer: number | null;
+  isLast: boolean;
+  onAnswer: (idx: number) => void;
+  onNext: () => void;
+}) {
+  return (
+    <div class="lz-quiz">
+      <p class="lz-quiz-q">{q.prompt}</p>
+      <div class="lz-quiz-opts">
+        {q.options.map((opt, i) => {
+          let cls = '';
+          if (answer !== null) {
+            if (opt === q.answer) cls = 'correct';
+            else if (answer === i) cls = 'wrong';
+            else cls = 'dim';
+          }
+          return (
+            <button
+              key={i}
+              type="button"
+              class={`lz-quiz-opt ${cls}`}
+              disabled={answer !== null}
+              onClick={() => onAnswer(i)}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+      {answer !== null && (
+        <button type="button" class="lz-quiz-next" onClick={onNext}>
+          {isLast ? 'Fertig ✓' : 'Weiter →'}
         </button>
       )}
     </div>

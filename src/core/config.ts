@@ -92,6 +92,8 @@ export interface Settings {
   /** Show the daily-challenge card (fetches the Wikipedia featured feed — the
    *  only non-localhost network call). Off keeps Sidelearn fully local. */
   dailyChallenge: boolean;
+  /** How many mini-lessons make up the daily challenge. */
+  dailySetSize: number;
   /** False until the first-run onboarding (languages + level) is completed. */
   onboarded: boolean;
 }
@@ -109,6 +111,7 @@ export const DEFAULT_SETTINGS: Settings = {
   reviewMode: 'words',
   mode: 'home',
   dailyChallenge: true,
+  dailySetSize: 2,
   onboarded: false,
 };
 

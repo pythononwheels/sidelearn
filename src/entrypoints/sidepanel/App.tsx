@@ -38,12 +38,12 @@ import {
   activeStreak,
   ensureToday,
   isDoneToday,
-  isOpenedToday,
   markDoneToday,
-  markOpenedToday,
   watchDaily,
   type DailyState,
 } from '@/core/daily';
+import { getLessons, watchLessons } from '@/core/lessons';
+import type { DailyArticle } from '@/core/wikifeed';
 import { computeStats, type LearnStats, type Period } from '@/core/stats';
 import {
   estimateDifficulty,
@@ -100,6 +100,7 @@ export function App() {
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [daily, setDaily] = useState<DailyState | null>(null);
   const [dailyEst, setDailyEst] = useState<DifficultyEstimate | null>(null);
+  const [lessonsDone, setLessonsDone] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState<LearnStats | null>(null);
   const prevResultLen = useRef(0);
   const resultsReady = useRef(false);
@@ -117,6 +118,10 @@ export function App() {
     void getBookmarks().then(setBookmarks);
     const offVocab = watchVocab(setVocab);
     const offBookmarks = watchBookmarks(setBookmarks);
+    const completedUrls = (all: Record<string, { completed?: boolean }>) =>
+      new Set(Object.entries(all).filter(([, l]) => l.completed).map(([url]) => url));
+    void getLessons().then((all) => setLessonsDone(completedUrls(all)));
+    const offLessons = watchLessons((all) => setLessonsDone(completedUrls(all)));
     // Signal "panel open for THIS window" to the background via a port named
     // panel:<windowId>; auto-disconnects on close, reconnects if the SW restarts.
     let closing = false;
@@ -171,6 +176,7 @@ export function App() {
       offBookmarks();
       offResults();
       offFocus();
+      offLessons();
       port?.disconnect();
       browser.tabs.onActivated.removeListener(onActivated);
       browser.tabs.onUpdated.removeListener(onUpdated);
@@ -201,26 +207,17 @@ export function App() {
     setStats(computeStats(vocab, Date.now()));
   }, [vocab]);
 
-  // Daily challenge: fetch today's article (cached per day), tag its difficulty,
-  // and keep streak/done in sync. Off → no network call, no card.
+  // Daily challenge: fetch today's article set (cached per day). Off → no call.
   useEffect(() => {
     if (!settings?.dailyChallenge) {
       setDaily(null);
-      setDailyEst(null);
       return;
     }
     let cancelled = false;
-    const { learnLang, level } = settings;
+    const { learnLang, dailySetSize } = settings;
     void (async () => {
-      const state = await ensureToday(learnLang, new Date());
-      if (cancelled) return;
-      setDaily(state);
-      if (state.article?.extract) {
-        const est = await estimateDifficulty(state.article.extract, learnLang, level);
-        if (!cancelled) setDailyEst(est);
-      } else {
-        setDailyEst(null);
-      }
+      const state = await ensureToday(learnLang, new Date(), dailySetSize);
+      if (!cancelled) setDaily(state);
     })();
     const off = watchDaily((s) => {
       if (!cancelled) setDaily(s);
@@ -229,28 +226,43 @@ export function App() {
       cancelled = true;
       off();
     };
-  }, [settings?.dailyChallenge, settings?.learnLang, settings?.level]);
+  }, [settings?.dailyChallenge, settings?.learnLang, settings?.dailySetSize]);
+
+  // Difficulty tag for the current (next-unfinished) article.
+  const dailyArticles = daily?.articles?.slice(0, settings?.dailySetSize ?? 2) ?? [];
+  const currentArticle: DailyArticle | null =
+    dailyArticles.find((a) => !lessonsDone.has(a.url)) ?? dailyArticles[dailyArticles.length - 1] ?? null;
+  const dailyDoneCount = dailyArticles.filter((a) => lessonsDone.has(a.url)).length;
+  const dailyAllDone = dailyArticles.length > 0 && dailyDoneCount === dailyArticles.length;
+
+  useEffect(() => {
+    if (!settings || !currentArticle?.extract) {
+      setDailyEst(null);
+      return;
+    }
+    let cancelled = false;
+    void estimateDifficulty(currentArticle.extract, settings.learnLang, settings.level).then(
+      (e) => !cancelled && setDailyEst(e),
+    );
+    return () => void (cancelled = true);
+  }, [currentArticle?.url, settings?.level]);
+
+  // Credit the streak once all of today's articles are completed.
+  useEffect(() => {
+    if (dailyAllDone && daily && !isDoneToday(daily, new Date())) {
+      void markDoneToday(new Date()).then((s) => s && setDaily(s));
+    }
+  }, [dailyAllDone, daily]);
 
   if (!settings) return null;
 
-  async function openDaily() {
-    if (!daily?.article?.url) return;
-    void browser.tabs.create({ url: daily.article.url });
-    const next = await markOpenedToday(new Date());
-    if (next) setDaily(next);
+  function openDaily() {
+    if (currentArticle?.url) void browser.tabs.create({ url: currentArticle.url });
   }
-  async function openLesson() {
-    const a = daily?.article;
-    if (!a) return;
+  function openLesson(a: DailyArticle) {
     const q = new URLSearchParams({ lang: a.lang, title: a.title, url: a.url });
     if (a.thumbnail) q.set('thumb', a.thumbnail);
     void browser.tabs.create({ url: browser.runtime.getURL(`/lesson.html?${q}` as never) });
-    const next = await markOpenedToday(new Date());
-    if (next) setDaily(next);
-  }
-  async function completeDaily() {
-    const next = await markDoneToday(new Date());
-    if (next) setDaily(next);
   }
 
   /** Open exactly one full-view (others close). */
@@ -664,6 +676,19 @@ export function App() {
             />
             Tägliche Challenge (lädt einen Artikel von Wikipedia)
           </label>
+          {settings.dailyChallenge && (
+            <label>
+              Mini-Lektionen pro Tag
+              <select
+                value={String(settings.dailySetSize)}
+                onChange={(e) => patch({ dailySetSize: Number(e.currentTarget.value) })}
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </label>
+          )}
         </section>
       )}
 
@@ -699,17 +724,20 @@ export function App() {
             <span class="ll-mode-name">Surfen</span>
             <span class="ll-mode-sub">Echte Seiten lesen — mit Hilfe</span>
           </button>
-          {(activeStreak(daily, new Date()) > 0 ||
-            (daily?.article && isOpenedToday(daily, new Date()) && !isDoneToday(daily, new Date()))) && (
+          {(activeStreak(daily, new Date()) > 0 || (currentArticle && !dailyAllDone)) && (
             <div class="ll-home-foot">
               {activeStreak(daily, new Date()) > 0 && (
                 <span class="ll-home-streak" title="Tage in Folge mit erledigter Challenge">
                   <FlameIcon class="ll-ic-flame" size={13} /> {activeStreak(daily, new Date())} Tage Streak
                 </span>
               )}
-              {daily?.article && isOpenedToday(daily, new Date()) && !isDoneToday(daily, new Date()) && (
-                <button type="button" class="ll-home-continue" onClick={() => void openLesson()}>
-                  Lektion fortsetzen →
+              {currentArticle && !dailyAllDone && (
+                <button
+                  type="button"
+                  class="ll-home-continue"
+                  onClick={() => openLesson(currentArticle)}
+                >
+                  Zur Tageslektion →
                 </button>
               )}
             </div>
@@ -717,17 +745,16 @@ export function App() {
         </section>
       ) : mode === 'learn' ? (
         <>
-          {settings.dailyChallenge && daily?.article && (
+          {settings.dailyChallenge && currentArticle && (
             <DailyCard
-              article={daily.article}
+              article={currentArticle}
               est={dailyEst}
               level={settings.level}
-              opened={isOpenedToday(daily, new Date())}
-              done={isDoneToday(daily, new Date())}
-              streak={activeStreak(daily, new Date())}
-              onLesson={() => void openLesson()}
-              onOpen={() => void openDaily()}
-              onDone={() => void completeDaily()}
+              total={dailyArticles.length}
+              doneCount={dailyDoneCount}
+              allDone={dailyAllDone}
+              onLesson={() => openLesson(currentArticle)}
+              onOpen={openDaily}
             />
           )}
           <button
@@ -798,29 +825,27 @@ function onSectionToggle(e: Event) {
   if (el.open) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/** Daily-challenge card: today's Wikipedia article + read / done / streak. */
+/** Daily-challenge card: a small set of mini-lessons; shows the current one. */
 function DailyCard({
   article,
   est,
   level,
-  opened,
-  done,
-  streak,
+  total,
+  doneCount,
+  allDone,
   onLesson,
   onOpen,
-  onDone,
 }: {
   article: { title: string; extract: string; thumbnail?: string };
   est: DifficultyEstimate | null;
   level: CefrLevel;
-  opened: boolean;
-  done: boolean;
-  streak: number;
+  total: number;
+  doneCount: number;
+  allDone: boolean;
   onLesson: () => void;
   onOpen: () => void;
-  onDone: () => void;
 }) {
-  const teaser = article.extract.replace(/\s+/g, ' ').trim().slice(0, 130);
+  const teaser = article.extract.replace(/\s+/g, ' ').trim().slice(0, 120);
   const tagTitle = est
     ? `≈ ${Math.round(est.aboveShare * 100)} % der bekannten Wörter über ${level} (von ${est.sample} geprüft)`
     : undefined;
@@ -830,42 +855,38 @@ function DailyCard({
         <span class="ll-daily-eyebrow">
           <TargetIcon size={14} /> Tägliche Challenge
         </span>
-        {streak > 0 && (
-          <span class="ll-daily-streak" title="Tage in Folge mit erledigter Challenge">
-            <FlameIcon class="ll-ic-flame" size={13} /> {streak}
+        {total > 1 && (
+          <span class="ll-daily-count">
+            {doneCount}/{total}
           </span>
         )}
       </div>
-      <div class="ll-daily-body">
-        {article.thumbnail && <img class="ll-daily-thumb" src={article.thumbnail} alt="" />}
-        <div class="ll-daily-text">
-          <h3 class="ll-daily-title">{article.title}</h3>
-          {teaser && <p class="ll-daily-teaser">{teaser}…</p>}
-          {est && (
-            <span class={`ll-daily-tag t-${est.tag}`} title={tagTitle}>
-              {difficultyLabel(est.tag, level)}
-            </span>
-          )}
-        </div>
-      </div>
-      <div class="ll-daily-actions">
-        <button type="button" class="ll-daily-read" onClick={onLesson}>
-          {opened ? 'Lektion fortsetzen →' : 'Lektion lesen →'}
-        </button>
-        {opened && (
-          <button
-            type="button"
-            class={`ll-daily-done ${done ? 'is-done' : ''}`}
-            disabled={done}
-            onClick={onDone}
-          >
-            {done ? '✓ erledigt' : 'erledigt ✓'}
+      {allDone ? (
+        <p class="ll-daily-alldone">Heute geschafft 🎉 — {total} Mini-Lektionen.</p>
+      ) : (
+        <>
+          <div class="ll-daily-body">
+            {article.thumbnail && <img class="ll-daily-thumb" src={article.thumbnail} alt="" />}
+            <div class="ll-daily-text">
+              <h3 class="ll-daily-title">{article.title}</h3>
+              {teaser && <p class="ll-daily-teaser">{teaser}…</p>}
+              {est && (
+                <span class={`ll-daily-tag t-${est.tag}`} title={tagTitle}>
+                  {difficultyLabel(est.tag, level)}
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="ll-daily-actions">
+            <button type="button" class="ll-daily-read" onClick={onLesson}>
+              {doneCount > 0 ? 'Nächste Lektion →' : 'Lektion lesen →'}
+            </button>
+          </div>
+          <button type="button" class="ll-daily-wiki" onClick={onOpen}>
+            ↗ auf Wikipedia öffnen
           </button>
-        )}
-      </div>
-      <button type="button" class="ll-daily-wiki" onClick={onOpen}>
-        ↗ auf Wikipedia öffnen
-      </button>
+        </>
+      )}
     </section>
   );
 }

@@ -5,6 +5,21 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.52] — 2026-06-17
+
+### Added
+- **Comprehension check after every paragraph (#2).** In the lesson, pressing
+  "Gelesen" now shows a single multiple-choice question (3 options) about that
+  paragraph, generated in the background while you read; answer it, then
+  continue. The lesson also **auto-collects a few new/hard words per paragraph**
+  into your vocab. The end screen shows your quiz score; results are saved to the
+  lesson.
+- **Daily challenge is now a small set of mini-lessons (#3).** Instead of one big
+  article, the day's challenge is **2 articles by default** (configurable 1–3 in
+  settings → "Mini-Lektionen pro Tag"). The card shows progress (e.g. 1/2) and
+  the current lesson; finishing all of them credits the streak. Completion is
+  tracked via the lesson store, so it survives reloads.
+
 ## [0.6.51] — 2026-06-17
 
 ### Added

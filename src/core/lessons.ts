@@ -31,6 +31,9 @@ export interface Lesson {
   updatedTs: number;
   /** True once every paragraph has been read. */
   completed?: boolean;
+  /** Per-paragraph comprehension quiz tally. */
+  quizAnswered?: number;
+  quizCorrect?: number;
 }
 
 type Lessons = Record<string, Lesson>; // keyed by url

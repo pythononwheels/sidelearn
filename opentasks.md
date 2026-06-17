@@ -37,12 +37,13 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Ideas (pipeline)
 
-- [open] **Lern-App-Modus (Tageslektion)** — phase A done (0.6.47): dedicated
-  `lesson.html` app page, paragraph-by-paragraph level-adapted reading of the
-  daily article with background prefetch, resume, Wikipedia credit, `local:lessons`
-  store. **Phase B (next):** per-paragraph vocab extraction → vocab store;
-  end-of-lesson quiz (reuse quiz core) → results in lesson store + Erfolge/streak;
-  "gelernte Artikel"-Übersicht; maybe questions interleaved between chunks.
+- [open] **Lern-App-Modus (Tageslektion)** — phases A+B done (0.6.47–0.6.52):
+  dedicated `lesson.html`, paragraph-by-paragraph level-adapted reading with
+  background prefetch + resume; one-click word popover (dict + merken + mehr) and
+  select-to-translate; per-paragraph MC question + auto vocab extraction; daily
+  challenge as a configurable set of mini-lessons with streak. **Follow-ups:**
+  "gelernte Artikel"-Übersicht; feed MC results into Erfolge/Übungsquote;
+  difficulty-aware article pick; free-text question option.
 - [open] **Daily Challenge & Progress** — daily "Artikel des Tages" from the
   Wikipedia featured feed (`mostread` is universal across fr/de/en/nl/es; `tfa`
   only de/en), difficulty-tagged, with read/done/streak + a start-of-panel stats

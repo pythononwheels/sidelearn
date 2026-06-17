@@ -1041,6 +1041,20 @@ body {
   font-weight: 700;
   color: var(--ll-text-soft);
 }
+.ll-daily-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ll-text-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--ll-bg);
+}
+.ll-daily-alldone {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ll-text);
+}
 .ll-ic-flame {
   color: #e8843c;
   flex: 0 0 auto;
