@@ -5,6 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.51] — 2026-06-17
+
+### Added
+- **One-click word translation in the lesson (app mode).** Borderline words
+  (above your level) are now gently underlined in the simplified text; clicking
+  one opens a small popover with the dictionary translation, **★ merken** (saves
+  to vocab) and **mehr** (local-model explanation with an example) — no more
+  selection → OS menu → submenu → translate. **Selecting any text** also opens
+  the popover (single words via the dictionary, phrases translated by the model).
+
 ## [0.6.50] — 2026-06-17
 
 ### Changed
