@@ -29,6 +29,10 @@ export default defineContentScript({
     let panelOpen = inOpenWindow(await getOpenWindows());
 
     async function apply() {
+      // After an extension reload/update, content scripts in already-open tabs
+      // are orphaned: their `browser.*` calls throw "Extension context
+      // invalidated". Bail quietly instead of spamming the page console.
+      if (!contextAlive()) return;
       clear();
       // Only mark while the panel is open — closing it removes the markings.
       if (!settings.inlineEnabled || !settings.onboarded || !panelOpen) return;
@@ -48,6 +52,7 @@ export default defineContentScript({
       el.addEventListener('mouseenter', () => {
         cancelHide();
         hoverTimer = window.setTimeout(async () => {
+          if (!contextAlive()) return;
           const info = await resolveWord(word, settings.learnLang, settings.nativeLang, settings.level);
           showHover(el, info);
         }, 120);
@@ -60,15 +65,32 @@ export default defineContentScript({
 
     await apply();
     watchSettings((next) => {
+      if (!contextAlive()) return;
       settings = next;
       void apply();
     });
     watchOpenWindows((ids) => {
+      if (!contextAlive()) return;
       panelOpen = inOpenWindow(ids);
       void apply();
     });
   },
 });
+
+/**
+ * True while this content script can still reach its extension. After the
+ * extension is reloaded/updated, scripts injected by the previous instance are
+ * orphaned and `browser.runtime.id` becomes undefined; any `browser.*` call
+ * then throws "Extension context invalidated". Guarding on this lets stale tabs
+ * fail silently until the user reloads them.
+ */
+function contextAlive(): boolean {
+  try {
+    return !!browser.runtime?.id;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Marker styling injected into the host page. We aggressively reset the mark so
