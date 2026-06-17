@@ -34,6 +34,16 @@ import {
   watchBookmarks,
   type Bookmark,
 } from '@/core/bookmarks';
+import {
+  activeStreak,
+  ensureToday,
+  isDoneToday,
+  markDoneToday,
+  watchDaily,
+  type DailyState,
+} from '@/core/daily';
+import { computeStats, type LearnStats } from '@/core/stats';
+import { estimateDifficulty, difficultyLabel, type DifficultyTag } from '@/core/difficulty/estimate';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
@@ -69,6 +79,9 @@ export function App() {
   const autoOpenRef = useRef(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
+  const [daily, setDaily] = useState<DailyState | null>(null);
+  const [dailyTag, setDailyTag] = useState<DifficultyTag | null>(null);
+  const [stats, setStats] = useState<LearnStats | null>(null);
   const prevResultLen = useRef(0);
   const resultsReady = useRef(false);
   // Latest results/key for the focus watcher (subscribed once, reads fresh refs).
@@ -164,7 +177,50 @@ export function App() {
     prevResultLen.current = results.length;
   }, [results]);
 
+  // Start-card stats are derived from the vocab store — recompute on change.
+  useEffect(() => {
+    setStats(computeStats(vocab, Date.now()));
+  }, [vocab]);
+
+  // Daily challenge: fetch today's article (cached per day), tag its difficulty,
+  // and keep streak/done in sync. Off → no network call, no card.
+  useEffect(() => {
+    if (!settings?.dailyChallenge) {
+      setDaily(null);
+      setDailyTag(null);
+      return;
+    }
+    let cancelled = false;
+    const { learnLang, level } = settings;
+    void (async () => {
+      const state = await ensureToday(learnLang, new Date());
+      if (cancelled) return;
+      setDaily(state);
+      if (state.article?.extract) {
+        const est = await estimateDifficulty(state.article.extract, learnLang, level);
+        if (!cancelled) setDailyTag(est.tag);
+      } else {
+        setDailyTag(null);
+      }
+    })();
+    const off = watchDaily((s) => {
+      if (!cancelled) setDaily(s);
+    });
+    return () => {
+      cancelled = true;
+      off();
+    };
+  }, [settings?.dailyChallenge, settings?.learnLang, settings?.level]);
+
   if (!settings) return null;
+
+  function openDaily() {
+    if (daily?.article?.url) void browser.tabs.create({ url: daily.article.url });
+  }
+  async function completeDaily() {
+    const next = await markDoneToday(new Date());
+    if (next) setDaily(next);
+  }
 
   /** Open exactly one full-view (others close). */
   const showOnly = (v: 'chat' | 'chooser' | 'none') => {
@@ -486,6 +542,19 @@ export function App() {
         </button>
       </nav>
       {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
+
+      {settings.dailyChallenge && daily?.article && (
+        <DailyCard
+          article={daily.article}
+          tag={dailyTag}
+          level={settings.level}
+          done={isDoneToday(daily, new Date())}
+          streak={activeStreak(daily, new Date())}
+          onOpen={openDaily}
+          onDone={() => void completeDaily()}
+        />
+      )}
+      {stats && (stats.vocab.all > 0 || stats.review.answered > 0) && <StatsCard stats={stats} />}
       </>
       )}
 
@@ -527,6 +596,14 @@ export function App() {
               onChange={(e) => patch({ keepResults: e.currentTarget.checked })}
             />
             Ergebnisse sammeln (sonst nur das letzte)
+          </label>
+          <label class="ll-toggle">
+            <input
+              type="checkbox"
+              checked={settings.dailyChallenge}
+              onChange={(e) => patch({ dailyChallenge: e.currentTarget.checked })}
+            />
+            Tägliche Challenge (lädt einen Artikel von Wikipedia)
           </label>
         </section>
       )}
@@ -606,6 +683,86 @@ export function App() {
 function onSectionToggle(e: Event) {
   const el = e.currentTarget as HTMLDetailsElement;
   if (el.open) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Daily-challenge card: today's Wikipedia article + read / done / streak. */
+function DailyCard({
+  article,
+  tag,
+  level,
+  done,
+  streak,
+  onOpen,
+  onDone,
+}: {
+  article: { title: string; extract: string; thumbnail?: string };
+  tag: DifficultyTag | null;
+  level: CefrLevel;
+  done: boolean;
+  streak: number;
+  onOpen: () => void;
+  onDone: () => void;
+}) {
+  const teaser = article.extract.replace(/\s+/g, ' ').trim().slice(0, 130);
+  return (
+    <section class="ll-daily">
+      <div class="ll-daily-top">
+        <span class="ll-daily-eyebrow">🎯 Tägliche Challenge</span>
+        {streak > 0 && (
+          <span class="ll-daily-streak" title="Tage in Folge">
+            🔥 {streak}
+          </span>
+        )}
+      </div>
+      <div class="ll-daily-body">
+        {article.thumbnail && <img class="ll-daily-thumb" src={article.thumbnail} alt="" />}
+        <div class="ll-daily-text">
+          <h3 class="ll-daily-title">{article.title}</h3>
+          {teaser && <p class="ll-daily-teaser">{teaser}…</p>}
+          {tag && <span class={`ll-daily-tag t-${tag}`}>{difficultyLabel(tag, level)}</span>}
+        </div>
+      </div>
+      <div class="ll-daily-actions">
+        <button type="button" class="ll-daily-read" onClick={onOpen}>
+          Lesen →
+        </button>
+        <button
+          type="button"
+          class={`ll-daily-done ${done ? 'is-done' : ''}`}
+          disabled={done}
+          onClick={onDone}
+        >
+          {done ? '✓ erledigt' : 'erledigt ✓'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** Compact progress strip on the home view. */
+function StatsCard({ stats }: { stats: LearnStats }) {
+  const acc =
+    stats.review.answered > 0 ? `${Math.round(stats.review.accuracy * 100)}%` : '–';
+  return (
+    <section class="ll-stats">
+      <div class="ll-stat">
+        <span class="ll-stat-num">{stats.vocab.week}</span>
+        <span class="ll-stat-lbl">Vokabeln 7 T.</span>
+      </div>
+      <div class="ll-stat">
+        <span class="ll-stat-num">{stats.vocab.month}</span>
+        <span class="ll-stat-lbl">30 T.</span>
+      </div>
+      <div class="ll-stat">
+        <span class="ll-stat-num">{stats.vocab.all}</span>
+        <span class="ll-stat-lbl">gesamt</span>
+      </div>
+      <div class="ll-stat" title={`${stats.review.correct}/${stats.review.answered} richtig`}>
+        <span class="ll-stat-num">{acc}</span>
+        <span class="ll-stat-lbl">Übungsquote</span>
+      </div>
+    </section>
+  );
 }
 
 function SitesList({ bookmarks }: { bookmarks: Bookmark[] }) {

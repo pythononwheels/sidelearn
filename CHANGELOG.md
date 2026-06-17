@@ -5,6 +5,29 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.42] — 2026-06-17
+
+### Added
+- **Daily Challenge (phase 1).** A start-of-panel card offers a fresh article of
+  the day in the learning language, sourced from the Wikipedia featured feed
+  (`tfa` where available — de/en — otherwise the universal `mostread`). The
+  card shows a thumbnail, teaser and a difficulty tag ("passt zu A2" …
+  "anspruchsvoll", from the existing frequency banding), a **Lesen** button
+  (opens the article, marking on), an **erledigt ✓** button, and a 🔥 streak of
+  consecutive completed days. Cached once per calendar day; refetched when the
+  learning language changes.
+- **Progress stats card.** New vocab in the last 7 / 30 days and all-time, plus
+  review accuracy — all derived from the existing vocab store, no new tracking.
+- **Setting `dailyChallenge`** (default on) to toggle the card. It is the only
+  non-localhost network call in the extension — a public, read-only Wikipedia
+  endpoint that sends no user data; turning it off keeps Sidelearn fully local.
+
+### Notes
+- New modules: `core/wikifeed.ts`, `core/daily.ts`, `core/stats.ts`,
+  `core/difficulty/estimate.ts`. Concept & roadmap in
+  `doc/tech/daily-challenge.md` (phases 2–3: difficulty-aware pick, "einfachere
+  Sprache" side-by-side, persisted quiz stats, daily goals, badges).
+
 ## [0.6.41] — 2026-06-17
 
 ### Fixed

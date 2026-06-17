@@ -84,6 +84,9 @@ export interface Settings {
   keepResults: boolean;
   /** Last-used review mode. */
   reviewMode: 'words' | 'sentences' | 'mix';
+  /** Show the daily-challenge card (fetches the Wikipedia featured feed — the
+   *  only non-localhost network call). Off keeps Sidelearn fully local. */
+  dailyChallenge: boolean;
   /** False until the first-run onboarding (languages + level) is completed. */
   onboarded: boolean;
 }
@@ -98,6 +101,7 @@ export const DEFAULT_SETTINGS: Settings = {
   markOnlyWithDict: false,
   keepResults: true,
   reviewMode: 'words',
+  dailyChallenge: true,
   onboarded: false,
 };
 
@@ -126,4 +130,6 @@ export const STORAGE_KEYS = {
   chats: 'local:chats',
   /** Transient "jump to this card" request written by the hover, read by the panel. */
   focus: 'local:focus',
+  /** Daily-challenge state: today's article, done flag, and streak. */
+  daily: 'local:daily',
 } as const;

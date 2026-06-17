@@ -1,7 +1,10 @@
 # Sidelearn
 
 > Read foreign-language web pages with inline, CEFR-aware reading help —
-> powered entirely by a **local** LLM (LM Studio). Nothing leaves your machine.
+> powered entirely by a **local** LLM (LM Studio). All translation and analysis
+> stays on your machine; the only optional exception is the daily-challenge card,
+> which fetches a public Wikipedia article-of-the-day feed (no user data sent)
+> and can be turned off in settings.
 
 Sidelearn is a Manifest V3 browser extension for learning **French, German,
 English, Dutch or Spanish** by reading real pages. Words above your level are gently highlighted; hover for

@@ -1003,3 +1003,136 @@ body {
   margin-top: 4px;
   padding: 8px 18px;
 }
+
+/* Daily challenge --------------------------------------------------------- */
+.ll-daily {
+  margin: 4px 0 2px;
+  padding: 12px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius);
+  background: var(--ll-accent-soft);
+}
+.ll-daily-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ll-daily-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ll-accent-strong);
+  letter-spacing: 0.02em;
+}
+.ll-daily-streak {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ll-text-soft);
+}
+.ll-daily-body {
+  display: flex;
+  gap: 10px;
+}
+.ll-daily-thumb {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: var(--ll-radius-sm);
+  background: var(--ll-surface);
+}
+.ll-daily-text {
+  min-width: 0;
+}
+.ll-daily-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ll-text);
+}
+.ll-daily-teaser {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ll-text-soft);
+}
+.ll-daily-tag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--ll-surface);
+  color: var(--ll-text-soft);
+  border: 1px solid var(--ll-border);
+}
+.ll-daily-tag.t-leicht { color: #2f9e6b; }
+.ll-daily-tag.t-passt { color: var(--ll-accent-strong); }
+.ll-daily-tag.t-fordernd { color: #c98a2e; }
+.ll-daily-tag.t-schwer { color: #d2603f; }
+.ll-daily-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ll-daily-read,
+.ll-daily-done {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: var(--ll-radius-sm);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.ll-daily-read {
+  background: var(--ll-accent);
+  color: #fff;
+}
+.ll-daily-read:hover {
+  background: var(--ll-accent-strong);
+}
+.ll-daily-done {
+  background: var(--ll-surface);
+  color: var(--ll-text);
+  border-color: var(--ll-border);
+}
+.ll-daily-done:hover:not(:disabled) {
+  border-color: var(--ll-accent);
+}
+.ll-daily-done.is-done {
+  color: #2f9e6b;
+  cursor: default;
+}
+
+/* Start-card stats -------------------------------------------------------- */
+.ll-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 6px 0 2px;
+}
+.ll-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius-sm);
+  background: var(--ll-surface);
+}
+.ll-stat-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ll-accent-strong);
+  line-height: 1;
+}
+.ll-stat-lbl {
+  font-size: 10px;
+  color: var(--ll-text-soft);
+  text-align: center;
+  line-height: 1.2;
+}
