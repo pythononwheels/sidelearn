@@ -879,7 +879,7 @@ function DailyCard({
           </div>
           <div class="ll-daily-actions">
             <button type="button" class="ll-daily-read" onClick={onLesson}>
-              {doneCount > 0 ? 'Nächste Lektion →' : 'Lektion lesen →'}
+              {doneCount > 0 ? 'Nächste Lektion →' : 'Lektion starten →'}
             </button>
           </div>
           <button type="button" class="ll-daily-wiki" onClick={onOpen}>

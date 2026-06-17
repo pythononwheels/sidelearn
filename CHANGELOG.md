@@ -5,6 +5,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.55] — 2026-06-17
+
+### Changed
+- **Smarter word underlining in the lesson.** Only words clearly above your
+  level (≥ 2 CEFR bands) are underlined now, so common near-level words (B1
+  cognates like "français"/"décembre" for an A2 reader) are left alone. The same
+  threshold applies to the per-paragraph auto-collected vocab.
+- **Lesson app bar matches the sidebar** — same page-background "material" (no
+  filled surface bar), only the logo square + "LERN-MODUS" chip carry the accent.
+- **"Lektion starten →"** instead of "Lektion lesen →" on the daily card.
+
 ## [0.6.54] — 2026-06-17
 
 ### Fixed

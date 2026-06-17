@@ -24,10 +24,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 18px;
-  background: var(--ll-surface);
+  padding: 12px 18px;
+  background: var(--ll-bg);
   color: var(--ll-text);
-  border-bottom: 1px solid var(--ll-border);
 }
 .lz-brand {
   display: inline-flex;

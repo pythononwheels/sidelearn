@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { type Language } from '@/core/config';
-import { isAboveLevel, rankToBand, type CefrLevel } from '@/core/difficulty/banding';
+import { levelIndex, rankToBand, type CefrLevel } from '@/core/difficulty/banding';
 import { loadRanks, rankOf } from '@/core/difficulty/frequency';
 import { getSettings } from '@/core/settings';
 import { fetchArticleParagraphs } from '@/core/wikifeed';
@@ -39,6 +39,12 @@ type Pop =
 
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Only flag words clearly above the user's level (≥ 2 CEFR bands), so common
+ *  near-level words (e.g. B1 cognates for an A2 reader) aren't underlined. */
+function wellAbove(band: CefrLevel, level: CefrLevel): boolean {
+  return levelIndex(band) - levelIndex(level) >= 2;
 }
 
 type Sim = string | 'error' | undefined;
@@ -257,7 +263,7 @@ export function App() {
       const low = tok.toLowerCase();
       if (seen.has(low) || names.has(low)) continue;
       const rank = rankOf(ranks, tok);
-      if (rank === undefined || !isAboveLevel(rankToBand(rank), level)) continue;
+      if (rank === undefined || !wellAbove(rankToBand(rank), level)) continue;
       seen.add(low);
       picks.push({ tok, rank });
     }
@@ -562,7 +568,7 @@ function RichText({
         const rank = rankOf(ranks, tok);
         if (rank === undefined) return tok;
         const band = rankToBand(rank);
-        if (!isAboveLevel(band, level)) return tok;
+        if (!wellAbove(band, level)) return tok;
         return (
           <button
             type="button"
