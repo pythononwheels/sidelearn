@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.58] — 2026-06-18
+
+### Changed
+- **The panel always opens on the Lernen/Surfen chooser** again. The mode is no
+  longer persisted across opens (it only lives for the session, kept across tab
+  switches while the panel stays open) — so every fresh open starts at the
+  landing screen.
+
 ## [0.6.57] — 2026-06-18
 
 ### Fixed

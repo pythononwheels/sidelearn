@@ -83,6 +83,9 @@ export function App() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  // Always start on the Lernen/Surfen chooser; the mode lives only for this
+  // session (kept across tab switches while the panel stays open).
+  const [mode, setMode] = useState<'home' | 'learn' | 'surf'>('home');
   const [results, setResults] = useState<PanelResult[]>([]);
   const [currentKey, setCurrentKey] = useState('');
   const [vocab, setVocab] = useState<VocabEntry[]>([]);
@@ -477,8 +480,7 @@ export function App() {
 
   if (!settings.onboarded) return <Onboarding initial={settings} onDone={patch} />;
 
-  const mode = settings.mode;
-  const goMode = (m: Settings['mode']) => void patch({ mode: m });
+  const goMode = setMode;
 
   return (
     <main class={`ll-panel ${fullscreen ? 'll-full' : ''}`}>
