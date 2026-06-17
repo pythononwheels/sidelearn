@@ -635,20 +635,8 @@ body {
   font-weight: 600;
   padding: 1px 6px;
   border-radius: 999px;
-  color: var(--ll-accent);
-  background: var(--ll-accent-soft);
-}
-.ll-vocab-band[data-band='A'] {
-  color: var(--ll-band-a);
-  background: var(--ll-band-a-soft);
-}
-.ll-vocab-band[data-band='B'] {
-  color: var(--ll-band-b);
-  background: var(--ll-band-b-soft);
-}
-.ll-vocab-band[data-band='C'] {
-  color: var(--ll-band-c);
-  background: var(--ll-band-c-soft);
+  color: var(--ll-text-soft);
+  background: var(--ll-border);
 }
 
 /* Action nav -------------------------------------------------------------- */

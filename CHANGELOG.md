@@ -5,7 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.31] — 2026-06-17
+## [0.6.32] — 2026-06-17
+
+### Changed
+- Vocab list CEFR badges are now neutral (light grey) instead of coloured, for a
+  calmer list. The hover card keeps the colour-coded band (green→amber→red) where
+  it signals difficulty while reading.
 
 ### Fixed
 - Inline marking is now **per window**: it only appears in the window whose side
