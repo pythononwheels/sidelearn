@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.28] — 2026-06-17
+## [0.6.29] — 2026-06-17
+
+### Added
+- Hand-gloss batches for **fr→de** (175: hyphenated forms est-ce/peut-être/
+  dis-moi/tais-toi… + real words), **en→de** (85 real words), **nl→de** (191:
+  many common Dutch words FreeDict lacks — hij, tijd, natuurlijk, krijgen, …).
+  English contractions/slang/interjections and names skipped.
 
 ### Added
 - es→de hand-gloss batch 002 (~190 entries): real high-frequency words missed by
