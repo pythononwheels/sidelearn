@@ -1,7 +1,7 @@
 # Sidelearn — User Guide
 
 Sidelearn helps you read web pages in a language you're learning (French, German,
-English or Dutch) with reading aids in your own native language. Everything runs
+English, Dutch or Spanish) with reading aids in your own native language. Everything runs
 **locally** — the AI lives on your own machine via [LM Studio](https://lmstudio.ai),
 nothing is sent to the cloud.
 

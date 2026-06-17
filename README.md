@@ -4,7 +4,7 @@
 > powered entirely by a **local** LLM (LM Studio). Nothing leaves your machine.
 
 Sidelearn is a Manifest V3 browser extension for learning **French, German,
-English or Dutch** by reading real pages. Words above your level are gently highlighted; hover for
+English, Dutch or Spanish** by reading real pages. Words above your level are gently highlighted; hover for
 an instant translation; ask the local model for deeper explanations or paragraph
 translations — only when you want them.
 

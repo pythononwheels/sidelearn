@@ -852,7 +852,7 @@ interface ChatMsg extends ChatTurn {
   translating?: boolean;
 }
 
-const YOU_LABEL: Record<Language, string> = { de: 'Du', en: 'You', fr: 'Tu', nl: 'Jij' };
+const YOU_LABEL: Record<Language, string> = { de: 'Du', en: 'You', fr: 'Tu', nl: 'Jij', es: 'Tú' };
 const modelShort = (model: string) => model.split('/').pop() ?? model;
 
 function Chat({

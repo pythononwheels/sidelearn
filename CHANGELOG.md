@@ -5,7 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.20] — 2026-06-17
+## [0.6.21] — 2026-06-17
+
+### Added
+- **Spanish** (es) as a fifth language: frequency list + dictionaries
+  (es↔de/en/fr and de/en/fr/nl→es; es→nl unavailable in FreeDict, fails soft),
+  endonym/prompt names, and Spanish lemmatization (plurals, gerund/participle).
+
+### Fixed
+- Dictionary parser strips grammatical markers like `<n, f>` whose commas were
+  splitting into bogus translations (regenerated all data).
 
 ### Added
 - **Review modes**: clicking "Vokabeln üben" now opens a chooser — **Wörter**

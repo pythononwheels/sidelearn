@@ -27,4 +27,10 @@ describe('lemmaCandidates', () => {
     expect(lemmaCandidates('huizens', 'nl')).toContain('huizen');
     expect(lemmaCandidates('kinder', 'de')).toContain('kind');
   });
+
+  it('reduces Spanish plurals and verb forms', () => {
+    expect(lemmaCandidates('flores', 'es')).toContain('flor');
+    expect(lemmaCandidates('gatos', 'es')).toContain('gato');
+    expect(lemmaCandidates('hablando', 'es')).toContain('hablar');
+  });
 });

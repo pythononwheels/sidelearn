@@ -49,6 +49,14 @@ export function lemmaCandidates(word: string, lang: Language): string[] {
       if (ends('e')) add(word.slice(0, -1));
       if (ends('s')) add(word.slice(0, -1));
       break;
+    case 'es':
+      if (ends('ando')) add(word.slice(0, -4) + 'ar'); // gerund → infinitive
+      if (ends('iendo')) add(word.slice(0, -5) + 'er');
+      if (ends('ado')) add(word.slice(0, -3) + 'ar'); // participle → infinitive
+      if (ends('ido')) add(word.slice(0, -3) + 'er');
+      if (ends('es')) add(word.slice(0, -2)); // plural -es → singular (flores → flor)
+      if (ends('s')) add(word.slice(0, -1)); // plural -s
+      break;
   }
   return [...out];
 }

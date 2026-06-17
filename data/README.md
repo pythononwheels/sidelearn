@@ -1,6 +1,6 @@
 # Data
 
-Sidelearn supports four languages (fr, de, en, nl); native and learning language
+Sidelearn supports four languages (fr, de, en, nl, es); native and learning language
 are chosen at onboarding. Two kinds of dataset are bundled and fetched at runtime
 from `src/public/data/`:
 

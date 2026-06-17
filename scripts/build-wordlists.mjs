@@ -27,13 +27,15 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'src', 'public', 'data');
 const SRC = join(ROOT, 'data', 'sources');
 
-const LANGS = ['fr', 'de', 'en', 'nl'];
-const ISO3 = { fr: 'fra', de: 'deu', en: 'eng', nl: 'nld' };
+const LANGS = ['fr', 'de', 'en', 'nl', 'es'];
+const ISO3 = { fr: 'fra', de: 'deu', en: 'eng', nl: 'nld', es: 'spa' };
 
-/** Directed dictionary pairs [learn, native]. */
+/** Directed dictionary pairs [learn, native]. Missing FreeDict pairs are skipped. */
 const DICT_PAIRS = [
-  ['fr', 'de'], ['en', 'de'], ['nl', 'de'],
-  ['de', 'en'], ['fr', 'en'], ['nl', 'en'],
+  ['fr', 'de'], ['en', 'de'], ['nl', 'de'], ['es', 'de'],
+  ['de', 'en'], ['fr', 'en'], ['nl', 'en'], ['es', 'en'],
+  ['es', 'fr'], ['es', 'nl'],
+  ['de', 'es'], ['en', 'es'], ['fr', 'es'], ['nl', 'es'],
 ];
 
 const TOP_RANKS = 20_000; // ranks bundled into freq-*.json
@@ -99,7 +101,14 @@ function parseEntry(text) {
     // otherwise: source-language definition / note → ignore
   }
   return senses
-    .map((s) => ({ translations: s.split(/[,;]/).map((t) => t.trim()).filter(Boolean) }))
+    .map((s) => ({
+      // Strip grammatical markers like "<n, f>" (their commas would split wrong).
+      translations: s
+        .replace(/<[^>]*>/g, '')
+        .split(/[,;]/)
+        .map((t) => t.trim())
+        .filter((t) => t && t.length <= 40),
+    }))
     .filter((s) => s.translations.length);
 }
 

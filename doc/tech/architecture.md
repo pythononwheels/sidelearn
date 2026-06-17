@@ -4,7 +4,7 @@ Sidelearn is a Manifest V3 browser extension that helps you read pages in a
 language you are learning with reading aids in your native language, powered
 entirely by a **local** LLM (LM Studio). Nothing leaves your machine.
 
-**Languages:** fr, de, en, nl. Native and learning language are both chosen at
+**Languages:** fr, de, en, nl, es. Native and learning language are both chosen at
 onboarding (native ≠ learn); explanations/translations are rendered in the native
 language. Frequency lists are per language; dictionaries are directed
 (learning → native).
