@@ -99,8 +99,23 @@ export async function fetchDailyArticle(lang: Language, date: Date): Promise<Dai
   return (await fetchDailyArticles(lang, date, 1))[0] ?? null;
 }
 
-/** Fetch up to `count` distinct articles for the day's challenge set. */
+/**
+ * Fetch up to `count` distinct articles for the day's challenge set. The
+ * featured feed for "today" can 404 early in the day, so we fall back to the
+ * previous day's feed (its `mostread` always exists).
+ */
 export async function fetchDailyArticles(
+  lang: Language,
+  date: Date,
+  count: number,
+): Promise<DailyArticle[]> {
+  const today = await fetchFeedArticles(lang, date, count);
+  if (today.length > 0) return today;
+  const yesterday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
+  return fetchFeedArticles(lang, yesterday, count);
+}
+
+async function fetchFeedArticles(
   lang: Language,
   date: Date,
   count: number,
@@ -110,7 +125,10 @@ export async function fetchDailyArticles(
     `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
   try {
     const res = await fetch(url, { headers: { accept: 'application/json' } });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn('[sidelearn] daily feed fetch failed', res.status, url);
+      return [];
+    }
     const data = (await res.json()) as FeaturedFeed;
     const candidates: FeedPage[] = [];
     if (data.tfa) candidates.push(data.tfa);
@@ -125,7 +143,8 @@ export async function fetchDailyArticles(
       if (out.length >= count) break;
     }
     return out;
-  } catch {
+  } catch (err) {
+    console.warn('[sidelearn] daily feed fetch error', url, err);
     return [];
   }
 }

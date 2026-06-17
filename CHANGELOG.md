@@ -5,6 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.57] — 2026-06-18
+
+### Fixed
+- **Daily card empty on a new day.** The Wikipedia featured feed for "today" can
+  404 early in the day, returning no articles and leaving the learn view with
+  only "Vokabeln üben". The fetch now **falls back to yesterday's feed** (whose
+  `mostread` always exists), logs failures, and the card shows a
+  "lädt…/Erneut versuchen" state instead of disappearing.
+
 ## [0.6.56] — 2026-06-17
 
 ### Changed

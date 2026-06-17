@@ -270,6 +270,10 @@ export function App() {
     if (a.thumbnail) q.set('thumb', a.thumbnail);
     void browser.tabs.create({ url: browser.runtime.getURL(`/lesson.html?${q}` as never) });
   }
+  async function reloadDaily() {
+    if (!settings) return;
+    setDaily(await ensureToday(settings.learnLang, new Date(), settings.dailySetSize));
+  }
 
   /** Open exactly one full-view (others close). */
   const showOnly = (v: 'chat' | 'chooser' | 'none') => {
@@ -751,19 +755,40 @@ export function App() {
         </section>
       ) : mode === 'learn' ? (
         <>
-          {settings.dailyChallenge && currentArticle && (
-            <DailyCard
-              article={currentArticle}
-              est={dailyEst}
-              level={settings.level}
-              total={dailyArticles.length}
-              doneCount={dailyDoneCount}
-              allDone={dailyAllDone}
-              started={lessonsStarted.has(currentArticle.url)}
-              onLesson={() => openLesson(currentArticle)}
-              onOpen={openDaily}
-            />
-          )}
+          {settings.dailyChallenge &&
+            (currentArticle ? (
+              <DailyCard
+                article={currentArticle}
+                est={dailyEst}
+                level={settings.level}
+                total={dailyArticles.length}
+                doneCount={dailyDoneCount}
+                allDone={dailyAllDone}
+                started={lessonsStarted.has(currentArticle.url)}
+                onLesson={() => openLesson(currentArticle)}
+                onOpen={openDaily}
+              />
+            ) : (
+              <section class="ll-daily">
+                <div class="ll-daily-top">
+                  <span class="ll-daily-eyebrow">
+                    <TargetIcon size={14} /> Tägliche Challenge
+                  </span>
+                </div>
+                {daily === null ? (
+                  <p class="ll-daily-teaser">lädt…</p>
+                ) : (
+                  <>
+                    <p class="ll-daily-teaser">Tageslektion konnte nicht geladen werden.</p>
+                    <div class="ll-daily-actions">
+                      <button type="button" class="ll-daily-read" onClick={() => void reloadDaily()}>
+                        Erneut versuchen
+                      </button>
+                    </div>
+                  </>
+                )}
+              </section>
+            ))}
           <button
             type="button"
             class="ll-bigbtn"
