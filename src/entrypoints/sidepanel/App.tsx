@@ -465,6 +465,14 @@ export function App() {
           <label class="ll-toggle">
             <input
               type="checkbox"
+              checked={settings.markOnlyWithDict}
+              onChange={(e) => patch({ markOnlyWithDict: e.currentTarget.checked })}
+            />
+            Nur Wörter mit Wörterbuch-Eintrag markieren
+          </label>
+          <label class="ll-toggle">
+            <input
+              type="checkbox"
               checked={settings.keepResults}
               onChange={(e) => patch({ keepResults: e.currentTarget.checked })}
             />

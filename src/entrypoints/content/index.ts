@@ -30,6 +30,7 @@ export default defineContentScript({
         learn: settings.learnLang,
         native: settings.nativeLang,
         level: settings.level,
+        requireDict: settings.markOnlyWithDict,
         onMarkCreated: attachHover,
       });
     }

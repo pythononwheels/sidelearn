@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.22] — 2026-06-17
+## [0.6.23] — 2026-06-17
+
+### Added
+- Setting **"Nur Wörter mit Wörterbuch-Eintrag markieren"** (default off): when on,
+  only words with an instant dictionary translation are underlined — no more
+  "marked but no translation". Off keeps marking all above-level words (rare ones
+  rely on the LLM "mehr"). Clarifies that marking comes from the frequency list
+  while the dictionary is a separate, partial source.
 
 ### Fixed
 - Spanish lemmatization now resolves **-ir verb** participles/gerunds

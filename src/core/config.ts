@@ -78,6 +78,8 @@ export interface Settings {
   inlineEnabled: boolean;
   /** Underline colour for marks: 'auto' (by page brightness) or a fixed hex. */
   markerColor: string;
+  /** Only underline words that have a dictionary entry (instant translation). */
+  markOnlyWithDict: boolean;
   /** Keep result cards stacked (true) or only show the latest (false). */
   keepResults: boolean;
   /** Last-used review mode. */
@@ -93,6 +95,7 @@ export const DEFAULT_SETTINGS: Settings = {
   model: DEFAULT_MODEL,
   inlineEnabled: true,
   markerColor: 'auto',
+  markOnlyWithDict: false,
   keepResults: true,
   reviewMode: 'words',
   onboarded: false,

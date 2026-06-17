@@ -35,6 +35,8 @@ export interface HighlightOptions {
   learn: Language;
   native: Language;
   level: CefrLevel;
+  /** Only mark words that have a dictionary entry. */
+  requireDict: boolean;
   onMarkCreated: (el: HTMLElement, word: string) => void;
 }
 
@@ -86,7 +88,7 @@ async function processNode(node: Text, opts: HighlightOptions): Promise<void> {
       continue;
     }
     const info = await resolveWord(token, opts.learn, opts.native, opts.level);
-    if (!info.challenging) {
+    if (!info.challenging || (opts.requireDict && info.senses.length === 0)) {
       frag.append(token);
       continue;
     }
