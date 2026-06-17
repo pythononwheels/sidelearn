@@ -64,6 +64,8 @@ export function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [reviewChooser, setReviewChooser] = useState(false);
   const [resultsExpanded, setResultsExpanded] = useState(false);
+  const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  const autoOpenRef = useRef(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const prevResultLen = useRef(0);
@@ -129,11 +131,13 @@ export function App() {
       return;
     }
     if (results.length > prevResultLen.current) {
-      // Exit any full view and expand the inline Übersetzungen section.
+      // Exit any full view, expand Übersetzungen, focus the new card (others collapse).
+      autoOpenRef.current = true;
       setChatOpen(false);
       setReviewChooser(false);
       setQuiz(null);
       setResultsExpanded(true);
+      setActiveResultId(results[0]?.id ?? null);
     }
     prevResultLen.current = results.length;
   }, [results]);
@@ -240,6 +244,24 @@ export function App() {
       setCollectMsg(picked.length ? `${picked.length} Wörter gesammelt` : 'Nichts Passendes gefunden.');
     } finally {
       setCollectBusy(false);
+    }
+  }
+
+  // Click a saved word → show its explanation in Übersetzungen (reuse if present,
+  // otherwise ask the LLM). Focuses that card; never stacks duplicate requests.
+  function explainVocab(word: string, context?: string) {
+    setChatOpen(false);
+    setReviewChooser(false);
+    setQuiz(null);
+    setResultsExpanded(true);
+    const existing = results.find(
+      (r) => r.kind === 'explanation' && r.title === word && r.status !== 'error',
+    );
+    if (existing) {
+      autoOpenRef.current = true;
+      setActiveResultId(existing.id);
+    } else {
+      void sendMessage({ type: 'explainToPanel', word, context });
     }
   }
 
@@ -513,12 +535,22 @@ export function App() {
             name="ll-acc"
             open={resultsExpanded}
             onToggle={(e) => {
-              setResultsExpanded(e.currentTarget.open);
+              const open = e.currentTarget.open;
+              setResultsExpanded(open);
+              if (open) {
+                if (autoOpenRef.current) autoOpenRef.current = false;
+                else setActiveResultId(null); // manual open → all cards collapsed
+              }
               onSectionToggle(e);
             }}
           >
             <summary>Übersetzungen ({results.length})</summary>
-            <ResultsList results={results} pageKey={currentKey} />
+            <ResultsList
+              results={results}
+              pageKey={currentKey}
+              activeId={activeResultId}
+              onToggleCard={(id) => setActiveResultId((cur) => (cur === id ? null : id))}
+            />
           </details>
 
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
@@ -535,7 +567,7 @@ export function App() {
               </button>
               {collectMsg && <span class="ll-collect-msg">{collectMsg}</span>}
             </div>
-            <VocabList entries={vocab} />
+            <VocabList entries={vocab} onWordClick={explainVocab} />
           </details>
 
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
@@ -735,7 +767,13 @@ function optionClass(option: string, answer: string, selected: string | null): s
   return 'dim';
 }
 
-function VocabList({ entries }: { entries: VocabEntry[] }) {
+function VocabList({
+  entries,
+  onWordClick,
+}: {
+  entries: VocabEntry[];
+  onWordClick: (word: string, context?: string) => void;
+}) {
   if (entries.length === 0) {
     return (
       <p class="ll-vocab-empty">
@@ -763,7 +801,7 @@ function VocabList({ entries }: { entries: VocabEntry[] }) {
                 type="button"
                 class="ll-vocab-word"
                 title="Mehr Infos & Beispiele (KI)"
-                onClick={() => void sendMessage({ type: 'explainToPanel', word: e.text, context: e.context })}
+                onClick={() => onWordClick(e.text, e.context)}
               >
                 {e.text}
               </button>
@@ -805,7 +843,17 @@ function FullHeader({
   );
 }
 
-function ResultsList({ results, pageKey: key }: { results: PanelResult[]; pageKey: string }) {
+function ResultsList({
+  results,
+  pageKey: key,
+  activeId,
+  onToggleCard,
+}: {
+  results: PanelResult[];
+  pageKey: string;
+  activeId: string | null;
+  onToggleCard: (id: string) => void;
+}) {
   if (results.length === 0) {
     return (
       <p class="ll-vocab-empty">
@@ -820,21 +868,36 @@ function ResultsList({ results, pageKey: key }: { results: PanelResult[]; pageKe
         alle löschen
       </button>
       {results.map((r) => (
-        <ResultCard key={r.id} result={r} onRemove={() => void removeResult(key, r.id)} />
+        <ResultCard
+          key={r.id}
+          result={r}
+          collapsed={r.id !== activeId}
+          onToggle={() => onToggleCard(r.id)}
+          onRemove={() => void removeResult(key, r.id)}
+        />
       ))}
     </div>
   );
 }
 
-function ResultCard({ result, onRemove }: { result: PanelResult; onRemove: () => void }) {
-  const [collapsed, setCollapsed] = useState(false);
+function ResultCard({
+  result,
+  collapsed,
+  onToggle,
+  onRemove,
+}: {
+  result: PanelResult;
+  collapsed: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+}) {
   return (
     <article class={`ll-result ${collapsed ? 'collapsed' : ''}`}>
       <div class="ll-result-head">
         <button
           type="button"
           class="ll-result-toggle"
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={onToggle}
           title={collapsed ? 'aufklappen' : 'zuklappen'}
         >
           <span class="ll-caret">{collapsed ? '▸' : '▾'}</span>
@@ -845,9 +908,7 @@ function ResultCard({ result, onRemove }: { result: PanelResult; onRemove: () =>
         </button>
       </div>
 
-      {collapsed ? null : (
-        <ResultBody result={result} />
-      )}
+      {collapsed ? null : <ResultBody result={result} />}
     </article>
   );
 }

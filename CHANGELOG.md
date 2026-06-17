@@ -5,6 +5,19 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.37] — 2026-06-17
+
+### Changed
+- **Übersetzungen cards are now an exclusive accordion** — only one card is open
+  at a time, so the focus is always on the current action. Opening the
+  Übersetzungen section manually shows all cards collapsed; a new result (or a
+  reused one) opens exactly that card and closes the rest.
+- **Clicking a vocabulary word jumps into Übersetzungen** and behaves like
+  marked words in the page: if an explanation already exists it is shown (no
+  duplicate LLM call), otherwise a fresh card appears with the "erkläre…"
+  dancing-dots spinner. Fixes the invisible background pile-up where repeated
+  clicks silently queued several "erkläre…" cards.
+
 ## [0.6.36] — 2026-06-17
 
 ### Changed
