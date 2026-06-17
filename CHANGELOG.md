@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.39] — 2026-06-17
+
+### Changed
+- **Hover "mehr" confirmation** no longer says "im Panel / öffne die Sidebar" —
+  the panel is always open whenever marked words are shown, so that hint was
+  redundant. It now just reads "✓ gefragt" to acknowledge the click.
+
 ## [0.6.38] — 2026-06-17
 
 ### Changed
