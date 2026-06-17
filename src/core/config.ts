@@ -76,6 +76,8 @@ export interface Settings {
   model: string;
   /** Inline highlighting on the live page (the optional "Kür" layer). */
   inlineEnabled: boolean;
+  /** Show a simplified (level-adapted, same-language) version under each paragraph. */
+  simplifyInline: boolean;
   /** Underline colour for marks: 'auto' (by page brightness) or a fixed hex. */
   markerColor: string;
   /** Only underline words that have a dictionary entry (instant translation). */
@@ -97,6 +99,7 @@ export const DEFAULT_SETTINGS: Settings = {
   level: 'A2',
   model: DEFAULT_MODEL,
   inlineEnabled: true,
+  simplifyInline: false,
   markerColor: 'auto',
   markOnlyWithDict: false,
   keepResults: true,
@@ -132,4 +135,6 @@ export const STORAGE_KEYS = {
   focus: 'local:focus',
   /** Daily-challenge state: today's article, done flag, and streak. */
   daily: 'local:daily',
+  /** Cached per-page simplified paragraphs (level-adapted reading aid). */
+  simplify: 'local:simplify',
 } as const;

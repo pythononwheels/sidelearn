@@ -14,6 +14,11 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Next
 
+- [closed] **Inline "Vereinfachen"** — done (0.6.46). Level-adapted, same-language
+  rewrite under each paragraph on the live page; lazy (viewport), cached per page,
+  concurrency-limited. Follow-ups: per-paragraph "Original/Vereinfacht" toggle;
+  optional native-language translation mode; reuse for the daily-challenge
+  "einfachere Sprache" side-by-side.
 - [open] **Reader view in panel** — Readability.js extraction of the source
   text, difficulty colouring in-panel, per-paragraph translation rendered
   *beneath* each paragraph (the stable backbone fallback).

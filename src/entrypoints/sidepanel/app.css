@@ -181,15 +181,21 @@ body {
   gap: 8px;
 }
 .ll-marktoggle {
-  flex: 3;
+  flex: 1 1 0;
+  min-width: 0;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: var(--ll-radius);
   border: 1px solid var(--ll-border);
   cursor: pointer;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
+}
+.ll-marktoggle:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .ll-marktoggle.on {
   background: var(--ll-accent-soft);
@@ -201,7 +207,7 @@ body {
   color: var(--ll-text-muted);
 }
 .ll-colorbtn {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;

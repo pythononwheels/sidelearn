@@ -104,6 +104,41 @@ export async function translateParagraph(
   return { source: text, translation: parts.join('\n\n') };
 }
 
+/**
+ * Rewrite a paragraph in *simpler* language at the learner's CEFR level, staying
+ * in the same (learning) language — short sentences, common words, same meaning.
+ * Used by the inline "vereinfachen" reading aid.
+ */
+export async function simplifyParagraph(
+  text: string,
+  learn: Language,
+  level: string,
+  model: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  const learnName = LANG_NAMES_EN[learn];
+  const chunks = splitForBudget(text, LM_STUDIO.maxInputTokens);
+  const parts: string[] = [];
+  for (const chunk of chunks) {
+    parts.push(
+      await chat(
+        [
+          {
+            role: 'system',
+            content:
+              `Rewrite the user's ${learnName} text in simpler ${learnName} for a CEFR ${level} ` +
+              `learner: short sentences, common words, keep the meaning and key facts. Stay in ` +
+              `${learnName} — do NOT translate. Reply with the simplified ${learnName} text only, no preamble.`,
+          },
+          { role: 'user', content: chunk },
+        ],
+        { model, signal, maxTokens: 700 },
+      ),
+    );
+  }
+  return parts.join(' ').trim();
+}
+
 interface RawExplanation {
   meaning?: string;
   examples?: string[];

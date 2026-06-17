@@ -9,7 +9,7 @@
  */
 
 import type { Message } from '@/core/messaging';
-import { explainWord, translateParagraph, translateWord } from '@/core/llm/prompts';
+import { explainWord, simplifyParagraph, translateParagraph, translateWord } from '@/core/llm/prompts';
 import { getSettings } from '@/core/settings';
 import { clearResults, pageKey, pushResult, updateResult } from '@/core/result';
 import { resolveWord } from '@/core/wordinfo';
@@ -73,10 +73,14 @@ export default defineBackground(() => {
     port.onDisconnect.addListener(() => void removeOpenWindow(windowId));
   });
 
-  // Async responder: tell a content script which window it's in.
+  // Async responders that return a value to the content script.
   browser.runtime.onMessage.addListener((msg: unknown, sender: { tab?: { windowId?: number } }) => {
-    if ((msg as { type?: string }).type === 'whichWindow') {
+    const type = (msg as { type?: string }).type;
+    if (type === 'whichWindow') {
       return Promise.resolve(sender.tab?.windowId ?? null);
+    }
+    if (type === 'simplifyPara') {
+      return runSimplify((msg as { text: string }).text);
     }
     return Promise.resolve(undefined);
   });
@@ -166,6 +170,33 @@ async function runExplain(key: string, word: string, context?: string): Promise<
     await updateResult(key, id, { status: 'done', explanation });
   } catch (err) {
     await updateResult(key, id, { status: 'error', error: String(err) });
+  }
+}
+
+// Limit concurrent simplify calls so scrolling a long page doesn't flood
+// LM Studio — extra requests queue and run as slots free up.
+let active = 0;
+const waiting: Array<() => void> = [];
+async function withLimit<T>(fn: () => Promise<T>, max = 2): Promise<T> {
+  if (active >= max) await new Promise<void>((r) => waiting.push(r));
+  active++;
+  try {
+    return await fn();
+  } finally {
+    active--;
+    waiting.shift()?.();
+  }
+}
+
+/** Simplify a paragraph to the user's level (same language). Returns '' on error. */
+async function runSimplify(text: string): Promise<string> {
+  const trimmed = (text ?? '').trim();
+  if (!trimmed) return '';
+  const { learnLang, level, model } = await getSettings();
+  try {
+    return await withLimit(() => simplifyParagraph(trimmed, learnLang, level, model));
+  } catch {
+    return '';
   }
 }
 

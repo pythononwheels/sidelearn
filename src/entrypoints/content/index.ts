@@ -13,6 +13,7 @@ import { getOpenWindows, watchOpenWindows } from '@/core/panel';
 import { loadNames } from '@/core/names';
 import { clear, highlight } from './highlighter';
 import { cancelHide, scheduleHide, showHover } from './hover';
+import { clearSimplify, simplifyPage } from './simplify';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -34,17 +35,23 @@ export default defineContentScript({
       // invalidated". Bail quietly instead of spamming the page console.
       if (!contextAlive()) return;
       clear();
-      // Only mark while the panel is open — closing it removes the markings.
-      if (!settings.inlineEnabled || !settings.onboarded || !panelOpen) return;
+      clearSimplify();
+      // Only mark/simplify while the panel is open — closing it removes them.
+      if (!settings.onboarded || !panelOpen) return;
       document.documentElement.style.setProperty('--ll-underline', underlineColor(settings.markerColor));
-      await highlight(document.body, {
-        learn: settings.learnLang,
-        native: settings.nativeLang,
-        level: settings.level,
-        requireDict: settings.markOnlyWithDict,
-        names,
-        onMarkCreated: attachHover,
-      });
+      if (settings.inlineEnabled) {
+        await highlight(document.body, {
+          learn: settings.learnLang,
+          native: settings.nativeLang,
+          level: settings.level,
+          requireDict: settings.markOnlyWithDict,
+          names,
+          onMarkCreated: attachHover,
+        });
+      }
+      // Simplify runs after highlighting so the inserted blocks (which carry
+      // data-ll-ui) are never walked by the highlighter.
+      if (settings.simplifyInline) simplifyPage(settings);
     }
 
     function attachHover(el: HTMLElement, word: string) {

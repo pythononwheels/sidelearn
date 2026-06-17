@@ -5,6 +5,24 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.46] — 2026-06-17
+
+### Added
+- **Inline "Vereinfachen" reading aid.** A new toggle (next to "Markieren")
+  renders, beneath each paragraph, a level-adapted version of the text **in the
+  same language** (short sentences, common words — not a translation), produced
+  by the local model. Paragraphs are simplified lazily as they scroll into view
+  (300px look-ahead) with a small dancing-dots placeholder, and every result is
+  cached per page (`local:simplify`, keyed by language+level+text) so
+  re-scrolling and revisits are instant. Background simplify calls are capped at
+  2 concurrent so a long page doesn't flood LM Studio. Gated on the panel being
+  open and LM Studio online; off by default.
+
+### Notes
+- New: `core/simplify.ts` (cache), `core/llm/prompts.ts#simplifyParagraph`,
+  `entrypoints/content/simplify.ts`, `requestSimplify` messaging, background
+  concurrency limiter, `simplifyInline` setting.
+
 ## [0.6.45] — 2026-06-17
 
 ### Changed

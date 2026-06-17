@@ -466,7 +466,20 @@ export function App() {
           class={`ll-marktoggle ${settings.inlineEnabled ? 'on' : 'off'}`}
           onClick={() => patch({ inlineEnabled: !settings.inlineEnabled })}
         >
-          {settings.inlineEnabled ? '◉ Markierung an' : '○ Markierung aus'}
+          {settings.inlineEnabled ? '◉ Markieren' : '○ Markieren'}
+        </button>
+        <button
+          type="button"
+          class={`ll-marktoggle ${settings.simplifyInline ? 'on' : 'off'}`}
+          disabled={!online}
+          title={
+            online
+              ? 'Zeigt unter jedem Absatz eine vereinfachte Version auf deinem Niveau (lokales Modell).'
+              : 'LM Studio offline'
+          }
+          onClick={() => patch({ simplifyInline: !settings.simplifyInline })}
+        >
+          {settings.simplifyInline ? '◉ Vereinfachen' : '○ Vereinfachen'}
         </button>
         <button
           type="button"
