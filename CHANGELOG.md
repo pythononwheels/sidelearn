@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.44] — 2026-06-17
+
+### Changed
+- **Emoji icons → crisp inline SVGs** in the daily-challenge and Erfolge cards:
+  a concentric target (challenge / accuracy), a flame (streak) and a trophy
+  (achievements), Lucide-style line icons that inherit colour via `currentColor`
+  (warm flame, accent target, amber trophy). New `src/ui/icons.tsx`.
+
 ## [0.6.43] — 2026-06-17
 
 ### Changed

@@ -54,6 +54,7 @@ import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
 import { renderMarkdown } from '@/core/markdown';
+import { FlameIcon, TargetIcon, TrophyIcon } from '@/ui/icons';
 import { pickStudyWords, type Candidate } from '@/core/collect';
 import { resolveWord } from '@/core/wordinfo';
 import { normalize } from '@/core/difficulty/frequency';
@@ -724,10 +725,12 @@ function DailyCard({
   return (
     <section class="ll-daily">
       <div class="ll-daily-top">
-        <span class="ll-daily-eyebrow">🎯 Tägliche Challenge</span>
+        <span class="ll-daily-eyebrow">
+          <TargetIcon size={14} /> Tägliche Challenge
+        </span>
         {streak > 0 && (
           <span class="ll-daily-streak" title="Tage in Folge mit erledigter Challenge">
-            🔥 {streak}
+            <FlameIcon class="ll-ic-flame" size={13} /> {streak}
           </span>
         )}
       </div>
@@ -776,7 +779,9 @@ function StatsCard({ stats, streak }: { stats: LearnStats; streak: number }) {
   return (
     <section class="ll-prog">
       <div class="ll-prog-head">
-        <span class="ll-prog-title">🏆 Erfolge</span>
+        <span class="ll-prog-title">
+          <TrophyIcon size={14} /> Erfolge
+        </span>
         <div class="ll-prog-tabs" role="tablist">
           {PERIOD_TABS.map((t) => (
             <button
@@ -803,10 +808,10 @@ function StatsCard({ stats, streak }: { stats: LearnStats; streak: number }) {
       </div>
       <div class="ll-prog-foot">
         <span class="ll-prog-chip" title="Tage in Folge mit erledigter Challenge">
-          🔥 {streak} Tage Streak
+          <FlameIcon class="ll-ic-flame" size={13} /> {streak} Tage Streak
         </span>
         <span class="ll-prog-chip" title={`${stats.correct}/${stats.answered} richtig beantwortet`}>
-          🎯 {acc} Übungsquote
+          <TargetIcon class="ll-ic-target" size={13} /> {acc} Übungsquote
         </span>
       </div>
     </section>

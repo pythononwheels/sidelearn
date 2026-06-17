@@ -1019,15 +1019,29 @@ body {
   margin-bottom: 8px;
 }
 .ll-daily-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   font-weight: 700;
   color: var(--ll-accent-strong);
   letter-spacing: 0.02em;
 }
 .ll-daily-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--ll-text-soft);
+}
+.ll-ic-flame {
+  color: #e8843c;
+  flex: 0 0 auto;
+}
+.ll-ic-target {
+  color: var(--ll-accent);
+  flex: 0 0 auto;
 }
 .ll-daily-body {
   display: flex;
@@ -1123,10 +1137,16 @@ body {
   margin-bottom: 12px;
 }
 .ll-prog-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   font-weight: 700;
   color: var(--ll-text-soft);
   letter-spacing: 0.02em;
+}
+.ll-prog-title svg {
+  color: #d9a52e;
 }
 .ll-prog-tabs {
   display: inline-flex;
@@ -1181,7 +1201,10 @@ body {
 }
 .ll-prog-chip {
   flex: 1;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   padding: 6px 8px;
   border-radius: var(--ll-radius-sm);
   border: 1px solid var(--ll-border);
