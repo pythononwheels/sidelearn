@@ -27,4 +27,34 @@ describe('parseQuiz', () => {
   it('returns [] when there is no JSON', () => {
     expect(parseQuiz('no json here')).toEqual([]);
   });
+
+  it('coerces "correct" given as a numeric string', () => {
+    const raw = '{"questions":[{"q":"A?","options":["x","y","z"],"correct":"2"}]}';
+    expect(parseQuiz(raw)[0]!.answer).toBe('z');
+  });
+
+  it('accepts a letter answer (B → index 1)', () => {
+    const raw = '{"questions":[{"q":"A?","options":["x","y","z"],"correct":"B"}]}';
+    expect(parseQuiz(raw)[0]!.answer).toBe('y');
+  });
+
+  it('accepts the answer given as option text', () => {
+    const raw = '{"questions":[{"q":"A?","options":["chat","chien"],"answer":"chien"}]}';
+    expect(parseQuiz(raw)[0]!.answer).toBe('chien');
+  });
+
+  it('accepts alternative keys and object-shaped options', () => {
+    const raw =
+      '{"quiz":[{"question":"A?","choices":[{"text":"x"},{"text":"y"}],"correctIndex":1}]}';
+    expect(parseQuiz(raw)[0]!.answer).toBe('y');
+  });
+
+  it('salvages complete questions from truncated JSON', () => {
+    // Second question is cut off mid-object; the first must still parse.
+    const raw =
+      '{"questions":[{"q":"One?","options":["a","b"],"correct":0},{"q":"Two?","options":["c","d"';
+    const qs = parseQuiz(raw);
+    expect(qs).toHaveLength(1);
+    expect(qs[0]!.answer).toBe('a');
+  });
 });

@@ -5,6 +5,18 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.41] — 2026-06-17
+
+### Fixed
+- **"Kein verwertbares Quiz" far less often.** Hardened the quiz parser against
+  the ways small local models trip up: numeric-string / single-letter (A–D) /
+  option-text answers, alternative key names (question/choices/correctIndex…),
+  options given as objects, code fences and `<think>` blocks, and — most
+  importantly — **truncated JSON**, where complete question objects are now
+  salvaged one by one instead of failing the whole batch. Bumped the quiz token
+  budget 1200 → 2000 so 5 questions rarely get cut off. On an empty result the
+  raw model output is logged to the panel console for diagnosis.
+
 ## [0.6.40] — 2026-06-17
 
 ### Added
