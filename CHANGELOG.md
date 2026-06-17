@@ -5,6 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.40] — 2026-06-17
+
+### Added
+- **Hover "✓ zeigen" for already-explained words.** When a word already has an
+  explanation card, the hover's "mehr →" turns into "✓ zeigen". Clicking it
+  jumps the panel straight to that card — opening Übersetzungen, focusing the
+  word and collapsing all other cards — even if the panel was on Chat or
+  Vokabeln. No duplicate LLM call. Backed by a transient `local:focus` signal
+  the hover writes and the panel watches.
+
 ## [0.6.39] — 2026-06-17
 
 ### Changed

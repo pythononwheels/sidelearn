@@ -12,6 +12,7 @@ import {
   pageKey,
   removeResult,
   watchAllResults,
+  watchFocus,
   type PanelResult,
 } from '@/core/result';
 import {
@@ -70,6 +71,11 @@ export function App() {
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const prevResultLen = useRef(0);
   const resultsReady = useRef(false);
+  // Latest results/key for the focus watcher (subscribed once, reads fresh refs).
+  const resultsRef = useRef<PanelResult[]>([]);
+  const keyRef = useRef('');
+  resultsRef.current = results;
+  keyRef.current = currentKey;
 
   useEffect(() => {
     void getSettings().then(setLocal);
@@ -112,11 +118,27 @@ export function App() {
     browser.tabs.onUpdated.addListener(onUpdated);
     const offResults = watchAllResults((all) => setResults(all[key] ?? []));
 
+    // Hover "✓ zeigen" → jump to an existing card, collapsing the rest.
+    const offFocus = watchFocus((f) => {
+      if (!f || f.key !== keyRef.current) return;
+      const hit = resultsRef.current.find(
+        (r) => r.kind === 'explanation' && r.title === f.title && r.status !== 'error',
+      );
+      if (!hit) return;
+      autoOpenRef.current = true;
+      setChatOpen(false);
+      setReviewChooser(false);
+      setQuiz(null);
+      setResultsExpanded(true);
+      setActiveResultId(hit.id);
+    });
+
     return () => {
       closing = true;
       offVocab();
       offBookmarks();
       offResults();
+      offFocus();
       port?.disconnect();
       browser.tabs.onActivated.removeListener(onActivated);
       browser.tabs.onUpdated.removeListener(onUpdated);

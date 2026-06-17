@@ -27,6 +27,25 @@ const MAX_PAGES = 50;
 
 const item = storage.defineItem<ResultsByPage>(STORAGE_KEYS.results, { fallback: {} });
 
+/**
+ * Transient "jump to this card" request. The hover writes it when a word is
+ * already explained; the panel watches it, opens Übersetzungen and focuses the
+ * matching card (collapsing the rest). `ts` makes repeated clicks on the same
+ * word re-trigger the watcher.
+ */
+export interface FocusRequest {
+  key: string;
+  title: string;
+  ts: number;
+}
+
+const focusItem = storage.defineItem<FocusRequest | null>(STORAGE_KEYS.focus, { fallback: null });
+
+export const watchFocus = (cb: (f: FocusRequest | null) => void) => focusItem.watch(cb);
+export async function requestFocus(req: FocusRequest): Promise<void> {
+  await focusItem.setValue(req);
+}
+
 /** Normalize a URL to a cache key (drop the hash; keep path + query). */
 export function pageKey(url: string): string {
   try {

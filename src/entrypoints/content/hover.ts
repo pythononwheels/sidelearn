@@ -7,6 +7,7 @@
  */
 
 import { sendMessage } from '@/core/messaging';
+import { getResultsFor, pageKey, requestFocus } from '@/core/result';
 import type { WordInfo } from '@/core/types';
 import tokens from '@/ui/tokens.css?inline';
 import styles from './hover.css?inline';
@@ -70,9 +71,23 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
     list.append(li);
   }
 
-  card.querySelector('.ll-more')!.addEventListener('click', () => {
-    void sendMessage({ type: 'explainToPanel', word: info.word, context: sentenceAround(anchor) });
-    card.querySelector('.ll-more')!.textContent = '✓ gefragt';
+  // "mehr →" asks the model; once a word is already explained it becomes
+  // "✓ zeigen", which just jumps the panel to that existing card (no new call).
+  const moreBtn = card.querySelector('.ll-more') as HTMLButtonElement;
+  let explained = false;
+  moreBtn.addEventListener('click', () => {
+    if (explained) {
+      void requestFocus({ key: pageKey(location.href), title: info.word, ts: Date.now() });
+    } else {
+      void sendMessage({ type: 'explainToPanel', word: info.word, context: sentenceAround(anchor) });
+      moreBtn.textContent = '✓ gefragt';
+    }
+  });
+  void getResultsFor(pageKey(location.href)).then((rs) => {
+    if (rs.some((r) => r.kind === 'explanation' && r.title === info.word && r.status !== 'error')) {
+      explained = true;
+      moreBtn.textContent = '✓ zeigen';
+    }
   });
 
   card.querySelector('.ll-save')!.addEventListener('click', () => {

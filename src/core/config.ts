@@ -124,4 +124,6 @@ export const STORAGE_KEYS = {
   bookmarks: 'local:bookmarks',
   /** Per-page chat history. */
   chats: 'local:chats',
+  /** Transient "jump to this card" request written by the hover, read by the panel. */
+  focus: 'local:focus',
 } as const;
