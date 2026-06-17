@@ -45,6 +45,36 @@ export function FlameIcon({ class: cls, size = 16 }: IconProps) {
   );
 }
 
+/** Open book — learn mode. */
+export function BookIcon({ class: cls, size = 16 }: IconProps) {
+  return (
+    <svg class={cls} {...svgProps(size)}>
+      <path d="M12 7v14" />
+      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+    </svg>
+  );
+}
+
+/** Compass — surf mode. */
+export function CompassIcon({ class: cls, size = 16 }: IconProps) {
+  return (
+    <svg class={cls} {...svgProps(size)}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" />
+    </svg>
+  );
+}
+
+/** House — back to the landing chooser. */
+export function HomeIcon({ class: cls, size = 16 }: IconProps) {
+  return (
+    <svg class={cls} {...svgProps(size)}>
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 22V12h6v10" />
+    </svg>
+  );
+}
+
 /** Trophy — achievements. */
 export function TrophyIcon({ class: cls, size = 16 }: IconProps) {
   return (

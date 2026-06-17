@@ -86,6 +86,9 @@ export interface Settings {
   keepResults: boolean;
   /** Last-used review mode. */
   reviewMode: 'words' | 'sentences' | 'mix';
+  /** Which sidebar surface to show: the landing chooser, the learn hub, or the
+   *  browsing-help tools. Keeps each view lean instead of one crowded panel. */
+  mode: 'home' | 'learn' | 'surf';
   /** Show the daily-challenge card (fetches the Wikipedia featured feed — the
    *  only non-localhost network call). Off keeps Sidelearn fully local. */
   dailyChallenge: boolean;
@@ -104,6 +107,7 @@ export const DEFAULT_SETTINGS: Settings = {
   markOnlyWithDict: false,
   keepResults: true,
   reviewMode: 'words',
+  mode: 'home',
   dailyChallenge: true,
   onboarded: false,
 };

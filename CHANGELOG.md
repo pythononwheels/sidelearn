@@ -5,6 +5,18 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.48] — 2026-06-17
+
+### Changed
+- **Decluttered the sidebar into two focused modes.** Instead of one crowded
+  panel, a clean landing asks "Lernen oder Surfen?" with two large SVG buttons:
+  - **Lernen** — the lean-back hub: daily lesson card, Erfolge, "Vokabeln üben".
+  - **Surfen** — the browsing tools: Markieren/Vereinfachen toggles, page actions
+    (merken, Seite übersetzen, Seiten-Quiz, Chat) and the Übersetzungen / Vokabeln
+    / Sites sections.
+  A small home button in the header returns to the landing; the chosen mode is
+  remembered (`settings.mode`). New icons: book (Lernen), compass (Surfen), home.
+
 ## [0.6.47] — 2026-06-17
 
 ### Added

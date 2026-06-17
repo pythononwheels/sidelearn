@@ -54,7 +54,7 @@ import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
 import { renderMarkdown } from '@/core/markdown';
-import { FlameIcon, TargetIcon, TrophyIcon } from '@/ui/icons';
+import { BookIcon, CompassIcon, FlameIcon, HomeIcon, TargetIcon, TrophyIcon } from '@/ui/icons';
 import { pickStudyWords, type Candidate } from '@/core/collect';
 import { resolveWord } from '@/core/wordinfo';
 import { normalize } from '@/core/difficulty/frequency';
@@ -443,10 +443,26 @@ export function App() {
 
   if (!settings.onboarded) return <Onboarding initial={settings} onDone={patch} />;
 
+  const mode = settings.mode;
+  const goMode = (m: Settings['mode']) => void patch({ mode: m });
+
   return (
     <main class={`ll-panel ${fullscreen ? 'll-full' : ''}`}>
       <header class="ll-panel-head">
         <div class="ll-head-left">
+          {mode !== 'home' && !fullscreen && (
+            <button
+              type="button"
+              class="ll-homebtn"
+              title="Start"
+              onClick={() => {
+                showOnly('none');
+                goMode('home');
+              }}
+            >
+              <HomeIcon size={15} />
+            </button>
+          )}
           <span class="ll-badge">
             {settings.learnLang.toUpperCase()} → {settings.nativeLang.toUpperCase()}
           </span>
@@ -467,7 +483,7 @@ export function App() {
         </div>
       </header>
 
-      {!fullscreen && (
+      {!fullscreen && !settingsOpen && mode === 'surf' && (
       <>
       <div class="ll-mark-row">
         <button
@@ -539,15 +555,6 @@ export function App() {
         <button
           type="button"
           class="ll-navbtn"
-          disabled={!canReview(vocab)}
-          title="Üben: Wörter, Sätze (Lückentext) oder Mix (ab 4 Wörtern)."
-          onClick={() => showOnly('chooser')}
-        >
-          Vokabeln üben
-        </button>
-        <button
-          type="button"
-          class="ll-navbtn"
           disabled={!online}
           title={online ? undefined : 'LM Studio offline'}
           onClick={translatePage}
@@ -574,23 +581,6 @@ export function App() {
         </button>
       </nav>
       {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
-
-      {settings.dailyChallenge && daily?.article && (
-        <DailyCard
-          article={daily.article}
-          est={dailyEst}
-          level={settings.level}
-          opened={isOpenedToday(daily, new Date())}
-          done={isDoneToday(daily, new Date())}
-          streak={activeStreak(daily, new Date())}
-          onLesson={() => void openLesson()}
-          onOpen={() => void openDaily()}
-          onDone={() => void completeDaily()}
-        />
-      )}
-      {stats && (stats.all.added > 0 || stats.answered > 0) && (
-        <StatsCard stats={stats} streak={activeStreak(daily, new Date())} />
-      )}
       </>
       )}
 
@@ -663,6 +653,48 @@ export function App() {
         />
       ) : quiz ? (
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
+      ) : settingsOpen ? null : mode === 'home' ? (
+        <section class="ll-home">
+          <h1 class="ll-home-title">Womit möchtest du starten?</h1>
+          <button type="button" class="ll-mode-card learn" onClick={() => goMode('learn')}>
+            <BookIcon size={26} />
+            <span class="ll-mode-name">Lernen</span>
+            <span class="ll-mode-sub">Tageslektion, Vokabeln &amp; Fortschritt</span>
+          </button>
+          <button type="button" class="ll-mode-card surf" onClick={() => goMode('surf')}>
+            <CompassIcon size={26} />
+            <span class="ll-mode-name">Surfen</span>
+            <span class="ll-mode-sub">Echte Seiten lesen — mit Hilfe</span>
+          </button>
+        </section>
+      ) : mode === 'learn' ? (
+        <>
+          {settings.dailyChallenge && daily?.article && (
+            <DailyCard
+              article={daily.article}
+              est={dailyEst}
+              level={settings.level}
+              opened={isOpenedToday(daily, new Date())}
+              done={isDoneToday(daily, new Date())}
+              streak={activeStreak(daily, new Date())}
+              onLesson={() => void openLesson()}
+              onOpen={() => void openDaily()}
+              onDone={() => void completeDaily()}
+            />
+          )}
+          {stats && (stats.all.added > 0 || stats.answered > 0) && (
+            <StatsCard stats={stats} streak={activeStreak(daily, new Date())} />
+          )}
+          <button
+            type="button"
+            class="ll-bigbtn"
+            disabled={!canReview(vocab)}
+            title="Üben: Wörter, Sätze (Lückentext) oder Mix (ab 4 Wörtern)."
+            onClick={() => showOnly('chooser')}
+          >
+            Vokabeln üben
+          </button>
+        </>
       ) : (
         <>
           <details

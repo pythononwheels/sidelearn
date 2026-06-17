@@ -1238,3 +1238,91 @@ body {
   color: var(--ll-text-soft);
   white-space: nowrap;
 }
+
+/* Mode chooser (home) ---------------------------------------------------- */
+.ll-home {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+}
+.ll-home-title {
+  margin: 6px 2px 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ll-text);
+}
+.ll-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px;
+  border-radius: var(--ll-radius);
+  border: 1px solid var(--ll-border);
+  background: var(--ll-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.05s ease;
+}
+.ll-mode-card:hover {
+  border-color: var(--ll-accent);
+}
+.ll-mode-card:active {
+  transform: translateY(1px);
+}
+.ll-mode-card svg {
+  color: var(--ll-accent);
+  margin-bottom: 4px;
+}
+.ll-mode-card.surf svg {
+  color: #22c0d4;
+}
+.ll-mode-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ll-text);
+}
+.ll-mode-sub {
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+
+/* Home button in the header --------------------------------------------- */
+.ll-homebtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 2px;
+  border: none;
+  background: none;
+  color: var(--ll-text-soft);
+  cursor: pointer;
+  border-radius: 6px;
+}
+.ll-homebtn:hover {
+  color: var(--ll-accent-strong);
+  background: var(--ll-accent-soft);
+}
+
+/* Big primary button (learn hub: Vokabeln üben) ------------------------- */
+.ll-bigbtn {
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: var(--ll-radius);
+  border: 1px solid var(--ll-border);
+  background: var(--ll-surface);
+  color: var(--ll-accent);
+  cursor: pointer;
+}
+.ll-bigbtn:hover:not(:disabled) {
+  border-color: var(--ll-accent);
+}
+.ll-bigbtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
