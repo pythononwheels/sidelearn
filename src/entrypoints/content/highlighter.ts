@@ -18,6 +18,19 @@ const SKIP_TAGS = new Set([
   'SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'CODE', 'PRE', 'KBD',
 ]);
 
+// Splitting a text node whose direct parent is a flex/grid container turns one
+// item into many → the layout collapses into columns (e.g. lemonde.fr). Skip those.
+const displayCache = new WeakMap<Element, boolean>();
+function isFlexOrGrid(el: Element): boolean {
+  let cached = displayCache.get(el);
+  if (cached === undefined) {
+    const display = getComputedStyle(el).display;
+    cached = display.includes('flex') || display.includes('grid');
+    displayCache.set(el, cached);
+  }
+  return cached;
+}
+
 export interface HighlightOptions {
   learn: Language;
   native: Language;
@@ -49,6 +62,7 @@ function collectTextNodes(root: ParentNode): Text[] {
       // discourages clicking them.
       if (parent.closest('a')) return NodeFilter.FILTER_REJECT;
       if (parent.closest('[data-ll-ui]')) return NodeFilter.FILTER_REJECT;
+      if (isFlexOrGrid(parent)) return NodeFilter.FILTER_REJECT;
       if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },

@@ -606,15 +606,26 @@ body {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-width: 0;
+  overflow: hidden;
 }
 .ll-vocab-word {
   font-weight: 600;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.ll-vocab-band {
+  flex: 0 0 auto;
 }
 .ll-vocab-trans {
+  flex: 1;
+  min-width: 0;
   color: var(--ll-text-soft);
   font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ll-vocab-band {
   font-size: 10px;

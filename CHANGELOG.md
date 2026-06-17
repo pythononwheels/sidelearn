@@ -5,7 +5,18 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.18] — 2026-06-17
+## [0.6.19] — 2026-06-17
+
+### Fixed
+- Inline marks no longer break flex/grid layouts (e.g. lemonde.fr): text nodes
+  whose direct parent is a flex/grid container are skipped (splitting them into
+  spans would turn one item into many → column collapse).
+- Vocab list is one line per word — the translation truncates with "…".
+
+### Changed
+- Review ordering now factors **accuracy**: never-reviewed first, then weakest
+  (often-wrong) words, then answered-wrong-last, then least-recent. Each answer
+  also tracks a correct count, so mastered words resurface least.
 
 ### Fixed
 - New explanations/translations triggered while the **quiz or chat full-screen

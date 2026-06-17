@@ -28,6 +28,8 @@ export interface VocabEntry {
   seen: number;
   /** Spaced-repetition bookkeeping. */
   reviews: number;
+  /** How many of those reviews were answered correctly. */
+  correct?: number;
   lastReviewed?: number;
   lastCorrect?: boolean;
 }
@@ -68,7 +70,13 @@ export async function recordReview(id: string, correct: boolean): Promise<void> 
   await item.setValue(
     current.map((e) =>
       e.id === id
-        ? { ...e, reviews: e.reviews + 1, lastReviewed: Date.now(), lastCorrect: correct }
+        ? {
+            ...e,
+            reviews: e.reviews + 1,
+            correct: (e.correct ?? 0) + (correct ? 1 : 0),
+            lastReviewed: Date.now(),
+            lastCorrect: correct,
+          }
         : e,
     ),
   );

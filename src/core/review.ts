@@ -25,16 +25,25 @@ export function primary(entry: VocabEntry): string {
   return (entry.translation ?? '').split(/[,;]/)[0]!.trim();
 }
 
+/** Accuracy 0..1; never-reviewed counts as 0 (so it's prioritized). */
+function accuracy(e: VocabEntry): number {
+  return e.reviews > 0 ? (e.correct ?? 0) / e.reviews : 0;
+}
+
 /**
- * Order entries for review: never-reviewed first, then ones answered wrong last
- * time, then least-recently reviewed. (Simple spaced-repetition heuristic.)
+ * Order entries for review (simple spaced repetition): never-reviewed first,
+ * then lowest accuracy (often-wrong before often-right), then answered-wrong
+ * last time, then least-recently reviewed. So mastered words resurface least.
  */
 export function selectForReview(vocab: VocabEntry[], size: number): VocabEntry[] {
   return vocab
     .filter((e) => primary(e))
     .slice()
     .sort((a, b) => {
-      if (a.reviews !== b.reviews) return a.reviews - b.reviews;
+      const af = a.reviews === 0 ? 0 : 1;
+      const bf = b.reviews === 0 ? 0 : 1;
+      if (af !== bf) return af - bf; // never-reviewed first
+      if (accuracy(a) !== accuracy(b)) return accuracy(a) - accuracy(b); // weakest first
       const aw = a.lastCorrect === false ? 0 : 1;
       const bw = b.lastCorrect === false ? 0 : 1;
       if (aw !== bw) return aw - bw;
