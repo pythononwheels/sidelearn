@@ -5,7 +5,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.33] — 2026-06-17
+## [0.6.34] — 2026-06-17
+
+### Changed
+- **Results moved into a full-screen "Ergebnisse" view** (card per word/sentence/
+  paragraph, collapsible), reached via a nav button or the "Neues Ergebnis →
+  anzeigen" banner. No longer stacked inline.
+- **Consistent full-view title bar** across Chat, Quiz, Üben-chooser and
+  Ergebnisse: colour-marked (accent) and rounded; **double-clicking it closes**
+  the view (× still works too).
+- **Spinner (dancing dots)** for loading states: page/quiz generation, the
+  Seiten-Quiz button, streaming chat, and loading result cards.
 
 ### Changed
 - Translating a **single word** now: titles the card with the word (not

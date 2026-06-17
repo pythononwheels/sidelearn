@@ -1,3 +1,4 @@
+import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
 import { LANG_LABELS, LANGUAGES, MARKER_COLORS, type Language, type Settings } from '@/core/config';
@@ -62,6 +63,7 @@ export function App() {
   const [colorOpen, setColorOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [reviewChooser, setReviewChooser] = useState(false);
+  const [resultsOpen, setResultsOpen] = useState(false);
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [newResultNotice, setNewResultNotice] = useState(false);
@@ -119,18 +121,25 @@ export function App() {
     };
   }, []);
 
-  // While a full-screen view (quiz/chat) is open, a new result can't be seen —
-  // surface a banner instead of silently stacking it behind the takeover.
-  const fullscreen = quiz !== null || chatOpen;
+  // A new result lives in the Ergebnisse view; if it's not open, show a banner.
   useEffect(() => {
-    if (fullscreen && results.length > prevResultLen.current) setNewResultNotice(true);
+    if (results.length > prevResultLen.current && !resultsOpen) setNewResultNotice(true);
     prevResultLen.current = results.length;
-  }, [results, fullscreen]);
+  }, [results, resultsOpen]);
   useEffect(() => {
-    if (!fullscreen) setNewResultNotice(false);
-  }, [fullscreen]);
+    if (resultsOpen) setNewResultNotice(false);
+  }, [resultsOpen]);
 
   if (!settings) return null;
+
+  /** Open exactly one full-view (others close). */
+  const showOnly = (v: 'chat' | 'results' | 'chooser' | 'none') => {
+    setChatOpen(v === 'chat');
+    setResultsOpen(v === 'results');
+    setReviewChooser(v === 'chooser');
+    setQuiz(null);
+  };
+  const fullscreen = chatOpen || quiz !== null || reviewChooser || resultsOpen;
 
   async function patch(p: Partial<Settings>) {
     setLocal(await setSettings(p));
@@ -229,6 +238,8 @@ export function App() {
 
   async function startReview(mode: Settings['reviewMode']) {
     setReviewChooser(false);
+    setChatOpen(false);
+    setResultsOpen(false);
     if (!settings) return;
     void patch({ reviewMode: mode });
 
@@ -279,6 +290,7 @@ export function App() {
         hideSource: true,
         pageKey: currentKey,
       });
+      showOnly('results');
     }
   }
 
@@ -308,7 +320,7 @@ export function App() {
   if (!settings.onboarded) return <Onboarding initial={settings} onDone={patch} />;
 
   return (
-    <main class={`ll-panel ${chatOpen ? 'll-full' : ''}`}>
+    <main class={`ll-panel ${fullscreen ? 'll-full' : ''}`}>
       <header class="ll-panel-head">
         <div class="ll-head-left">
           <span class="ll-badge">
@@ -331,23 +343,16 @@ export function App() {
         </div>
       </header>
 
-      {fullscreen && newResultNotice && (
+      {newResultNotice && !resultsOpen && (
         <div class="ll-notice">
-          <span>Neues Ergebnis im Panel.</span>
-          <button
-            type="button"
-            onClick={() => {
-              setQuiz(null);
-              setChatOpen(false);
-              setNewResultNotice(false);
-            }}
-          >
+          <span>Neues Ergebnis.</span>
+          <button type="button" onClick={() => showOnly('results')}>
             anzeigen
           </button>
         </div>
       )}
 
-      {!chatOpen && (
+      {!fullscreen && (
       <>
       <div class="ll-mark-row">
         <button
@@ -408,7 +413,7 @@ export function App() {
           class="ll-navbtn"
           disabled={!canReview(vocab)}
           title="Üben: Wörter, Sätze (Lückentext) oder Mix (ab 4 Wörtern)."
-          onClick={() => setReviewChooser(true)}
+          onClick={() => showOnly('chooser')}
         >
           Vokabeln üben
         </button>
@@ -428,16 +433,24 @@ export function App() {
           title={online ? undefined : 'LM Studio offline'}
           onClick={startPageQuiz}
         >
-          {quizLoading ? 'Quiz…' : 'Seiten-Quiz'}
+          {quizLoading ? <Dots /> : 'Seiten-Quiz'}
         </button>
         <button
           type="button"
           class="ll-navbtn"
           disabled={!online}
           title={online ? undefined : 'LM Studio offline'}
-          onClick={() => setChatOpen(true)}
+          onClick={() => showOnly('chat')}
         >
           Chat
+        </button>
+        <button
+          type="button"
+          class="ll-navbtn"
+          disabled={results.length === 0}
+          onClick={() => showOnly('results')}
+        >
+          Ergebnisse ({results.length})
         </button>
       </nav>
       {quizError && <p class="ll-error ll-nav-error">{quizError}</p>}
@@ -505,10 +518,10 @@ export function App() {
         />
       ) : quiz ? (
         <Quiz state={quiz} onExit={() => setQuiz(null)} />
+      ) : resultsOpen ? (
+        <ResultsView results={results} pageKey={currentKey} onExit={() => setResultsOpen(false)} />
       ) : (
         <>
-          <ResultsView results={results} pageKey={currentKey} />
-
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
             <summary>Vokabeln ({vocab.length})</summary>
             <div class="ll-vocab-collect">
@@ -638,14 +651,15 @@ function Quiz({ state, onExit }: { state: QuizState; onExit: () => void }) {
 
   return (
     <section class="ll-review">
-      <div class="ll-review-head">
-        <span class="ll-review-progress">
-          {title} · {index + 1} / {questions.length}
-        </span>
-        <button type="button" class="ll-close" title="beenden" onClick={onExit}>
-          ×
-        </button>
-      </div>
+      <FullHeader
+        title={title}
+        extra={
+          <span class="ll-review-progress">
+            {index + 1} / {questions.length}
+          </span>
+        }
+        onExit={onExit}
+      />
 
       <p class="ll-review-word">{q.prompt}</p>
 
@@ -698,12 +712,7 @@ function ReviewChooser({
   ];
   return (
     <section class="ll-chooser">
-      <div class="ll-result-head">
-        <h2>Üben</h2>
-        <button type="button" class="ll-close" title="schließen" onClick={onCancel}>
-          ×
-        </button>
-      </div>
+      <FullHeader title="Üben" onExit={onCancel} />
       {modes.map((m) => (
         <button
           key={m.value}
@@ -769,25 +778,61 @@ function VocabList({ entries }: { entries: VocabEntry[] }) {
   );
 }
 
-function ResultsView({ results, pageKey: key }: { results: PanelResult[]; pageKey: string }) {
-  if (results.length === 0) {
-    return (
-      <section class="ll-result ll-empty">
-        <p>Markiere Text auf der Seite, dann Rechtsklick → <b>Sidelearn: übersetzen</b>.</p>
-        <p>Oder fahre über ein <span class="ll-hint-mark">unterstrichenes</span> Wort.</p>
-      </section>
-    );
-  }
+/** Full-view title bar: colour-marked, double-click anywhere closes. */
+function FullHeader({
+  title,
+  extra,
+  onExit,
+}: {
+  title: string;
+  extra?: ComponentChildren;
+  onExit: () => void;
+}) {
   return (
-    <section class="ll-results">
-      {results.length > 1 && (
-        <button type="button" class="ll-clearall" onClick={() => void clearResults(key)}>
-          alle löschen ({results.length})
-        </button>
-      )}
-      {results.map((r) => (
-        <ResultCard key={r.id} result={r} onRemove={() => void removeResult(key, r.id)} />
-      ))}
+    <div class="ll-fullhead" onDblClick={onExit} title="Doppelklick zum Schließen">
+      <span class="ll-fullhead-title">{title}</span>
+      {extra}
+      <button type="button" class="ll-close" title="schließen" onClick={onExit}>
+        ×
+      </button>
+    </div>
+  );
+}
+
+function ResultsView({
+  results,
+  pageKey: key,
+  onExit,
+}: {
+  results: PanelResult[];
+  pageKey: string;
+  onExit: () => void;
+}) {
+  return (
+    <section class="ll-fullview">
+      <FullHeader
+        title="Ergebnisse"
+        extra={
+          results.length > 0 ? (
+            <button type="button" class="ll-clearall" onClick={() => void clearResults(key)}>
+              alle löschen
+            </button>
+          ) : undefined
+        }
+        onExit={onExit}
+      />
+      <div class="ll-fullview-body">
+        {results.length === 0 ? (
+          <p class="ll-vocab-empty">
+            Noch keine Ergebnisse. Markiere Text → Rechtsklick → <b>Sidelearn: übersetzen</b>, oder
+            fahre über ein <span class="ll-hint-mark">unterstrichenes</span> Wort und klick „mehr".
+          </p>
+        ) : (
+          results.map((r) => (
+            <ResultCard key={r.id} result={r} onRemove={() => void removeResult(key, r.id)} />
+          ))
+        )}
+      </div>
     </section>
   );
 }
@@ -818,11 +863,24 @@ function ResultCard({ result, onRemove }: { result: PanelResult; onRemove: () =>
   );
 }
 
+/** Animated three-dot spinner. */
+function Dots() {
+  return (
+    <span class="ll-dots" aria-label="lädt">
+      <span />
+      <span />
+      <span />
+    </span>
+  );
+}
+
 function ResultBody({ result }: { result: PanelResult }) {
   return (
     <>
       {result.status === 'loading' && (
-        <p class="ll-muted">{result.kind === 'translation' ? 'übersetze…' : 'erkläre…'}</p>
+        <p class="ll-muted">
+          {result.kind === 'translation' ? 'übersetze' : 'erkläre'} <Dots />
+        </p>
       )}
       {result.status === 'error' && <p class="ll-error">Fehler: {result.error}</p>}
 
@@ -968,14 +1026,7 @@ function Chat({
 
   return (
     <div class="ll-chat">
-      <div class="ll-chatview-head">
-        <button type="button" class="ll-chatview-title" title="schließen" onClick={onExit}>
-          ▾ Chat zur Seite
-        </button>
-        <button type="button" class="ll-close" title="schließen" onClick={onExit}>
-          ×
-        </button>
-      </div>
+      <FullHeader title="Chat zur Seite" onExit={onExit} />
       <div class="ll-chat-messages" ref={listRef}>
         {messages.length === 0 && (
           <p class="ll-chat-hint">
@@ -996,7 +1047,9 @@ function Chat({
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }}
                 />
               ) : (
-                <div class={`ll-bubble ll-bubble-${m.role}`}>{m.content || (streaming ? '…' : '')}</div>
+                <div class={`ll-bubble ll-bubble-${m.role}`}>
+                  {m.content || (streaming ? <Dots /> : '')}
+                </div>
               )}
               {m.role === 'assistant' && m.content && !streaming && !m.translation && (
                 <button
