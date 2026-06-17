@@ -9,7 +9,7 @@
 
 import { resolveWord } from '@/core/wordinfo';
 import { getSettings, watchSettings } from '@/core/settings';
-import { getPanelOpen, watchPanelOpen } from '@/core/panel';
+import { getOpenWindows, watchOpenWindows } from '@/core/panel';
 import { loadNames } from '@/core/names';
 import { clear, highlight } from './highlighter';
 import { cancelHide, scheduleHide, showHover } from './hover';
@@ -20,8 +20,13 @@ export default defineContentScript({
   async main() {
     injectMarkerStyle();
     let settings = await getSettings();
-    let panelOpen = await getPanelOpen();
     const names = await loadNames();
+    // Mark only when THIS window's panel is open (not other windows').
+    const myWindowId = (await browser.runtime
+      .sendMessage({ type: 'whichWindow' })
+      .catch(() => null)) as number | null;
+    const inOpenWindow = (ids: number[]) => myWindowId != null && ids.includes(myWindowId);
+    let panelOpen = inOpenWindow(await getOpenWindows());
 
     async function apply() {
       clear();
@@ -58,8 +63,8 @@ export default defineContentScript({
       settings = next;
       void apply();
     });
-    watchPanelOpen((open) => {
-      panelOpen = open;
+    watchOpenWindows((ids) => {
+      panelOpen = inOpenWindow(ids);
       void apply();
     });
   },

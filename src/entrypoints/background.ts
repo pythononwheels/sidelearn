@@ -14,7 +14,7 @@ import { getSettings } from '@/core/settings';
 import { clearResults, pageKey, pushResult, updateResult } from '@/core/result';
 import { resolveWord } from '@/core/wordinfo';
 import { addVocab } from '@/core/vocab';
-import { setPanelOpen } from '@/core/panel';
+import { addOpenWindow, clearOpenWindows, removeOpenWindow } from '@/core/panel';
 
 // chrome.sidePanel is Chrome-only and not in the cross-browser `browser` types.
 declare const chrome: {
@@ -30,9 +30,8 @@ const MENU_EXPLAIN = 'll-explain';
 export default defineBackground(() => {
   chrome.sidePanel?.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 
-  // On (re)start no panel can be connected yet — clear any stale "open" flag so
-  // markings never linger after the panel is gone.
-  void setPanelOpen(false);
+  // On (re)start no panel can be connected yet — clear stale open-window state.
+  void clearOpenWindows();
 
   browser.runtime.onInstalled.addListener(() => {
     browser.contextMenus.create({
@@ -65,26 +64,36 @@ export default defineBackground(() => {
     })();
   });
 
-  // Track side-panel open/closed via a long-lived port from the panel.
+  // Track which windows have the panel open, via a port named panel:<windowId>.
   browser.runtime.onConnect.addListener((port) => {
-    if (port.name !== 'panel') return;
-    void setPanelOpen(true);
-    port.onDisconnect.addListener(() => void setPanelOpen(false));
+    const m = /^panel:(-?\d+)$/.exec(port.name);
+    if (!m) return;
+    const windowId = Number(m[1]);
+    void addOpenWindow(windowId);
+    port.onDisconnect.addListener(() => void removeOpenWindow(windowId));
   });
 
+  // Async responder: tell a content script which window it's in.
+  browser.runtime.onMessage.addListener((msg: unknown, sender: { tab?: { windowId?: number } }) => {
+    if ((msg as { type?: string }).type === 'whichWindow') {
+      return Promise.resolve(sender.tab?.windowId ?? null);
+    }
+    return Promise.resolve(undefined);
+  });
+
+  // Fire-and-forget actions; result flows to the panel via storage.
   browser.runtime.onMessage.addListener((msg: unknown, sender: { tab?: { url?: string } }) => {
     const m = msg as Message;
+    if (m.type !== 'translateToPanel' && m.type !== 'explainToPanel' && m.type !== 'saveVocab') {
+      return;
+    }
     void (async () => {
-      // Prefer the sender tab (content script), then a key the panel passed
-      // explicitly, then the active tab — the SW's own active-tab query is the
-      // least reliable, so it's the last resort.
       const explicit = m.type === 'translateToPanel' ? m.pageKey : undefined;
       const key = sender.tab?.url ? pageKey(sender.tab.url) : explicit || (await activeKey());
       if (m.type === 'translateToPanel') await runTranslate(key, m.text, m.title, m.hideSource);
       else if (m.type === 'explainToPanel') await runExplain(key, m.word, m.context);
       else if (m.type === 'saveVocab') await captureWord(m.word, m.context);
     })();
-    return false;
   });
 });
 

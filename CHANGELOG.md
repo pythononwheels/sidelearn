@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.30] — 2026-06-17
+## [0.6.31] — 2026-06-17
+
+### Fixed
+- Inline marking is now **per window**: it only appears in the window whose side
+  panel is open, not in other windows. The panel reports its window id via a
+  `panel:<windowId>` port; the content script marks only if its window (asked via
+  a `whichWindow` message) is in the open set.
 
 ### Changed
 - Vocab list aligned: the CEFR band now sits in a fixed left column, so words and

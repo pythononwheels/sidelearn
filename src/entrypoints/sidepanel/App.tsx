@@ -75,16 +75,21 @@ export function App() {
     void getBookmarks().then(setBookmarks);
     const offVocab = watchVocab(setVocab);
     const offBookmarks = watchBookmarks(setBookmarks);
-    // Signal "panel open" to the background; auto-disconnects when it closes.
-    // Reconnect if the service worker restarts, so the flag stays accurate.
+    // Signal "panel open for THIS window" to the background via a port named
+    // panel:<windowId>; auto-disconnects on close, reconnects if the SW restarts.
     let closing = false;
-    let port = browser.runtime.connect({ name: 'panel' });
-    function reconnect() {
-      if (closing) return;
-      port = browser.runtime.connect({ name: 'panel' });
-      port.onDisconnect.addListener(reconnect);
-    }
-    port.onDisconnect.addListener(reconnect);
+    let port: ReturnType<typeof browser.runtime.connect> | null = null;
+    void (async () => {
+      const win = await browser.windows.getCurrent().catch(() => null);
+      const wid = win?.id ?? -1;
+      const connect = () => {
+        port = browser.runtime.connect({ name: `panel:${wid}` });
+        port.onDisconnect.addListener(() => {
+          if (!closing) connect();
+        });
+      };
+      connect();
+    })();
 
     // Show the active page's results; follow tab switches and navigation.
     let key = '';
@@ -108,7 +113,7 @@ export function App() {
       offVocab();
       offBookmarks();
       offResults();
-      port.disconnect();
+      port?.disconnect();
       browser.tabs.onActivated.removeListener(onActivated);
       browser.tabs.onUpdated.removeListener(onUpdated);
     };

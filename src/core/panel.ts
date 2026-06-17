@@ -1,14 +1,25 @@
 /**
- * Side-panel open/closed state. The panel opens a runtime port to the
- * background; the background flips this flag on connect/disconnect. The content
- * script watches it so inline marking only shows while the panel is open.
+ * Which browser windows currently have the side panel open. The panel opens a
+ * runtime port named `panel:<windowId>`; the background adds/removes the id.
+ * The content script marks only when its own window is in this set, so marking
+ * doesn't bleed into other windows that have no panel open.
  */
 
 import { storage } from 'wxt/storage';
 import { STORAGE_KEYS } from './config';
 
-const item = storage.defineItem<boolean>(STORAGE_KEYS.panelOpen, { fallback: false });
+const item = storage.defineItem<number[]>(STORAGE_KEYS.panelOpen, { fallback: [] });
 
-export const getPanelOpen = () => item.getValue();
-export const setPanelOpen = (open: boolean) => item.setValue(open);
-export const watchPanelOpen = (cb: (open: boolean) => void) => item.watch(cb);
+export const getOpenWindows = () => item.getValue();
+export const watchOpenWindows = (cb: (ids: number[]) => void) => item.watch(cb);
+export const clearOpenWindows = () => item.setValue([]);
+
+export async function addOpenWindow(id: number): Promise<void> {
+  const ids = await item.getValue();
+  if (!ids.includes(id)) await item.setValue([...ids, id]);
+}
+
+export async function removeOpenWindow(id: number): Promise<void> {
+  const ids = await item.getValue();
+  await item.setValue(ids.filter((x) => x !== id));
+}
