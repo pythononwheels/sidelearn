@@ -23,34 +23,34 @@ body {
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 18px;
-  background: var(--ll-accent-grad);
-  color: #fff;
-  box-shadow: 0 2px 12px rgba(80, 60, 90, 0.18);
+  background: var(--ll-surface);
+  color: var(--ll-text);
+  border-bottom: 1px solid var(--ll-border);
 }
 .lz-brand {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-weight: 800;
+  gap: 8px;
+  font-weight: 700;
   letter-spacing: 0.01em;
 }
 .lz-brand-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 4px;
-  background: #fff;
-  opacity: 0.95;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--ll-accent-grad);
 }
 .lz-mode {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--ll-accent-soft);
+  color: var(--ll-accent-strong);
 }
 .lz-appbar-title {
   margin-left: auto;
@@ -59,7 +59,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
-  opacity: 0.9;
+  color: var(--ll-text-soft);
 }
 
 /* Reading column -------------------------------------------------------- */

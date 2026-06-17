@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.53] — 2026-06-17
+
+### Changed
+- **Calmer lesson app bar.** The full violet gradient top bar was too heavy and
+  clashed with the subtle sidebar header — it's now a light surface bar with a
+  thin divider, the accent kept only on the small Sidelearn logo square and the
+  "LERN-MODUS" chip, so both surfaces read consistently.
+
 ## [0.6.52] — 2026-06-17
 
 ### Added
