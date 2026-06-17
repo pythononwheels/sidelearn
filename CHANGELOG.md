@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [0.6.25] — 2026-06-17
+## [0.6.26] — 2026-06-17
+
+### Added
+- Wiktionary inflection maps for **all languages**: forms-fr/nl/de/en (joining
+  forms-es). Each ~144–238 KB. Resolves inflected words to their lemma for
+  FreeDict translation across every learning language (no hand work; the ~1 GB
+  extracts are only streamed at build time).
 
 ### Added
 - **Wiktionary inflection map** (`forms-<learn>.json`): resolves inflected words
