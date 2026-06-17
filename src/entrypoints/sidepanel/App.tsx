@@ -774,46 +774,60 @@ const PERIOD_TABS: ReadonlyArray<{ key: Period; label: string }> = [
 /** Progress card: period switcher + two headline values, streak & accuracy. */
 function StatsCard({ stats, streak }: { stats: LearnStats; streak: number }) {
   const [period, setPeriod] = useState<Period>('week');
+  const [collapsed, setCollapsed] = useState(false);
   const p = stats[period];
   const acc = stats.answered > 0 ? `${Math.round(stats.accuracy * 100)}%` : '–';
   return (
-    <section class="ll-prog">
+    <section class={`ll-prog ${collapsed ? 'collapsed' : ''}`}>
       <div class="ll-prog-head">
-        <span class="ll-prog-title">
+        <span
+          class="ll-prog-title"
+          title="Doppelklick: ein-/ausklappen"
+          onDblClick={() => setCollapsed((c) => !c)}
+        >
           <TrophyIcon size={14} /> Erfolge
         </span>
-        <div class="ll-prog-tabs" role="tablist">
-          {PERIOD_TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              class={`ll-prog-tab ${period === t.key ? 'sel' : ''}`}
-              aria-selected={period === t.key}
-              onClick={() => setPeriod(t.key)}
+        {!collapsed && (
+          <div class="ll-prog-tabs" role="tablist">
+            {PERIOD_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                class={`ll-prog-tab ${period === t.key ? 'sel' : ''}`}
+                aria-selected={period === t.key}
+                onClick={() => setPeriod(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {!collapsed && (
+        <>
+          <div class="ll-prog-values">
+            <div class="ll-prog-val">
+              <span class="ll-prog-num">{p.added}</span>
+              <span class="ll-prog-lbl">neue Vokabeln</span>
+            </div>
+            <div class="ll-prog-val">
+              <span class="ll-prog-num">{p.reviewed}</span>
+              <span class="ll-prog-lbl">Wörter geübt</span>
+            </div>
+          </div>
+          <div class="ll-prog-foot">
+            <span class="ll-prog-chip" title="Tage in Folge mit erledigter Challenge">
+              <FlameIcon class="ll-ic-flame" size={13} /> {streak} Tage Streak
+            </span>
+            <span
+              class="ll-prog-chip"
+              title={`${stats.correct}/${stats.answered} richtig beantwortet`}
             >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div class="ll-prog-values">
-        <div class="ll-prog-val">
-          <span class="ll-prog-num">{p.added}</span>
-          <span class="ll-prog-lbl">neue Vokabeln</span>
-        </div>
-        <div class="ll-prog-val">
-          <span class="ll-prog-num">{p.reviewed}</span>
-          <span class="ll-prog-lbl">Wörter geübt</span>
-        </div>
-      </div>
-      <div class="ll-prog-foot">
-        <span class="ll-prog-chip" title="Tage in Folge mit erledigter Challenge">
-          <FlameIcon class="ll-ic-flame" size={13} /> {streak} Tage Streak
-        </span>
-        <span class="ll-prog-chip" title={`${stats.correct}/${stats.answered} richtig beantwortet`}>
-          <TargetIcon class="ll-ic-target" size={13} /> {acc} Übungsquote
-        </span>
-      </div>
+              <TargetIcon class="ll-ic-target" size={13} /> {acc} Übungsquote
+            </span>
+          </div>
+        </>
+      )}
     </section>
   );
 }

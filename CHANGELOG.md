@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.45] — 2026-06-17
+
+### Changed
+- **Double-click the "Erfolge" title to collapse the card** (tabs and values
+  hide, leaving just the header), matching the double-click-to-close gesture of
+  the full views.
+
 ## [0.6.44] — 2026-06-17
 
 ### Changed

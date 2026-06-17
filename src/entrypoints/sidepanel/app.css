@@ -1136,6 +1136,9 @@ body {
   gap: 8px;
   margin-bottom: 12px;
 }
+.ll-prog.collapsed .ll-prog-head {
+  margin-bottom: 0;
+}
 .ll-prog-title {
   display: inline-flex;
   align-items: center;
@@ -1144,6 +1147,8 @@ body {
   font-weight: 700;
   color: var(--ll-text-soft);
   letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
 }
 .ll-prog-title svg {
   color: #d9a52e;
