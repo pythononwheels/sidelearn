@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.56] — 2026-06-17
+
+### Changed
+- **Daily card button reflects lesson progress.** If the current mini-lesson is
+  already in progress, the button reads "Fortsetzen →" (was always
+  "Lektion starten"); still "Nächste Lektion →" after finishing one and
+  "Lektion starten →" for a fresh one.
+
 ## [0.6.55] — 2026-06-17
 
 ### Changed

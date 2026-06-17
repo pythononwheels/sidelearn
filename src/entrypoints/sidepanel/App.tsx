@@ -101,6 +101,7 @@ export function App() {
   const [daily, setDaily] = useState<DailyState | null>(null);
   const [dailyEst, setDailyEst] = useState<DifficultyEstimate | null>(null);
   const [lessonsDone, setLessonsDone] = useState<Set<string>>(new Set());
+  const [lessonsStarted, setLessonsStarted] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState<LearnStats | null>(null);
   const prevResultLen = useRef(0);
   const resultsReady = useRef(false);
@@ -118,10 +119,15 @@ export function App() {
     void getBookmarks().then(setBookmarks);
     const offVocab = watchVocab(setVocab);
     const offBookmarks = watchBookmarks(setBookmarks);
-    const completedUrls = (all: Record<string, { completed?: boolean }>) =>
-      new Set(Object.entries(all).filter(([, l]) => l.completed).map(([url]) => url));
-    void getLessons().then((all) => setLessonsDone(completedUrls(all)));
-    const offLessons = watchLessons((all) => setLessonsDone(completedUrls(all)));
+    const applyLessons = (all: Record<string, { completed?: boolean }>) => {
+      const done = new Set<string>();
+      const started = new Set<string>();
+      for (const [url, l] of Object.entries(all)) (l.completed ? done : started).add(url);
+      setLessonsDone(done);
+      setLessonsStarted(started);
+    };
+    void getLessons().then(applyLessons);
+    const offLessons = watchLessons(applyLessons);
     // Signal "panel open for THIS window" to the background via a port named
     // panel:<windowId>; auto-disconnects on close, reconnects if the SW restarts.
     let closing = false;
@@ -753,6 +759,7 @@ export function App() {
               total={dailyArticles.length}
               doneCount={dailyDoneCount}
               allDone={dailyAllDone}
+              started={lessonsStarted.has(currentArticle.url)}
               onLesson={() => openLesson(currentArticle)}
               onOpen={openDaily}
             />
@@ -833,6 +840,7 @@ function DailyCard({
   total,
   doneCount,
   allDone,
+  started,
   onLesson,
   onOpen,
 }: {
@@ -842,6 +850,7 @@ function DailyCard({
   total: number;
   doneCount: number;
   allDone: boolean;
+  started: boolean;
   onLesson: () => void;
   onOpen: () => void;
 }) {
@@ -879,7 +888,7 @@ function DailyCard({
           </div>
           <div class="ll-daily-actions">
             <button type="button" class="ll-daily-read" onClick={onLesson}>
-              {doneCount > 0 ? 'Nächste Lektion →' : 'Lektion starten →'}
+              {started ? 'Fortsetzen →' : doneCount > 0 ? 'Nächste Lektion →' : 'Lektion starten →'}
             </button>
           </div>
           <button type="button" class="ll-daily-wiki" onClick={onOpen}>
