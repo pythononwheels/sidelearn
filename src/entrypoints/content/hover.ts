@@ -48,7 +48,7 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
     <ul class="ll-senses"></ul>
     <div class="ll-actions">
       <button class="ll-save" type="button">★ merken</button>
-      <button class="ll-more" type="button">mehr in der Sidebar →</button>
+      <button class="ll-more" type="button">mehr →</button>
     </div>
   `;
   card.querySelector('.ll-word')!.textContent = info.word;
@@ -72,7 +72,7 @@ export function showHover(anchor: HTMLElement, info: WordInfo): void {
 
   card.querySelector('.ll-more')!.addEventListener('click', () => {
     void sendMessage({ type: 'explainToPanel', word: info.word, context: sentenceAround(anchor) });
-    card.querySelector('.ll-more')!.textContent = '✓ im Panel (öffne die Sidebar)';
+    card.querySelector('.ll-more')!.textContent = '✓ im Panel';
   });
 
   card.querySelector('.ll-save')!.addEventListener('click', () => {

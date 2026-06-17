@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.6.38] — 2026-06-17
+
+### Changed
+- **Tidier hover actions.** Shortened the "mehr in der Sidebar →" button to
+  "mehr →" and its post-click confirmation to "✓ im Panel", and pinned both
+  hover buttons to a single line (`white-space: nowrap`) so they no longer wrap
+  awkwardly in the card.
+
 ## [0.6.37] — 2026-06-17
 
 ### Changed

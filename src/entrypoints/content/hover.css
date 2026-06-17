@@ -76,6 +76,7 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  white-space: nowrap;
 }
 .ll-save {
   font-weight: 600;
