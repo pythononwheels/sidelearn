@@ -28,7 +28,9 @@ h1{font-size:20px}
 .btn.primary{background:#6b57d6;color:#fff;border-color:transparent}
 .btn:disabled{opacity:.5;cursor:default}
 .card{border:1px solid #ccc3;border-radius:12px;padding:14px;margin:10px 0;display:flex;gap:12px}
-.card img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex:0 0 auto}
+.card img,.card .ph{width:64px;height:64px;border-radius:8px;flex:0 0 auto}
+.card img{object-fit:cover}
+.card .ph{background:#8881;display:flex;align-items:center;justify-content:center;color:#8887}
 .lvl{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;margin-right:4px;border:1px solid #ccc4}
 .lvl.done{background:#2f9e6b22;color:#2f9e6b;border-color:transparent}
 .muted{color:#8884;font-size:13px}
@@ -90,7 +92,16 @@ def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
         badges = "".join(
             f"<span class='lvl {'done' if lv in done else ''}'>{lv}</span>" for lv in config.LEVELS
         )
-        thumb = f"<img src='{escape(art['thumbnail'])}'>" if art.get("thumbnail") else ""
+        thumb = (
+            f"<img src='{escape(art['thumbnail'])}'>"
+            if art.get("thumbnail")
+            else (
+                "<div class=ph><svg width=26 height=26 viewBox='0 0 24 24' fill=none "
+                "stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round>"
+                "<rect width=18 height=18 x=3 y=3 rx=2/><circle cx=9 cy=9 r=2/>"
+                "<path d='m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21'/></svg></div>"
+            )
+        )
         full = len(done) >= len(config.LEVELS)
         action = (
             "<span class=run>läuft…</span>"
