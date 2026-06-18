@@ -49,6 +49,20 @@ pre{white-space:pre-wrap;background:#0001;padding:10px;border-radius:8px}
 .qbox b{color:inherit}
 @media(max-width:760px){.para{grid-template-columns:1fr}.para .orig{order:2}}
 .collab{font-size:11px;color:#8886;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.cards{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.kpi{border:1px solid #ccc3;border-radius:12px;padding:10px 16px;min-width:110px}
+.kpi b{display:block;font-size:22px}
+.kpi span{color:#8887;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.statrow{display:grid;grid-template-columns:170px 1fr auto;gap:10px;align-items:center;margin:7px 0;font-size:13px}
+.statlabel{font-weight:700}
+.bar2{height:16px;border-radius:6px;overflow:hidden;display:flex;background:#8881}
+.bar2 .in{background:#6b57d6}.bar2 .out{background:#a07ad0}
+.statnum{color:#8888;white-space:nowrap}
+.legend{font-size:12px;color:#8888;margin:4px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin:0 4px}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
+td,th{text-align:left;padding:5px 8px;border-bottom:1px solid #ccc3;white-space:nowrap}
+.err{color:#d2603f}
 """
 
 
@@ -79,15 +93,82 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
         "".join(f"<a class=day href='/admin/day?lang={lang}&date={d}'>{d}</a>" for d in dates)
         or "<span class=muted>noch keine Tage entdeckt</span>"
     )
+    t = db.telemetry_totals()
+    kpis = (
+        "<div class=cards>"
+        f"<div class=kpi><b>{t['calls']}</b><span>LLM-Calls</span></div>"
+        f"<div class=kpi><b>{t['tin']:,}</b><span>Input-Tokens</span></div>"
+        f"<div class=kpi><b>{t['tout']:,}</b><span>Output-Tokens</span></div>"
+        f"<div class=kpi><b>${t['cost']:.4f}</b><span>Kosten (geschätzt)</span></div>"
+        f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
+        "</div>"
+    )
     body = (
         f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
         f"<form method=post action='/admin/discover?lang={lang}&date={today}'>"
         f"<button class='btn primary'>Heute entdecken ({lang.upper()} · {today})</button></form>"
+        f"<h3>Telemetrie <a class=btn href='/admin/stats'>Details →</a></h3>{kpis}"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
         f"<p class=muted>Provider: {config.PROVIDER} · Modell: {config.GEMINI_MODEL} · "
         f"Level: {', '.join(config.LEVELS)}</p>"
     )
     return page("Sidelearn Admin", body)
+
+
+@router.get("/admin/stats", response_class=HTMLResponse)
+def admin_stats() -> HTMLResponse:
+    t = db.telemetry_totals()
+    by = db.telemetry_by_fn()
+    recent = db.telemetry_recent(30)
+    maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
+
+    bars = []
+    for r in by:
+        total = r["tin"] + r["tout"]
+        w = total / maxtok * 100
+        inpct = (r["tin"] / total * 100) if total else 0
+        bars.append(
+            f"<div class=statrow><div class=statlabel>{escape(r['label'])}</div>"
+            f"<div><div class=bar2 style='width:{w:.1f}%'>"
+            f"<span class=in style='width:{inpct:.1f}%'></span><span class=out style='flex:1'></span>"
+            f"</div></div>"
+            f"<div class=statnum>{r['tin']:,} / {r['tout']:,} · ${r['cost']:.4f} · {r['calls']}×</div></div>"
+        )
+
+    rows = []
+    for r in recent:
+        st = "<span class=err>error</span>" if r["status"] == "error" else "ok"
+        rows.append(
+            f"<tr><td>{escape((r['ts'] or '')[:19])}</td><td>{escape(r['model'] or '')}</td>"
+            f"<td>{escape((r['fn'] or '') + ':' + (r['level'] or ''))}</td><td>{escape(r['lang'] or '')}</td>"
+            f"<td>{r['input_tokens']:,}</td><td>{r['output_tokens']:,}</td>"
+            f"<td>${r['cost_usd'] or 0:.4f}</td><td>{r['ms']} ms</td><td>{st}</td>"
+            f"<td>{escape((r['article_url'] or '').replace('https://', ''))[:40]}</td></tr>"
+        )
+
+    kpis = (
+        "<div class=cards>"
+        f"<div class=kpi><b>{t['calls']}</b><span>Calls</span></div>"
+        f"<div class=kpi><b>{t['tin']:,}</b><span>Input</span></div>"
+        f"<div class=kpi><b>{t['tout']:,}</b><span>Output</span></div>"
+        f"<div class=kpi><b>${t['cost']:.4f}</b><span>Kosten</span></div>"
+        f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
+        "</div>"
+    )
+    body = (
+        "<p><a href='/admin'>← Admin</a></p><h1>Telemetrie</h1>"
+        f"{kpis}"
+        "<h3>Pro Typ (Input/Output-Tokens, Kosten)</h3>"
+        "<div class=legend><i style='background:#6b57d6'></i>Input <i style='background:#a07ad0'></i>Output</div>"
+        + ("".join(bars) or "<p class=muted>Noch keine Calls.</p>")
+        + "<h3>Letzte Calls</h3>"
+        "<table><tr><th>Zeit</th><th>Modell</th><th>Typ</th><th>Lang</th><th>In</th><th>Out</th>"
+        "<th>Kosten</th><th>Dauer</th><th>Status</th><th>Artikel</th></tr>"
+        + ("".join(rows) or "<tr><td colspan=10>—</td></tr>")
+        + "</table>"
+        "<p class=muted>Kosten sind Schätzungen (Preise in config.PRICES).</p>"
+    )
+    return page("Telemetrie", body)
 
 
 @router.get("/admin/day", response_class=HTMLResponse)

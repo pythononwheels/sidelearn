@@ -10,6 +10,7 @@ to the user's native language stays on the client.
 
 import json
 import re
+import time
 from typing import Any
 
 from . import config
@@ -34,21 +35,47 @@ SYSTEM = (
 )
 
 
-def prepare(paragraphs: list[str], lang_code: str, level: str) -> dict[str, Any]:
+def prepare(paragraphs: list[str], lang_code: str, level: str) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Returns (data, meta). data is None on error. meta carries telemetry:
+    model, input_tokens, output_tokens, cost_usd, ms, status, error, excerpt."""
     lang = config.LANG_NAMES.get(lang_code, lang_code)
     system = SYSTEM.format(lang=lang, level=level)
     user = json.dumps(paragraphs, ensure_ascii=False)
-    if config.PROVIDER == "openai":
-        raw = _openai(system, user)
-    elif config.PROVIDER == "gemini":
-        raw = _gemini(system, user)
-    else:
-        return _mock(paragraphs)
-    data = _parse(raw)
-    return _normalize(data, paragraphs)
+    model = (
+        config.OPENAI_MODEL
+        if config.PROVIDER == "openai"
+        else config.GEMINI_MODEL
+        if config.PROVIDER == "gemini"
+        else "mock"
+    )
+    t0 = time.monotonic()
+    try:
+        if config.PROVIDER == "openai":
+            raw, tin, tout = _openai(system, user)
+        elif config.PROVIDER == "gemini":
+            raw, tin, tout = _gemini(system, user)
+        else:
+            raw, tin, tout = json.dumps(_mock_raw(paragraphs)), 0, 0
+    except Exception as e:  # noqa: BLE001
+        return None, _meta(model, 0, 0, t0, "error", str(e), "")
+    data = _normalize(_parse(raw), paragraphs)
+    return data, _meta(model, tin, tout, t0, "ok", None, raw[:4000])
 
 
-def _openai(system: str, user: str) -> str:
+def _meta(model, tin, tout, t0, status, error, excerpt) -> dict[str, Any]:
+    return {
+        "model": model,
+        "input_tokens": int(tin or 0),
+        "output_tokens": int(tout or 0),
+        "cost_usd": config.cost_usd(model, int(tin or 0), int(tout or 0)),
+        "ms": int((time.monotonic() - t0) * 1000),
+        "status": status,
+        "error": error,
+        "excerpt": excerpt,
+    }
+
+
+def _openai(system: str, user: str) -> tuple[str, int, int]:
     from openai import OpenAI
 
     client = OpenAI(api_key=config.OPENAI_API_KEY)
@@ -58,10 +85,11 @@ def _openai(system: str, user: str) -> str:
         response_format={"type": "json_object"},
         temperature=0.4,
     )
-    return resp.choices[0].message.content or "{}"
+    u = resp.usage
+    return resp.choices[0].message.content or "{}", getattr(u, "prompt_tokens", 0), getattr(u, "completion_tokens", 0)
 
 
-def _gemini(system: str, user: str) -> str:
+def _gemini(system: str, user: str) -> tuple[str, int, int]:
     from google import genai
     from google.genai import types
 
@@ -75,7 +103,12 @@ def _gemini(system: str, user: str) -> str:
             temperature=0.4,
         ),
     )
-    return resp.text or "{}"
+    u = resp.usage_metadata
+    return (
+        resp.text or "{}",
+        getattr(u, "prompt_token_count", 0) or 0,
+        getattr(u, "candidates_token_count", 0) or 0,
+    )
 
 
 def _parse(raw: str) -> dict[str, Any]:
@@ -113,7 +146,7 @@ def _normalize(data: dict[str, Any], paragraphs: list[str]) -> dict[str, Any]:
     return {"paragraphs": out_paras, "vocab": vocab, "summary": summary}
 
 
-def _mock(paragraphs: list[str]) -> dict[str, Any]:
+def _mock_raw(paragraphs: list[str]) -> dict[str, Any]:
     """Passthrough for local testing without an API key."""
     return {
         "paragraphs": [{"simplified": p, "question": None} for p in paragraphs],

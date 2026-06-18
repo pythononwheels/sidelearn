@@ -29,6 +29,20 @@ BUILD_HOUR = int(os.getenv("SL_BUILD_HOUR", "4"))
 # Bump when the prepared-content shape changes so old rows are re-generated.
 SCHEMA_VERSION = 1
 
+# Estimated price per 1M tokens (input, output) in USD — tune to current rates.
+PRICES = {
+    "gemini-2.5-flash-lite": (0.10, 0.40),
+    "gemini-2.5-flash": (0.30, 2.50),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4o": (2.50, 10.0),
+}
+DEFAULT_PRICE = (0.20, 0.80)
+
+
+def cost_usd(model: str, in_tokens: int, out_tokens: int) -> float:
+    pin, pout = PRICES.get(model, DEFAULT_PRICE)
+    return in_tokens / 1_000_000 * pin + out_tokens / 1_000_000 * pout
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",

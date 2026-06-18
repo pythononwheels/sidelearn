@@ -35,6 +35,25 @@ CREATE TABLE IF NOT EXISTS daily (
 );
 CREATE INDEX IF NOT EXISTS idx_daily_lookup ON daily (date, lang, rank);
 CREATE INDEX IF NOT EXISTS idx_article_lang ON article (lang);
+CREATE TABLE IF NOT EXISTS telemetry (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts TEXT NOT NULL,
+  provider TEXT,
+  model TEXT,
+  fn TEXT,
+  level TEXT,
+  lang TEXT,
+  article_id TEXT,
+  article_url TEXT,
+  input_tokens INTEGER,
+  output_tokens INTEGER,
+  cost_usd REAL,
+  ms INTEGER,
+  status TEXT,
+  error TEXT,
+  excerpt TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_telemetry_ts ON telemetry (ts);
 """
 
 
@@ -153,3 +172,45 @@ def get_prepared(article_id: str, level: str) -> Optional[dict[str, Any]]:
             (article_id, level, config.SCHEMA_VERSION),
         ).fetchone()
     return json.loads(row["data"]) if row else None
+
+
+def add_telemetry(row: dict[str, Any]) -> None:
+    with conn() as c:
+        c.execute(
+            """INSERT INTO telemetry
+               (ts,provider,model,fn,level,lang,article_id,article_url,
+                input_tokens,output_tokens,cost_usd,ms,status,error,excerpt)
+               VALUES (:ts,:provider,:model,:fn,:level,:lang,:article_id,:article_url,
+                :input_tokens,:output_tokens,:cost_usd,:ms,:status,:error,:excerpt)""",
+            row,
+        )
+
+
+def telemetry_totals() -> dict[str, Any]:
+    with conn() as c:
+        r = c.execute(
+            """SELECT count(*) calls, coalesce(sum(input_tokens),0) tin,
+                      coalesce(sum(output_tokens),0) tout, coalesce(sum(cost_usd),0) cost,
+                      coalesce(sum(status='error'),0) errors
+               FROM telemetry"""
+        ).fetchone()
+    return dict(r)
+
+
+def telemetry_by_fn() -> list[dict[str, Any]]:
+    with conn() as c:
+        rows = c.execute(
+            """SELECT fn||coalesce(':'||level,'') label, count(*) calls,
+                      coalesce(sum(input_tokens),0) tin, coalesce(sum(output_tokens),0) tout,
+                      coalesce(sum(cost_usd),0) cost
+               FROM telemetry GROUP BY label ORDER BY cost DESC"""
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def telemetry_recent(limit: int = 25) -> list[dict[str, Any]]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT * FROM telemetry ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [dict(r) for r in rows]

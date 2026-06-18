@@ -58,12 +58,31 @@ def process_article(article_id: str, levels: list[str] | None = None, force: boo
             if not force and db.has_prepared(article_id, level):
                 skipped += 1
                 continue
-            try:
-                data = llm.prepare(art["paragraphs"], art["lang"], level)
-                db.upsert_prepared(article_id, level, data, _now())
-                made += 1
-            except Exception as e:  # noqa: BLE001
-                errors.append(f"{level}: {e}")
+            data, meta = llm.prepare(art["paragraphs"], art["lang"], level)
+            db.add_telemetry(
+                {
+                    "ts": _now(),
+                    "provider": config.PROVIDER,
+                    "model": meta["model"],
+                    "fn": "prepare",
+                    "level": level,
+                    "lang": art["lang"],
+                    "article_id": article_id,
+                    "article_url": art["url"],
+                    "input_tokens": meta["input_tokens"],
+                    "output_tokens": meta["output_tokens"],
+                    "cost_usd": meta["cost_usd"],
+                    "ms": meta["ms"],
+                    "status": meta["status"],
+                    "error": meta["error"],
+                    "excerpt": meta["excerpt"],
+                }
+            )
+            if data is None:
+                errors.append(f"{level}: {meta['error']}")
+                continue
+            db.upsert_prepared(article_id, level, data, _now())
+            made += 1
     finally:
         PROCESSING.discard(article_id)
     return {"ok": True, "made": made, "skipped": skipped, "errors": errors}
