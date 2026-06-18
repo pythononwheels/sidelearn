@@ -115,7 +115,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dailyChallenge: true,
   dailySetSize: 2,
   serverEnabled: false,
-  serverUrl: 'https://api.sidelearn.pyrates.org',
+  serverUrl: 'https://api.sidelearn.pyrates.io',
   serverLevel: 'A2',
   onboarded: false,
 };

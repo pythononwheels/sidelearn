@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.64] — 2026-06-18
+
+### Fixed
+- Default content-server URL corrected to `https://api.sidelearn.pyrates.io`
+  (the `.io` host; `.org` does not exist).
+
 ## [0.6.63] — 2026-06-18
 
 ### Added
