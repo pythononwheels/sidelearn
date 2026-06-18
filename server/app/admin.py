@@ -85,6 +85,9 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .vbar .out{background:var(--accent2);width:100%;flex:1}
 .vlabel{margin-top:7px;text-align:center;font-size:12px}
 .vlabel b{font-size:13px}.vlabel .c{color:var(--muted)}
+.side .vchart{gap:12px;justify-content:space-between}
+.side .vbar{width:30px}
+.side .vlabel{font-size:11px}.side .vlabel b{font-size:12px}
 """
 
 
@@ -139,12 +142,27 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
         f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
         "</div>"
     )
+    bylang = db.telemetry_by_lang()
+    maxl = max([r["tin"] + r["tout"] for r in bylang] + [1])
+    vcols = []
+    for r in bylang:
+        total = r["tin"] + r["tout"]
+        barpx = max(4, round(total / maxl * 120))
+        inpct = (r["tin"] / total * 100) if total else 0
+        vcols.append(
+            f"<div class=vcol><div class=vbar style='height:{barpx}px'>"
+            f"<span class=in style='height:{inpct:.0f}%'></span><span class=out></span></div>"
+            f"<div class=vlabel><b>{escape(r['lang'].upper())}</b></div></div>"
+        )
+    vchart = f"<div class=vchart>{''.join(vcols)}</div>" if vcols else ""
+
     side = (
         "<aside class=side><h3>Telemetrie</h3>"
         f"{kpis}"
         "<div class=legend><i style='background:var(--accent)'></i>In "
         "<i style='background:var(--accent2)'></i>Out</div>"
         + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>")
+        + ("<h3>Tokens pro Sprache</h3>" + vchart if vchart else "")
         + "<p style='margin-top:12px'><a class=btn href='/admin/stats'>Details →</a></p></aside>"
     )
 
@@ -156,28 +174,7 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
         f"<p class=muted>Provider: {config.PROVIDER} · Modell: {config.GEMINI_MODEL} · "
         f"Level: {', '.join(config.LEVELS)}</p>"
     )
-    bylang = db.telemetry_by_lang()
-    maxl = max([r["tin"] + r["tout"] for r in bylang] + [1])
-    vcols = []
-    for r in bylang:
-        total = r["tin"] + r["tout"]
-        barpx = max(4, round(total / maxl * 180))
-        inpct = (r["tin"] / total * 100) if total else 0
-        vcols.append(
-            f"<div class=vcol><div class=vbar style='height:{barpx}px'>"
-            f"<span class=in style='height:{inpct:.0f}%'></span><span class=out></span></div>"
-            f"<div class=vlabel><b>{escape(r['lang'].upper())}</b><br><span class=c>{total:,}</span></div></div>"
-        )
-    chart = (
-        "<h3>Tokens pro Sprache (Input/Output)</h3>"
-        "<div class=legend><i style='background:var(--accent)'></i>Input "
-        "<i style='background:var(--accent2)'></i>Output</div>"
-        f"<div class=vchart>{''.join(vcols)}</div>"
-        if vcols
-        else ""
-    )
-
-    body = f"<div class=cols><div>{left}</div>{side}</div>{chart}"
+    body = f"<div class=cols><div>{left}</div>{side}</div>"
     return page("Sidelearn Admin", body)
 
 
