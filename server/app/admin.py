@@ -52,9 +52,10 @@ pre{white-space:pre-wrap;background:#0001;padding:10px;border-radius:8px}
 """
 
 
-def page(title: str, body: str) -> HTMLResponse:
+def page(title: str, body: str, refresh: int = 0) -> HTMLResponse:
+    meta_refresh = f"<meta http-equiv=refresh content={refresh}>" if refresh else ""
     return HTMLResponse(
-        f"<!doctype html><meta charset=utf-8><title>{escape(title)}</title>"
+        f"<!doctype html><meta charset=utf-8><title>{escape(title)}</title>{meta_refresh}"
         f"<style>{CSS}</style><div class=wrap>{body}</div>"
     )
 
@@ -141,9 +142,11 @@ def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
         f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class=btn>Pool neu entdecken</button></form>"
         f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class='btn primary'>Alle verarbeiten</button></form>"
         f"</div>{cards_html}"
-        f"<p class=muted>Lädt nach dem Verarbeiten neu, um den Status zu sehen.</p>"
     )
-    return page(f"Admin {date_key} {lang}", body)
+    busy = any(db.get_article(a) and a in pipeline.PROCESSING for a in ids)
+    if busy:
+        body += "<p class=muted>Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
+    return page(f"Admin {date_key} {lang}", body, refresh=5 if busy else 0)
 
 
 @router.get("/admin/article", response_class=HTMLResponse)
