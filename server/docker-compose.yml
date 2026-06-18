@@ -1,0 +1,13 @@
+services:
+  sidelearn-content:
+    build: .
+    container_name: sidelearn-content
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - sidelearn-data:/data
+
+volumes:
+  sidelearn-data:

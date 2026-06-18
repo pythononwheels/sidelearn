@@ -1,0 +1,145 @@
+"""Sidelearn content server — read-only API over the pre-baked daily lessons."""
+
+import asyncio
+from datetime import date
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+
+from . import config, db, pipeline
+
+app = FastAPI(title="Sidelearn Content Server", version="0.1")
+
+# Public, read-only data → permissive CORS so the extension can fetch it.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+scheduler = BackgroundScheduler()
+
+
+def _run_build() -> None:
+    asyncio.run(pipeline.build_day(date.today()))
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    db.init()
+    # Build today's content in the background if it's missing.
+    import threading
+
+    threading.Thread(target=_run_build_if_missing, daemon=True).start()
+    scheduler.add_job(_run_build, "cron", hour=config.BUILD_HOUR, id="daily", replace_existing=True)
+    scheduler.start()
+
+
+def _run_build_if_missing() -> None:
+    if not db.daily_article_ids(pipeline.today_key(), config.LANGS[0]):
+        _run_build()
+
+
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    scheduler.shutdown(wait=False)
+
+
+@app.get("/health")
+def health() -> dict:
+    return {"ok": True, "provider": config.PROVIDER, "langs": config.LANGS, "levels": config.LEVELS}
+
+
+def _check_level(level: str) -> None:
+    if level not in config.LEVELS:
+        raise HTTPException(400, f"unknown level {level!r}; allowed: {config.LEVELS}")
+
+
+def _check_lang(lang: str) -> None:
+    if lang not in config.LANGS:
+        raise HTTPException(400, f"unknown lang {lang!r}; allowed: {config.LANGS}")
+
+
+@app.get("/daily")
+def daily(
+    lang: str = Query(...),
+    level: str = Query("A2"),
+    date_: str | None = Query(None, alias="date"),
+) -> dict:
+    _check_lang(lang)
+    _check_level(level)
+    dkey = date_ or pipeline.today_key()
+    ids = db.daily_article_ids(dkey, lang)
+    articles = []
+    for aid in ids:
+        art = db.get_article(aid)
+        if not art:
+            continue
+        prepared = db.get_prepared(aid, level)
+        articles.append(
+            {
+                "id": art["id"],
+                "title": art["title"],
+                "url": art["url"],
+                "thumbnail": art["thumbnail"],
+                "paragraphs": len(art["paragraphs"]),
+                "ready": prepared is not None,
+                "summary": (prepared or {}).get("summary", ""),
+            }
+        )
+    return {"date": dkey, "lang": lang, "level": level, "goal": min(2, len(articles)), "articles": articles}
+
+
+@app.get("/lesson/{article_id}")
+def lesson(article_id: str, level: str = Query("A2")) -> dict:
+    _check_level(level)
+    art = db.get_article(article_id)
+    if not art:
+        raise HTTPException(404, "article not found")
+    prepared = db.get_prepared(article_id, level)
+    if not prepared:
+        raise HTTPException(404, f"lesson not prepared for level {level}")
+    prep_paras = prepared.get("paragraphs", [])
+    paragraphs = []
+    for i, original in enumerate(art["paragraphs"]):
+        p = prep_paras[i] if i < len(prep_paras) else {}
+        paragraphs.append(
+            {
+                "original": original,
+                "simplified": p.get("simplified", original),
+                "question": p.get("question"),
+            }
+        )
+    return {
+        "id": art["id"],
+        "lang": art["lang"],
+        "level": level,
+        "title": art["title"],
+        "url": art["url"],
+        "thumbnail": art["thumbnail"],
+        "excerpt": True,
+        "paragraphs": paragraphs,
+        "vocab": prepared.get("vocab", []),
+        "summary": prepared.get("summary", ""),
+        "source": "wikipedia",
+        "license": "CC BY-SA",
+    }
+
+
+@app.get("/archive")
+def archive(lang: str = Query(...), limit: int = Query(30, le=120)) -> dict:
+    _check_lang(lang)
+    dates = db.daily_dates(lang, limit)
+    return {"lang": lang, "dates": dates}
+
+
+@app.get("/random")
+def random_lesson(lang: str = Query(...), level: str = Query("A2")) -> dict:
+    _check_lang(lang)
+    _check_level(level)
+    art = db.random_article(lang)
+    if not art:
+        raise HTTPException(404, "no articles yet")
+    return lesson(art["id"], level)

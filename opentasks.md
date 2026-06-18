@@ -37,6 +37,13 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Ideas (pipeline)
 
+- [open] **Sidelearn content server** — MVP done (`server/`, FastAPI+Docker):
+  daily Wikipedia pool per language, pre-baked simplifications A2–C1 + MC + vocab
+  + summary via cloud LLM (OpenAI/Gemini/mock), SQLite, `/daily /lesson /archive
+  /random`, CORS, Caddy-ready. Concept: `doc/tech/server.md`. **Next:** extension
+  opt-in client (server URL + level dropdown, local fallback); deploy behind
+  Caddy with a real key; then archive/random UI + question/vocab tuning.
+
 - [open] **Lern-App-Modus (Tageslektion)** — phases A+B done (0.6.47–0.6.52):
   dedicated `lesson.html`, paragraph-by-paragraph level-adapted reading with
   background prefetch + resume; one-click word popover (dict + merken + mehr) and

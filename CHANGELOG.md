@@ -3,17 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.6.59] — 2026-06-18
+## [Unreleased]
 
-### Changed
-- **UI consistency pass** (from a dark+light screenshot review of every surface):
-  - "Sites" section header no longer uses the lone 🔖 emoji — consistent with the
-    other (icon-less) section headers.
-  - Daily-card teaser no longer shows doubled punctuation ("Munich.…"); it trims
-    and only adds an ellipsis when actually truncated.
-  - In the lesson, capitalised words (almost always proper nouns like
-    "Palace"/"Crystal") are no longer underlined or auto-collected as vocab — for
-    every learning language except German, where common nouns are capitalised.
+### Added
+- **Sidelearn content server** (`server/`, FastAPI + Docker) that pre-bakes the
+  daily Wikipedia lessons (simplified A2–C1 + per-paragraph MC question + vocab +
+  summary) via a cloud LLM (OpenAI/Gemini, or `mock` for local dev). Read-only,
+  no auth, native-language-agnostic — only public Wikipedia content. Endpoints:
+  `/daily`, `/lesson/{id}`, `/archive`, `/random`. Concept: `doc/tech/server.md`.
+  Extension integration (opt-in client + level dropdown) is the next step.
 
 ## [0.6.62] — 2026-06-18
 
@@ -55,6 +53,18 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   Run with `npm run e2e:install` (once) then `npm run test:e2e`. Storage is
   seeded through the service worker, so the smoke run needs neither Wikipedia nor
   LM Studio.
+
+## [0.6.59] — 2026-06-18
+
+### Changed
+- **UI consistency pass** (from a dark+light screenshot review of every surface):
+  - "Sites" section header no longer uses the lone 🔖 emoji — consistent with the
+    other (icon-less) section headers.
+  - Daily-card teaser no longer shows doubled punctuation ("Munich.…"); it trims
+    and only adds an ellipsis when actually truncated.
+  - In the lesson, capitalised words (almost always proper nouns like
+    "Palace"/"Crystal") are no longer underlined or auto-collected as vocab — for
+    every learning language except German, where common nouns are capitalised.
 
 ## [0.6.58] — 2026-06-18
 
