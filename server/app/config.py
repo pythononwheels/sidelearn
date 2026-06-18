@@ -29,7 +29,8 @@ BUILD_HOUR = int(os.getenv("SL_BUILD_HOUR", "4"))
 # Bump when the prepared-content shape changes so old rows are re-generated.
 SCHEMA_VERSION = 1
 
-# Estimated price per 1M tokens (input, output) in USD — tune to current rates.
+# Price per 1M tokens (text input, output) in USD.
+# Gemini verified against ai.google.dev/gemini-api/docs/pricing on 2026-06-18.
 PRICES = {
     "gemini-2.5-flash-lite": (0.10, 0.40),
     "gemini-2.5-flash": (0.30, 2.50),
