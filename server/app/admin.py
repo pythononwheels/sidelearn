@@ -244,15 +244,23 @@ def admin_article(id: str, lang: str = "fr", date: str = "", level: str = "") ->
         f"href='/admin/article?id={id}&lang={lang}&date={date}&level={lv}'>{lv}</a>"
         for lv in config.LEVELS
     )
+    running = id in pipeline.PROCESSING
+    regen = (
+        "<span class=run>läuft…</span>"
+        if running
+        else f"<form method=post action='/admin/process?article_id={id}&lang={lang}&date={date}&level={level}&force=1'>"
+        f"<button class=btn>↻ {level} neu erzeugen</button></form>"
+    )
+    refresh = 4 if running else 0
 
     prep = db.get_prepared(id, level)
     if not prep:
         body = (
             f"<p><a href='/admin/day?lang={lang}&date={date}'>← Tagesansicht</a></p>"
-            f"<h1>{escape(art['title'])}</h1><div class=bar>{switch}</div>"
-            f"<p class=muted>Level {level} noch nicht verarbeitet — in der Tagesansicht „Verarbeiten“.</p>"
+            f"<h1>{escape(art['title'])}</h1><div class=bar>{switch} {regen}</div>"
+            f"<p class=muted>Level {level} noch nicht verarbeitet — „Verarbeiten“ oder ↻.</p>"
         )
-        return page(art["title"], body)
+        return page(art["title"], body, refresh=refresh)
 
     prep_paras = prep.get("paragraphs", [])
     rows = []
@@ -277,12 +285,12 @@ def admin_article(id: str, lang: str = "fr", date: str = "", level: str = "") ->
         f"<p><a href='/admin/day?lang={lang}&date={date}'>← Tagesansicht</a></p>"
         f"<h1>{escape(art['title'])}</h1>"
         f"<p class=muted><a href='{escape(art['url'])}' target=_blank>{escape(art['url'])}</a></p>"
-        f"<div class=bar>{switch}</div>"
+        f"<div class=bar>{switch} {regen}</div>"
         f"<div class=summary><b>Summary ({level}):</b> {escape(prep.get('summary', ''))}</div>"
         + "".join(rows)
         + (f"<p class=muted style='margin-top:14px'>Vokabeln: {vocab}</p>" if vocab else "")
     )
-    return page(art["title"], body)
+    return page(art["title"], body, refresh=refresh)
 
 
 @router.post("/admin/discover")
@@ -292,8 +300,20 @@ async def admin_discover(lang: str, date: str) -> RedirectResponse:
 
 
 @router.post("/admin/process")
-def admin_process(background: BackgroundTasks, article_id: str, lang: str, date: str) -> RedirectResponse:
-    background.add_task(pipeline.process_article, article_id)
+def admin_process(
+    background: BackgroundTasks,
+    article_id: str,
+    lang: str,
+    date: str,
+    level: str = "",
+    force: bool = False,
+) -> RedirectResponse:
+    levels = [level] if level in config.LEVELS else None
+    background.add_task(pipeline.process_article, article_id, levels, force)
+    if level:  # per-level (re)generation came from the article view → go back there
+        return RedirectResponse(
+            f"/admin/article?id={article_id}&lang={lang}&date={date}&level={level}", status_code=303
+        )
     return RedirectResponse(f"/admin/day?lang={lang}&date={date}", status_code=303)
 
 
