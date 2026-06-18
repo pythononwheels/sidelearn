@@ -1,0 +1,37 @@
+services:
+  sidelearn-content:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sidelearn-content:prod
+    container_name: sidelearn-content
+    env_file: .env
+    # Bind to loopback only — reachable solely via the host's Caddy proxy.
+    ports:
+      - "127.0.0.1:${SL_PORT:-9990}:8000"
+    volumes:
+      - sidelearn-data:/data
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  sidelearn-data:

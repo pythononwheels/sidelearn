@@ -34,13 +34,22 @@ docker compose up --build -d
 The SQLite DB persists in the `sidelearn-data` volume. The daily job runs at
 `SL_BUILD_HOUR`.
 
-## Caddy
+## Deploy (prod host, mirrors the other /opt services)
 
+```bash
+# one-time on the host
+sudo mkdir -p /opt/sidelearn && sudo chown "$USER" /opt/sidelearn
+git clone https://github.com/pythononwheels/sidelearn.git /opt/sidelearn
+cd /opt/sidelearn/server
+cp .env.example .env        # set LLM_PROVIDER=gemini + GEMINI_API_KEY
+./deploy.sh                 # build + up + health on 127.0.0.1:9990
+
+# Caddy (append the snippet, then reload)
+sudo tee -a /etc/caddy/Caddyfile < api.sidelearn.pyrates.io.caddy
+sudo systemctl reload caddy
 ```
-sidelearn-api.example.com {
-    reverse_proxy localhost:8000
-}
-```
+
+Updates later: `cd /opt/sidelearn/server && ./deploy.sh` (git pull + rebuild).
 
 CORS is open (public data), so the extension can fetch cross-origin.
 
