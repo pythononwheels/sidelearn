@@ -25,10 +25,18 @@ import { dateKey } from '@/core/daily';
 import { getLesson, saveLesson, type Lesson } from '@/core/lessons';
 import type { WordExplanation, WordInfo } from '@/core/types';
 import {
-  difficultyLabel,
   estimateDifficulty,
   type DifficultyEstimate,
+  type DifficultyTag,
 } from '@/core/difficulty/estimate';
+
+/** Short label for the *original* article's difficulty (level-independent). */
+const ORIG_LABEL: Record<DifficultyTag, string> = {
+  leicht: 'leicht',
+  passt: 'mittel',
+  fordernd: 'fordernd',
+  schwer: 'anspruchsvoll',
+};
 
 type RankMap = Record<string, number>;
 
@@ -352,10 +360,12 @@ export function App() {
             <div class="lz-meta">
               {est && (
                 <span
-                  class={`lz-tag t-${est.tag}`}
-                  title={`≈ ${Math.round(est.aboveShare * 100)} % der bekannten Wörter über ${level}`}
+                  class="lz-rewrite"
+                  title={`Original: ≈ ${Math.round(est.aboveShare * 100)} % der Wörter über ${level}`}
                 >
-                  {difficultyLabel(est.tag, level)}
+                  Original <span class={`lz-tag t-${est.tag}`}>{ORIG_LABEL[est.tag]}</span>
+                  <span class="lz-rewrite-arrow">→</span> vereinfacht{' '}
+                  <span class="lz-tag lz-tag-target">{level}</span>
                 </span>
               )}
               <span class="lz-progress">

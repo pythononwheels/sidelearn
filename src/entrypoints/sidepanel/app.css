@@ -1064,6 +1064,15 @@ body {
 .ll-daily-intro b {
   color: var(--ll-accent-strong);
 }
+.ll-daily-level {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--ll-accent-soft);
+  color: var(--ll-accent-strong);
+}
 .ll-daily-list {
   list-style: none;
   margin: 0;

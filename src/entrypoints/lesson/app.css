@@ -107,6 +107,21 @@ body {
 .lz-tag.t-passt { color: var(--ll-accent-strong); }
 .lz-tag.t-fordernd { color: #c98a2e; }
 .lz-tag.t-schwer { color: #d2603f; }
+.lz-tag-target {
+  color: var(--ll-accent-strong);
+  background: var(--ll-accent-soft);
+  border-color: transparent;
+}
+.lz-rewrite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ll-text-soft);
+}
+.lz-rewrite-arrow {
+  color: var(--ll-text-muted);
+}
 .lz-progress {
   font-size: 12px;
   color: var(--ll-text-soft);

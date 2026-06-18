@@ -15,6 +15,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
     "Palace"/"Crystal") are no longer underlined or auto-collected as vocab — for
     every learning language except German, where common nouns are capitalised.
 
+## [0.6.61] — 2026-06-18
+
+### Changed
+- **"dein Niveau" → "dein Sprachniveau"** in the daily card, with a small level
+  badge (e.g. A2) shown inline.
+- **Lesson header reframes the difficulty tag** as the *original* article's level
+  and the target: "Original anspruchsvoll → vereinfacht A2" (instead of a lone
+  "anspruchsvoll" over already-simplified text).
+
 ## [0.6.60] — 2026-06-18
 
 ### Changed

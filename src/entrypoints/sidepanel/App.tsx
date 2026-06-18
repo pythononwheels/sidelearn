@@ -744,6 +744,7 @@ export function App() {
               <DailyCard
                 articles={dailyArticles}
                 goal={dailyGoal}
+                level={settings.level}
                 doneCount={dailyDoneCount}
                 allDone={dailyAllDone}
                 doneUrls={lessonsDone}
@@ -848,6 +849,7 @@ function onSectionToggle(e: Event) {
 function DailyCard({
   articles,
   goal,
+  level,
   doneCount,
   allDone,
   doneUrls,
@@ -856,6 +858,7 @@ function DailyCard({
 }: {
   articles: DailyArticle[];
   goal: number;
+  level: CefrLevel;
   doneCount: number;
   allDone: boolean;
   doneUrls: Set<string>;
@@ -878,7 +881,8 @@ function DailyCard({
         ) : (
           <>
             Lies <b>{goal}</b> von {articles.length} Artikeln (Wikipedia, meistgelesen) in deiner
-            Lernsprache — wir vereinfachen sie vorab auf dein Niveau.
+            Lernsprache — wir vereinfachen sie vorab auf dein Sprachniveau{' '}
+            <span class="ll-daily-level">{level}</span>.
           </>
         )}
       </p>
