@@ -78,6 +78,13 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .side .kpi b{font-size:18px}
 .sbar{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;font-size:12px;margin:7px 0}
 .sbar .lab{font-weight:700}.sbar .c{color:var(--muted)}
+.vchart{display:flex;gap:24px;align-items:flex-end;margin:12px 0 4px;flex-wrap:wrap}
+.vcol{display:flex;flex-direction:column;align-items:center}
+.vbar{width:54px;border-radius:7px 7px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;background:var(--border)}
+.vbar .in{background:var(--accent);width:100%}
+.vbar .out{background:var(--accent2);width:100%;flex:1}
+.vlabel{margin-top:7px;text-align:center;font-size:12px}
+.vlabel b{font-size:13px}.vlabel .c{color:var(--muted)}
 """
 
 
@@ -149,7 +156,28 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
         f"<p class=muted>Provider: {config.PROVIDER} · Modell: {config.GEMINI_MODEL} · "
         f"Level: {', '.join(config.LEVELS)}</p>"
     )
-    body = f"<div class=cols><div>{left}</div>{side}</div>"
+    bylang = db.telemetry_by_lang()
+    maxl = max([r["tin"] + r["tout"] for r in bylang] + [1])
+    vcols = []
+    for r in bylang:
+        total = r["tin"] + r["tout"]
+        barpx = max(4, round(total / maxl * 180))
+        inpct = (r["tin"] / total * 100) if total else 0
+        vcols.append(
+            f"<div class=vcol><div class=vbar style='height:{barpx}px'>"
+            f"<span class=in style='height:{inpct:.0f}%'></span><span class=out></span></div>"
+            f"<div class=vlabel><b>{escape(r['lang'].upper())}</b><br><span class=c>{total:,}</span></div></div>"
+        )
+    chart = (
+        "<h3>Tokens pro Sprache (Input/Output)</h3>"
+        "<div class=legend><i style='background:var(--accent)'></i>Input "
+        "<i style='background:var(--accent2)'></i>Output</div>"
+        f"<div class=vchart>{''.join(vcols)}</div>"
+        if vcols
+        else ""
+    )
+
+    body = f"<div class=cols><div>{left}</div>{side}</div>{chart}"
     return page("Sidelearn Admin", body)
 
 

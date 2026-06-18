@@ -208,6 +208,16 @@ def telemetry_by_fn() -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def telemetry_by_lang() -> list[dict[str, Any]]:
+    with conn() as c:
+        rows = c.execute(
+            """SELECT lang, count(*) calls, coalesce(sum(input_tokens),0) tin,
+                      coalesce(sum(output_tokens),0) tout, coalesce(sum(cost_usd),0) cost
+               FROM telemetry GROUP BY lang ORDER BY lang"""
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def telemetry_recent(limit: int = 25) -> list[dict[str, Any]]:
     with conn() as c:
         rows = c.execute(
