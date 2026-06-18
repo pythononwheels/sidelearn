@@ -49,6 +49,9 @@ function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// A daily lesson is a bite-sized excerpt — nobody reads a 98-paragraph article.
+const MAX_LESSON_PARAS = 8;
+
 /** Only flag words clearly above the user's level (≥ 2 CEFR bands), so common
  *  near-level words (e.g. B1 cognates for an A2 reader) aren't underlined. */
 function wellAbove(band: CefrLevel, level: CefrLevel): boolean {
@@ -132,12 +135,13 @@ export function App() {
         setCompleted(!!existing.completed);
         setScore({ answered: existing.quizAnswered ?? 0, correct: existing.quizCorrect ?? 0 });
       } else {
-        const ps = await fetchArticleParagraphs(params.lang, params.title);
+        const all = await fetchArticleParagraphs(params.lang, params.title);
         if (!mounted.current) return;
-        if (ps.length === 0) {
+        if (all.length === 0) {
           setError('Artikeltext konnte nicht geladen werden.');
           return;
         }
+        const ps = all.slice(0, MAX_LESSON_PARAS);
         setParas(ps);
         setSims(new Array(ps.length).fill(undefined));
         setQs(new Array(ps.length).fill(undefined));
@@ -370,6 +374,7 @@ export function App() {
               )}
               <span class="lz-progress">
                 Absatz {Math.min(visible, total)} / {total}
+                {total >= MAX_LESSON_PARAS ? ' · Auszug' : ''}
               </span>
               <button
                 type="button"

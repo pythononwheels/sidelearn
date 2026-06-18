@@ -15,6 +15,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
     "Palace"/"Crystal") are no longer underlined or auto-collected as vocab — for
     every learning language except German, where common nouns are capitalised.
 
+## [0.6.62] — 2026-06-18
+
+### Changed
+- **Lessons are now a bite-sized excerpt.** Long articles (some have ~100
+  paragraphs) are capped at the first 8 paragraphs so a daily lesson stays
+  ~5–10 min and the "read 2 of 4" goal is achievable; the header marks it
+  "· Auszug" and the full article stays one click away (Wikipedia link).
+
 ## [0.6.61] — 2026-06-18
 
 ### Changed
