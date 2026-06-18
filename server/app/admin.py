@@ -69,6 +69,15 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;position:sticky;top:16px}
+.side h3{margin-top:0}
+.side .cards{gap:8px}
+.side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
+.side .kpi b{font-size:18px}
+.sbar{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;font-size:12px;margin:7px 0}
+.sbar .lab{font-weight:700}.sbar .c{color:var(--muted)}
 """
 
 
@@ -100,24 +109,47 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
         or "<span class=muted>noch keine Tage entdeckt</span>"
     )
     t = db.telemetry_totals()
+    by = db.telemetry_by_fn()
+    maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
+    sbars = []
+    for r in by:
+        total = r["tin"] + r["tout"]
+        w = total / maxtok * 100
+        inpct = (r["tin"] / total * 100) if total else 0
+        sbars.append(
+            f"<div class=sbar><span class=lab>{escape(r['label'].split(':')[-1])}</span>"
+            f"<div class=bar2 style='width:{w:.0f}%'>"
+            f"<span class=in style='width:{inpct:.0f}%'></span><span class=out style='flex:1'></span></div>"
+            f"<span class=c>${r['cost']:.4f}</span></div>"
+        )
+
     kpis = (
         "<div class=cards>"
-        f"<div class=kpi><b>{t['calls']}</b><span>LLM-Calls</span></div>"
-        f"<div class=kpi><b>{t['tin']:,}</b><span>Input-Tokens</span></div>"
-        f"<div class=kpi><b>{t['tout']:,}</b><span>Output-Tokens</span></div>"
-        f"<div class=kpi><b>${t['cost']:.4f}</b><span>Kosten (geschätzt)</span></div>"
+        f"<div class=kpi><b>{t['calls']}</b><span>Calls</span></div>"
+        f"<div class=kpi><b>${t['cost']:.4f}</b><span>Kosten</span></div>"
+        f"<div class=kpi><b>{t['tin']:,}</b><span>Input</span></div>"
+        f"<div class=kpi><b>{t['tout']:,}</b><span>Output</span></div>"
         f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
         "</div>"
     )
-    body = (
+    side = (
+        "<aside class=side><h3>Telemetrie</h3>"
+        f"{kpis}"
+        "<div class=legend><i style='background:var(--accent)'></i>In "
+        "<i style='background:var(--accent2)'></i>Out</div>"
+        + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>")
+        + "<p style='margin-top:12px'><a class=btn href='/admin/stats'>Details →</a></p></aside>"
+    )
+
+    left = (
         f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
         f"<form method=post action='/admin/discover?lang={lang}&date={today}'>"
         f"<button class='btn primary'>Heute entdecken ({lang.upper()} · {today})</button></form>"
-        f"<h3>Telemetrie <a class=btn href='/admin/stats'>Details →</a></h3>{kpis}"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
         f"<p class=muted>Provider: {config.PROVIDER} · Modell: {config.GEMINI_MODEL} · "
         f"Level: {', '.join(config.LEVELS)}</p>"
     )
+    body = f"<div class=cols><div>{left}</div>{side}</div>"
     return page("Sidelearn Admin", body)
 
 
