@@ -91,6 +91,12 @@ export interface Settings {
   dailyChallenge: boolean;
   /** How many mini-lessons make up the daily challenge. */
   dailySetSize: number;
+  /** Use the Sidelearn content server for pre-baked, multi-level lessons. */
+  serverEnabled: boolean;
+  /** Base URL of the content server. */
+  serverUrl: string;
+  /** Preferred reading level for server lessons (defaults to `level`). */
+  serverLevel: CefrLevel;
   /** False until the first-run onboarding (languages + level) is completed. */
   onboarded: boolean;
 }
@@ -108,6 +114,9 @@ export const DEFAULT_SETTINGS: Settings = {
   reviewMode: 'words',
   dailyChallenge: true,
   dailySetSize: 2,
+  serverEnabled: false,
+  serverUrl: 'https://api.sidelearn.pyrates.org',
+  serverLevel: 'A2',
   onboarded: false,
 };
 

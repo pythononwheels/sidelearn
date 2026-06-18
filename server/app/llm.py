@@ -62,15 +62,20 @@ def _openai(system: str, user: str) -> str:
 
 
 def _gemini(system: str, user: str) -> str:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
 
-    genai.configure(api_key=config.GEMINI_API_KEY)
-    model = genai.GenerativeModel(
-        config.GEMINI_MODEL,
-        system_instruction=system,
-        generation_config={"response_mime_type": "application/json", "temperature": 0.4},
+    client = genai.Client(api_key=config.GEMINI_API_KEY)
+    resp = client.models.generate_content(
+        model=config.GEMINI_MODEL,
+        contents=user,
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            response_mime_type="application/json",
+            temperature=0.4,
+        ),
     )
-    return model.generate_content(user).text or "{}"
+    return resp.text or "{}"
 
 
 def _parse(raw: str) -> dict[str, Any]:

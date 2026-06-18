@@ -17,6 +17,7 @@ import { getSettings } from '@/core/settings';
 import { fetchArticleParagraphs } from '@/core/wikifeed';
 import { explainWord, simplifyParagraph, translateParagraph } from '@/core/llm/prompts';
 import { generateParagraphQuestion, type QuizQuestion } from '@/core/quiz';
+import { fetchServerLesson } from '@/core/serverapi';
 import { resolveWord } from '@/core/wordinfo';
 import { loadNames } from '@/core/names';
 import { addVocab } from '@/core/vocab';
@@ -52,6 +53,9 @@ function newId(): string {
 // A daily lesson is a bite-sized excerpt — nobody reads a 98-paragraph article.
 const MAX_LESSON_PARAS = 8;
 
+// CEFR levels the content server prepares (for the in-lesson switcher).
+const LESSON_LEVELS = ['A2', 'B1', 'B2', 'C1'] as const;
+
 /** Only flag words clearly above the user's level (≥ 2 CEFR bands), so common
  *  near-level words (e.g. B1 cognates for an A2 reader) aren't underlined. */
 function wellAbove(band: CefrLevel, level: CefrLevel): boolean {
@@ -65,6 +69,9 @@ interface Params {
   title: string;
   url: string;
   thumb?: string;
+  /** Server article id (server mode) + the level to fetch. */
+  serverId?: string;
+  serverLevel?: CefrLevel;
 }
 
 function readParams(): Params | null {
@@ -73,12 +80,22 @@ function readParams(): Params | null {
   const title = q.get('title');
   const url = q.get('url');
   if (!lang || !title || !url) return null;
-  return { lang, title, url, thumb: q.get('thumb') ?? undefined };
+  return {
+    lang,
+    title,
+    url,
+    thumb: q.get('thumb') ?? undefined,
+    serverId: q.get('server') ?? undefined,
+    serverLevel: (q.get('level') as CefrLevel | null) ?? undefined,
+  };
 }
 
 export function App() {
   const params = readParams();
   const [level, setLevel] = useState<CefrLevel | null>(null);
+  // The CEFR level the displayed text is written at (= user level locally, or
+  // the chosen server level). Drives the header label + level switcher.
+  const [lessonLevel, setLessonLevel] = useState<CefrLevel | null>(null);
   const [native, setNative] = useState<Language>('de');
   const [model, setModel] = useState<string>('');
   const [paras, setParas] = useState<string[] | null>(null);
@@ -87,6 +104,7 @@ export function App() {
   const [completed, setCompleted] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [est, setEst] = useState<DifficultyEstimate | null>(null);
+  const [serverMode, setServerMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ranks, setRanks] = useState<RankMap | null>(null);
   const [names, setNames] = useState<Set<string>>(new Set());
@@ -126,14 +144,46 @@ export function App() {
       setModel(s.model);
 
       const existing = await getLesson(params.url);
+      const resume = (len: number) => {
+        if (existing?.startedTs) startedTs.current = existing.startedTs;
+        setVisible(existing?.progress ? Math.max(1, Math.min(existing.progress, len)) : 1);
+        setCompleted(!!existing?.completed);
+        setScore({ answered: existing?.quizAnswered ?? 0, correct: existing?.quizCorrect ?? 0 });
+      };
+
+      // Server mode: pre-baked lesson at the chosen level (no local model).
+      if (params.serverId) {
+        const lvl = params.serverLevel ?? s.serverLevel;
+        setLessonLevel(lvl);
+        const sl = await fetchServerLesson(s.serverUrl, params.serverId, lvl);
+        if (!mounted.current) return;
+        if (sl && sl.paragraphs.length) {
+          setServerMode(true);
+          setParas(sl.paragraphs.map((p) => p.original));
+          setSims(sl.paragraphs.map((p) => p.simplified));
+          setQs(
+            sl.paragraphs.map((p) =>
+              p.question
+                ? {
+                    prompt: p.question.q,
+                    options: p.question.options,
+                    answer: p.question.options[p.question.correct] ?? p.question.options[0] ?? '',
+                  }
+                : null,
+            ),
+          );
+          resume(sl.paragraphs.length);
+          return;
+        }
+        // Server unavailable → fall back to the local pipeline below.
+      }
+
+      setLessonLevel(s.level);
       if (existing && existing.paragraphs.length) {
-        startedTs.current = existing.startedTs;
         setParas(existing.paragraphs.map((p) => p.original));
         setSims(existing.paragraphs.map((p) => p.simplified));
         setQs(new Array(existing.paragraphs.length).fill(undefined));
-        setVisible(Math.max(1, existing.progress));
-        setCompleted(!!existing.completed);
-        setScore({ answered: existing.quizAnswered ?? 0, correct: existing.quizCorrect ?? 0 });
+        resume(existing.paragraphs.length);
       } else {
         const all = await fetchArticleParagraphs(params.lang, params.title);
         if (!mounted.current) return;
@@ -155,13 +205,14 @@ export function App() {
     })();
   }, []);
 
-  // Difficulty estimate once paragraphs are known (covers the fresh-fetch path).
+  // Difficulty estimate once paragraphs are known (local mode only — server
+  // lessons are already written at a known level).
   useEffect(() => {
-    if (!paras || !level || est) return;
+    if (serverMode || !paras || !level || est) return;
     void estimateDifficulty(paras.slice(0, 4).join(' '), params!.lang, level).then(
       (e) => mounted.current && setEst(e),
     );
-  }, [paras, level]);
+  }, [paras, level, serverMode]);
 
   // Background simplify: keep the visible paragraphs plus one look-ahead ready.
   // Sequential (one at a time) — the local model serves one request anyway.
@@ -253,6 +304,13 @@ export function App() {
     if (!paras) return;
     if (visible < paras.length) setVisible((v) => v + 1);
     else setCompleted(true);
+  }
+
+  // Server mode: switch the reading level by reloading with a new ?level=.
+  function changeLevel(newLevel: string) {
+    const q = new URLSearchParams(location.search);
+    q.set('level', newLevel);
+    location.search = q.toString();
   }
 
   // "Gelesen": collect a few new words, then show this paragraph's MC question
@@ -362,15 +420,30 @@ export function App() {
           <div class="lz-hero-text">
             <h1 class="lz-title">{params!.title}</h1>
             <div class="lz-meta">
-              {est && (
-                <span
-                  class="lz-rewrite"
-                  title={`Original: ≈ ${Math.round(est.aboveShare * 100)} % der Wörter über ${level}`}
-                >
-                  Original <span class={`lz-tag t-${est.tag}`}>{ORIG_LABEL[est.tag]}</span>
-                  <span class="lz-rewrite-arrow">→</span> vereinfacht{' '}
-                  <span class="lz-tag lz-tag-target">{level}</span>
+              {serverMode ? (
+                <span class="lz-rewrite">
+                  Niveau{' '}
+                  <select
+                    class="lz-level-select"
+                    value={lessonLevel ?? 'A2'}
+                    onChange={(e) => changeLevel(e.currentTarget.value)}
+                  >
+                    {LESSON_LEVELS.map((l) => (
+                      <option value={l}>{l}</option>
+                    ))}
+                  </select>
                 </span>
+              ) : (
+                est && (
+                  <span
+                    class="lz-rewrite"
+                    title={`Original: ≈ ${Math.round(est.aboveShare * 100)} % der Wörter über ${level}`}
+                  >
+                    Original <span class={`lz-tag t-${est.tag}`}>{ORIG_LABEL[est.tag]}</span>
+                    <span class="lz-rewrite-arrow">→</span> vereinfacht{' '}
+                    <span class="lz-tag lz-tag-target">{level}</span>
+                  </span>
+                )
               )}
               <span class="lz-progress">
                 Absatz {Math.min(visible, total)} / {total}

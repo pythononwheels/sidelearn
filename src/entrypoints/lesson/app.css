@@ -122,6 +122,17 @@ body {
 .lz-rewrite-arrow {
   color: var(--ll-text-muted);
 }
+.lz-level-select {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ll-border);
+  background: var(--ll-accent-soft);
+  color: var(--ll-accent-strong);
+  cursor: pointer;
+}
 .lz-progress {
   font-size: 12px;
   color: var(--ll-text-soft);

@@ -21,6 +21,8 @@ export interface DailyArticle {
   url: string;
   thumbnail?: string;
   lang: Language;
+  /** Server article id, when this article comes from the content server. */
+  id?: string;
 }
 
 /** A Wikipedia page-summary object as it appears in tfa / mostread.articles[]. */

@@ -3,15 +3,22 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [0.6.63] — 2026-06-18
 
 ### Added
+- **Content-server integration (opt-in).** New setting "Lektionen vom
+  Sidelearn-Server" + server URL + reading level. When on, the daily card and
+  lessons come **pre-baked** from the server (instant, no local model needed) and
+  the lesson gains a **level switcher** (A2/B1/B2/C1) — "same article in B1". Off
+  or unreachable → falls back to the local Wikipedia + LM Studio pipeline.
+  Personal/interactive features (hover, chat, page translate) always stay local.
 - **Sidelearn content server** (`server/`, FastAPI + Docker) that pre-bakes the
   daily Wikipedia lessons (simplified A2–C1 + per-paragraph MC question + vocab +
-  summary) via a cloud LLM (OpenAI/Gemini, or `mock` for local dev). Read-only,
-  no auth, native-language-agnostic — only public Wikipedia content. Endpoints:
-  `/daily`, `/lesson/{id}`, `/archive`, `/random`. Concept: `doc/tech/server.md`.
-  Extension integration (opt-in client + level dropdown) is the next step.
+  summary). Provider-agnostic cloud LLM (Gemini/OpenAI/`mock`), default
+  `gemini-2.5-flash-lite`; uses the new `google-genai` SDK. Read-only, no auth,
+  native-language-agnostic — only public Wikipedia content. Endpoints `/daily`,
+  `/lesson/{id}`, `/archive`, `/random`. Concept: `doc/tech/server.md`.
+  End-to-end verified: the extension renders a pre-baked server lesson.
 
 ## [0.6.62] — 2026-06-18
 

@@ -44,6 +44,7 @@ import {
 } from '@/core/daily';
 import { getLessons, watchLessons } from '@/core/lessons';
 import type { DailyArticle } from '@/core/wikifeed';
+import { fetchServerDaily, type ServerDaily } from '@/core/serverapi';
 import { computeStats, type LearnStats, type Period } from '@/core/stats';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
@@ -97,6 +98,7 @@ export function App() {
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [daily, setDaily] = useState<DailyState | null>(null);
+  const [serverDaily, setServerDaily] = useState<ServerDaily | null>(null);
   const [lessonsDone, setLessonsDone] = useState<Set<string>>(new Set());
   const [lessonsStarted, setLessonsStarted] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState<LearnStats | null>(null);
@@ -233,9 +235,33 @@ export function App() {
     };
   }, [settings?.dailyChallenge, settings?.learnLang, settings?.dailySetSize]);
 
-  // Daily set: a pool of articles; the goal is to finish `dailySetSize` of them.
-  const dailyGoal = settings?.dailySetSize ?? 2;
-  const dailyArticles = daily?.articles ?? [];
+  // When the content server is enabled, pull the pre-baked daily set from it.
+  useEffect(() => {
+    if (!settings?.dailyChallenge || !settings.serverEnabled) {
+      setServerDaily(null);
+      return;
+    }
+    let cancelled = false;
+    const { serverUrl, learnLang, serverLevel } = settings;
+    void fetchServerDaily(serverUrl, learnLang, serverLevel).then(
+      (d) => !cancelled && setServerDaily(d),
+    );
+    return () => void (cancelled = true);
+  }, [settings?.dailyChallenge, settings?.serverEnabled, settings?.serverUrl, settings?.learnLang, settings?.serverLevel]);
+
+  // Daily set: prefer the server pool when available, else the local one.
+  const usingServer = !!(settings?.serverEnabled && serverDaily);
+  const dailyGoal = usingServer ? serverDaily!.goal : settings?.dailySetSize ?? 2;
+  const dailyArticles: DailyArticle[] = usingServer
+    ? serverDaily!.articles.map((a) => ({
+        id: a.id,
+        title: a.title,
+        url: a.url,
+        thumbnail: a.thumbnail,
+        extract: a.summary,
+        lang: serverDaily!.lang,
+      }))
+    : daily?.articles ?? [];
   const currentArticle: DailyArticle | null =
     dailyArticles.find((a) => !lessonsDone.has(a.url)) ?? dailyArticles[0] ?? null;
   const dailyDoneCount = dailyArticles.filter((a) => lessonsDone.has(a.url)).length;
@@ -253,6 +279,10 @@ export function App() {
   function openLesson(a: DailyArticle) {
     const q = new URLSearchParams({ lang: a.lang, title: a.title, url: a.url });
     if (a.thumbnail) q.set('thumb', a.thumbnail);
+    if (a.id && settings!.serverEnabled) {
+      q.set('server', a.id);
+      q.set('level', settings!.serverLevel);
+    }
     void browser.tabs.create({ url: browser.runtime.getURL(`/lesson.html?${q}` as never) });
   }
   async function reloadDaily() {
@@ -682,6 +712,37 @@ export function App() {
                 <option value="3">3</option>
               </select>
             </label>
+          )}
+          <label class="ll-toggle">
+            <input
+              type="checkbox"
+              checked={settings.serverEnabled}
+              onChange={(e) => patch({ serverEnabled: e.currentTarget.checked })}
+            />
+            Lektionen vom Sidelearn-Server (schneller, mehrere Niveaus)
+          </label>
+          {settings.serverEnabled && (
+            <>
+              <label>
+                Server-URL
+                <input
+                  type="text"
+                  value={settings.serverUrl}
+                  onChange={(e) => patch({ serverUrl: e.currentTarget.value.trim() })}
+                />
+              </label>
+              <label>
+                Lese-Niveau (Server)
+                <select
+                  value={settings.serverLevel}
+                  onChange={(e) => patch({ serverLevel: e.currentTarget.value as CefrLevel })}
+                >
+                  {CEFR_LEVELS.map((l) => (
+                    <option value={l}>{l}</option>
+                  ))}
+                </select>
+              </label>
+            </>
           )}
         </section>
       )}
