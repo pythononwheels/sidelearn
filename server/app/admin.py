@@ -38,6 +38,17 @@ h1{font-size:20px}
 form{display:inline}
 pre{white-space:pre-wrap;background:#0001;padding:10px;border-radius:8px}
 .run{color:#c98a2e;font-weight:700}
+.lvlbtn{display:inline-block;padding:4px 14px;margin-right:6px;border-radius:999px;font-weight:700;border:1px solid #ccc4}
+.lvlbtn.on{background:#6b57d6;color:#fff;border-color:transparent}
+.lvlbtn.todo{opacity:.5}
+.summary{background:#6b57d61a;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:16px;line-height:1.5}
+.para{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:14px 0;border-top:1px solid #ccc3}
+.para .orig{color:#8889;font-size:14px}
+.para .simp{font-size:16px;line-height:1.5}
+.qbox{grid-column:1/-1;margin-top:4px;font-size:14px;color:#6b57d6cc}
+.qbox b{color:inherit}
+@media(max-width:760px){.para{grid-template-columns:1fr}.para .orig{order:2}}
+.collab{font-size:11px;color:#8886;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
 """
 
 
@@ -136,31 +147,58 @@ def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
 
 
 @router.get("/admin/article", response_class=HTMLResponse)
-def admin_article(id: str, lang: str = "fr", date: str = "") -> HTMLResponse:
+def admin_article(id: str, lang: str = "fr", date: str = "", level: str = "") -> HTMLResponse:
     art = db.get_article(id)
     if not art:
         return page("nicht gefunden", "<p>Artikel nicht gefunden.</p>")
-    sections = [f"<h1>{escape(art['title'])}</h1>", f"<p class=muted>{escape(art['url'])}</p>"]
-    for level in config.LEVELS:
-        prep = db.get_prepared(id, level)
-        sections.append(f"<h3>{level}</h3>")
-        if not prep:
-            sections.append("<p class=muted>noch nicht verarbeitet</p>")
-            continue
-        sections.append(f"<p><b>Summary:</b> {escape(prep.get('summary', ''))}</p>")
-        for i, p in enumerate(prep.get("paragraphs", [])):
-            q = p.get("question") or {}
-            qline = (
-                f"<br><span class=muted>Q: {escape(q.get('q', ''))} — {escape(', '.join(q.get('options', [])))}</span>"
-                if q
-                else ""
-            )
-            sections.append(f"<p>{i + 1}. {escape(p.get('simplified', ''))}{qline}</p>")
-        vocab = ", ".join(escape(v.get("word", "")) for v in prep.get("vocab", []))
-        if vocab:
-            sections.append(f"<p class=muted>Vokabeln: {vocab}</p>")
-    back = f"<p><a href='/admin/day?lang={lang}&date={date}'>← Tagesansicht</a></p>"
-    return page(art["title"], back + "".join(sections))
+    done = set(db.prepared_levels(id))
+    level = level if level in config.LEVELS else (sorted(done)[0] if done else config.LEVELS[0])
+
+    # Level switcher buttons.
+    switch = "".join(
+        f"<a class='lvlbtn {'on' if lv == level else ''} {'' if lv in done else 'todo'}' "
+        f"href='/admin/article?id={id}&lang={lang}&date={date}&level={lv}'>{lv}</a>"
+        for lv in config.LEVELS
+    )
+
+    prep = db.get_prepared(id, level)
+    if not prep:
+        body = (
+            f"<p><a href='/admin/day?lang={lang}&date={date}'>← Tagesansicht</a></p>"
+            f"<h1>{escape(art['title'])}</h1><div class=bar>{switch}</div>"
+            f"<p class=muted>Level {level} noch nicht verarbeitet — in der Tagesansicht „Verarbeiten“.</p>"
+        )
+        return page(art["title"], body)
+
+    prep_paras = prep.get("paragraphs", [])
+    rows = []
+    for i, original in enumerate(art["paragraphs"]):
+        p = prep_paras[i] if i < len(prep_paras) else {}
+        q = p.get("question") or {}
+        qbox = (
+            f"<div class=qbox><b>Frage:</b> {escape(q.get('q', ''))} "
+            f"— {escape(' · '.join(q.get('options', [])))}</div>"
+            if q
+            else ""
+        )
+        rows.append(
+            f"<div class=para>"
+            f"<div><div class=collab>Original</div><div class=orig>{escape(original)}</div></div>"
+            f"<div><div class=collab>Vereinfacht · {level}</div>"
+            f"<div class=simp>{escape(p.get('simplified', ''))}</div></div>"
+            f"{qbox}</div>"
+        )
+    vocab = ", ".join(escape(v.get("word", "")) for v in prep.get("vocab", []))
+    body = (
+        f"<p><a href='/admin/day?lang={lang}&date={date}'>← Tagesansicht</a></p>"
+        f"<h1>{escape(art['title'])}</h1>"
+        f"<p class=muted><a href='{escape(art['url'])}' target=_blank>{escape(art['url'])}</a></p>"
+        f"<div class=bar>{switch}</div>"
+        f"<div class=summary><b>Summary ({level}):</b> {escape(prep.get('summary', ''))}</div>"
+        + "".join(rows)
+        + (f"<p class=muted style='margin-top:14px'>Vokabeln: {vocab}</p>" if vocab else "")
+    )
+    return page(art["title"], body)
 
 
 @router.post("/admin/discover")
