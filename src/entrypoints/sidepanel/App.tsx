@@ -45,11 +45,6 @@ import {
 import { getLessons, watchLessons } from '@/core/lessons';
 import type { DailyArticle } from '@/core/wikifeed';
 import { computeStats, type LearnStats, type Period } from '@/core/stats';
-import {
-  estimateDifficulty,
-  difficultyLabel,
-  type DifficultyEstimate,
-} from '@/core/difficulty/estimate';
 import { askAboutPage, type ChatTurn } from '@/core/chat';
 import { getChat, setChat } from '@/core/chatstore';
 import { translateParagraph } from '@/core/llm/prompts';
@@ -102,7 +97,6 @@ export function App() {
   const [collectBusy, setCollectBusy] = useState(false);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [daily, setDaily] = useState<DailyState | null>(null);
-  const [dailyEst, setDailyEst] = useState<DifficultyEstimate | null>(null);
   const [lessonsDone, setLessonsDone] = useState<Set<string>>(new Set());
   const [lessonsStarted, setLessonsStarted] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState<LearnStats | null>(null);
@@ -224,8 +218,10 @@ export function App() {
     }
     let cancelled = false;
     const { learnLang, dailySetSize } = settings;
+    // Offer a pool to choose from (2× the goal), e.g. read any 2 of 4.
+    const pool = Math.max(dailySetSize + 1, dailySetSize * 2);
     void (async () => {
-      const state = await ensureToday(learnLang, new Date(), dailySetSize);
+      const state = await ensureToday(learnLang, new Date(), pool);
       if (!cancelled) setDaily(state);
     })();
     const off = watchDaily((s) => {
@@ -237,26 +233,15 @@ export function App() {
     };
   }, [settings?.dailyChallenge, settings?.learnLang, settings?.dailySetSize]);
 
-  // Difficulty tag for the current (next-unfinished) article.
-  const dailyArticles = daily?.articles?.slice(0, settings?.dailySetSize ?? 2) ?? [];
+  // Daily set: a pool of articles; the goal is to finish `dailySetSize` of them.
+  const dailyGoal = settings?.dailySetSize ?? 2;
+  const dailyArticles = daily?.articles ?? [];
   const currentArticle: DailyArticle | null =
-    dailyArticles.find((a) => !lessonsDone.has(a.url)) ?? dailyArticles[dailyArticles.length - 1] ?? null;
+    dailyArticles.find((a) => !lessonsDone.has(a.url)) ?? dailyArticles[0] ?? null;
   const dailyDoneCount = dailyArticles.filter((a) => lessonsDone.has(a.url)).length;
-  const dailyAllDone = dailyArticles.length > 0 && dailyDoneCount === dailyArticles.length;
+  const dailyAllDone = dailyArticles.length > 0 && dailyDoneCount >= dailyGoal;
 
-  useEffect(() => {
-    if (!settings || !currentArticle?.extract) {
-      setDailyEst(null);
-      return;
-    }
-    let cancelled = false;
-    void estimateDifficulty(currentArticle.extract, settings.learnLang, settings.level).then(
-      (e) => !cancelled && setDailyEst(e),
-    );
-    return () => void (cancelled = true);
-  }, [currentArticle?.url, settings?.level]);
-
-  // Credit the streak once all of today's articles are completed.
+  // Credit the streak once the day's goal is reached.
   useEffect(() => {
     if (dailyAllDone && daily && !isDoneToday(daily, new Date())) {
       void markDoneToday(new Date()).then((s) => s && setDaily(s));
@@ -265,9 +250,6 @@ export function App() {
 
   if (!settings) return null;
 
-  function openDaily() {
-    if (currentArticle?.url) void browser.tabs.create({ url: currentArticle.url });
-  }
   function openLesson(a: DailyArticle) {
     const q = new URLSearchParams({ lang: a.lang, title: a.title, url: a.url });
     if (a.thumbnail) q.set('thumb', a.thumbnail);
@@ -758,17 +740,15 @@ export function App() {
       ) : mode === 'learn' ? (
         <>
           {settings.dailyChallenge &&
-            (currentArticle ? (
+            (dailyArticles.length > 0 ? (
               <DailyCard
-                article={currentArticle}
-                est={dailyEst}
-                level={settings.level}
-                total={dailyArticles.length}
+                articles={dailyArticles}
+                goal={dailyGoal}
                 doneCount={dailyDoneCount}
                 allDone={dailyAllDone}
-                started={lessonsStarted.has(currentArticle.url)}
-                onLesson={() => openLesson(currentArticle)}
-                onOpen={openDaily}
+                doneUrls={lessonsDone}
+                startedUrls={lessonsStarted}
+                onLesson={openLesson}
               />
             ) : (
               <section class="ll-daily">
@@ -860,70 +840,73 @@ function onSectionToggle(e: Event) {
 }
 
 /** Daily-challenge card: a small set of mini-lessons; shows the current one. */
+/**
+ * Daily-challenge card: explains the goal and offers a pool of articles to
+ * choose from. Read any `goal` of them (each as a level-adapted lesson) to
+ * complete the day. No difficulty tag — we simplify to the user's level anyway.
+ */
 function DailyCard({
-  article,
-  est,
-  level,
-  total,
+  articles,
+  goal,
   doneCount,
   allDone,
-  started,
+  doneUrls,
+  startedUrls,
   onLesson,
-  onOpen,
 }: {
-  article: { title: string; extract: string; thumbnail?: string };
-  est: DifficultyEstimate | null;
-  level: CefrLevel;
-  total: number;
+  articles: DailyArticle[];
+  goal: number;
   doneCount: number;
   allDone: boolean;
-  started: boolean;
-  onLesson: () => void;
-  onOpen: () => void;
+  doneUrls: Set<string>;
+  startedUrls: Set<string>;
+  onLesson: (a: DailyArticle) => void;
 }) {
-  const clean = article.extract.replace(/\s+/g, ' ').trim();
-  const teaser = clean.length > 120 ? `${clean.slice(0, 120).replace(/[\s.,;:!?–-]+$/, '')}…` : clean;
-  const tagTitle = est
-    ? `≈ ${Math.round(est.aboveShare * 100)} % der bekannten Wörter über ${level} (von ${est.sample} geprüft)`
-    : undefined;
   return (
     <section class="ll-daily">
       <div class="ll-daily-top">
         <span class="ll-daily-eyebrow">
           <TargetIcon size={14} /> Tägliche Challenge
         </span>
-        {total > 1 && (
-          <span class="ll-daily-count">
-            {doneCount}/{total}
-          </span>
-        )}
+        <span class="ll-daily-count">
+          {Math.min(doneCount, goal)}/{goal}
+        </span>
       </div>
-      {allDone ? (
-        <p class="ll-daily-alldone">Heute geschafft 🎉 — {total} Mini-Lektionen.</p>
-      ) : (
-        <>
-          <div class="ll-daily-body">
-            {article.thumbnail && <img class="ll-daily-thumb" src={article.thumbnail} alt="" />}
-            <div class="ll-daily-text">
-              <h3 class="ll-daily-title">{article.title}</h3>
-              {teaser && <p class="ll-daily-teaser">{teaser}</p>}
-              {est && (
-                <span class={`ll-daily-tag t-${est.tag}`} title={tagTitle}>
-                  {difficultyLabel(est.tag, level)}
+      <p class="ll-daily-intro">
+        {allDone ? (
+          <>Heute geschafft 🎉 Lies gern noch mehr.</>
+        ) : (
+          <>
+            Lies <b>{goal}</b> von {articles.length} Artikeln (Wikipedia, meistgelesen) in deiner
+            Lernsprache — wir vereinfachen sie vorab auf dein Niveau.
+          </>
+        )}
+      </p>
+      <ul class="ll-daily-list">
+        {articles.map((a) => {
+          const done = doneUrls.has(a.url);
+          const started = !done && startedUrls.has(a.url);
+          return (
+            <li key={a.url}>
+              <button
+                type="button"
+                class={`ll-daily-item ${done ? 'done' : ''}`}
+                onClick={() => onLesson(a)}
+              >
+                {a.thumbnail ? (
+                  <img class="ll-daily-item-thumb" src={a.thumbnail} alt="" />
+                ) : (
+                  <span class="ll-daily-item-thumb ll-daily-item-ph" />
+                )}
+                <span class="ll-daily-item-title">{a.title}</span>
+                <span class="ll-daily-item-state">
+                  {done ? '✓' : started ? 'läuft' : 'lesen ›'}
                 </span>
-              )}
-            </div>
-          </div>
-          <div class="ll-daily-actions">
-            <button type="button" class="ll-daily-read" onClick={onLesson}>
-              {started ? 'Fortsetzen →' : doneCount > 0 ? 'Nächste Lektion →' : 'Lektion starten →'}
-            </button>
-          </div>
-          <button type="button" class="ll-daily-wiki" onClick={onOpen}>
-            ↗ auf Wikipedia öffnen
-          </button>
-        </>
-      )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

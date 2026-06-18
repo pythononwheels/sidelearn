@@ -1055,6 +1055,69 @@ body {
   font-weight: 600;
   color: var(--ll-text);
 }
+.ll-daily-intro {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ll-text-soft);
+}
+.ll-daily-intro b {
+  color: var(--ll-accent-strong);
+}
+.ll-daily-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ll-daily-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--ll-border);
+  border-radius: var(--ll-radius-sm);
+  background: var(--ll-bg);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.ll-daily-item:hover {
+  border-color: var(--ll-accent);
+}
+.ll-daily-item.done {
+  opacity: 0.6;
+}
+.ll-daily-item-thumb {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--ll-border);
+}
+.ll-daily-item-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ll-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ll-daily-item-state {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ll-accent);
+}
+.ll-daily-item.done .ll-daily-item-state {
+  color: #2f9e6b;
+}
 .ll-ic-flame {
   color: #e8843c;
   flex: 0 0 auto;

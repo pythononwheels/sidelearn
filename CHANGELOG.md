@@ -15,7 +15,17 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
     "Palace"/"Crystal") are no longer underlined or auto-collected as vocab — for
     every learning language except German, where common nouns are capitalised.
 
-## [Unreleased]
+## [0.6.60] — 2026-06-18
+
+### Changed
+- **Daily challenge reworked into "choose N of M".** The card now explains the
+  goal ("Lies 2 von 4 Artikeln … wir vereinfachen sie vorab auf dein Niveau")
+  and lists the day's article pool (2× the goal) to pick from; finishing any
+  `goal` of them as lessons completes the day. Per-article state (läuft / ✓ /
+  lesen). The difficulty tag is gone — moot once we simplify to your level.
+- **Lesson words translate on hover** (with click as a fallback), matching the
+  hover behaviour of marked words on live pages, instead of requiring a click;
+  the popover stays while the cursor is on the word or the card.
 
 ### Tooling
 - **Screenshot review run** (`tests/e2e/screens.spec.ts`) capturing every surface

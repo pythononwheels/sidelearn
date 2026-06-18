@@ -25,6 +25,18 @@ const ARTICLES = [
     url: 'https://fr.wikipedia.org/wiki/Testartikel_Zwei',
     lang: 'fr',
   },
+  {
+    title: 'Coupe du monde de football',
+    extract: 'La Coupe du monde est une compétition de football très importante.',
+    url: 'https://fr.wikipedia.org/wiki/Testartikel_Drei',
+    lang: 'fr',
+  },
+  {
+    title: 'Intelligence artificielle',
+    extract: "L'intelligence artificielle change beaucoup de choses aujourd'hui.",
+    url: 'https://fr.wikipedia.org/wiki/Testartikel_Vier',
+    lang: 'fr',
+  },
 ];
 
 const now = Date.now();

@@ -86,6 +86,8 @@ export function App() {
   const [score, setScore] = useState({ answered: 0, correct: 0 });
   const qInflight = useRef<Set<number>>(new Set());
   const extracted = useRef<Set<number>>(new Set());
+  const openTimer = useRef<number>();
+  const closeTimer = useRef<number>();
 
   const mounted = useRef(true);
   const inflight = useRef<Set<number>>(new Set());
@@ -288,9 +290,24 @@ export function App() {
     }
   }
 
-  function openWord(word: string, el: HTMLElement) {
+  function showWord(word: string, el: HTMLElement) {
     const r = el.getBoundingClientRect();
     setPop({ kind: 'word', word, x: r.left + window.scrollX, y: r.bottom + window.scrollY });
+  }
+  // Hover-to-translate (like marked words on live pages): open after a short
+  // intent delay; keep open while the cursor is on the word or the popover.
+  function wordEnter(word: string, el: HTMLElement) {
+    window.clearTimeout(closeTimer.current);
+    window.clearTimeout(openTimer.current);
+    openTimer.current = window.setTimeout(() => showWord(word, el), 140);
+  }
+  function wordLeave() {
+    window.clearTimeout(openTimer.current);
+    scheduleClose();
+  }
+  function scheduleClose() {
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setPop((p) => (p?.kind === 'word' ? null : p)), 260);
   }
   function onSelect() {
     const sel = window.getSelection();
@@ -370,7 +387,9 @@ export function App() {
               ranks={ranks}
               names={names}
               level={level}
-              onWord={openWord}
+              onEnter={wordEnter}
+              onLeave={wordLeave}
+              onClick={showWord}
             />
           ))}
           {quizIdx !== null && qs[quizIdx] && (
@@ -417,14 +436,18 @@ export function App() {
 
       {pop && (
         <>
-          <div class="lz-pop-backdrop" onClick={() => setPop(null)} />
+          {pop.kind === 'text' && (
+            <div class="lz-pop-backdrop" onClick={() => setPop(null)} />
+          )}
           <WordPopover
+            key={pop.kind === 'word' ? `w:${pop.word}` : `t:${pop.text}`}
             pop={pop}
             lang={params!.lang}
             native={native}
             level={level}
             model={model}
-            onClose={() => setPop(null)}
+            onEnter={() => window.clearTimeout(closeTimer.current)}
+            onLeave={() => pop.kind === 'word' && scheduleClose()}
           />
         </>
       )}
@@ -439,14 +462,16 @@ function WordPopover({
   native,
   level,
   model,
-  onClose,
+  onEnter,
+  onLeave,
 }: {
   pop: Pop;
   lang: Language;
   native: Language;
   level: CefrLevel;
   model: string;
-  onClose: () => void;
+  onEnter: () => void;
+  onLeave: () => void;
 }) {
   const [info, setInfo] = useState<WordInfo | null>(null);
   const [trans, setTrans] = useState<string | null>(null);
@@ -501,6 +526,8 @@ function WordPopover({
       class="lz-pop"
       style={{ top: `${pop.y + 6}px`, left: `${pop.x}px` }}
       onClick={(e) => e.stopPropagation()}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
     >
       {isWord ? (
         info === null ? (
@@ -555,14 +582,18 @@ function RichText({
   ranks,
   names,
   level,
-  onWord,
+  onEnter,
+  onLeave,
+  onClick,
 }: {
   text: string;
   lang: Language;
   ranks: RankMap | null;
   names: Set<string>;
   level: CefrLevel;
-  onWord: (word: string, el: HTMLElement) => void;
+  onEnter: (word: string, el: HTMLElement) => void;
+  onLeave: () => void;
+  onClick: (word: string, el: HTMLElement) => void;
 }) {
   if (!ranks) return <>{text}</>;
   // In languages that don't capitalise common nouns, a capitalised word is
@@ -583,7 +614,9 @@ function RichText({
             type="button"
             class="lz-word"
             data-band={band[0]}
-            onClick={(e) => onWord(tok, e.currentTarget)}
+            onMouseEnter={(e) => onEnter(tok, e.currentTarget)}
+            onMouseLeave={onLeave}
+            onClick={(e) => onClick(tok, e.currentTarget)}
           >
             {tok}
           </button>
@@ -605,7 +638,9 @@ function Para({
   ranks,
   names,
   level,
-  onWord,
+  onEnter,
+  onLeave,
+  onClick,
 }: {
   original: string;
   sim: Sim;
@@ -618,7 +653,9 @@ function Para({
   ranks: RankMap | null;
   names: Set<string>;
   level: CefrLevel;
-  onWord: (word: string, el: HTMLElement) => void;
+  onEnter: (word: string, el: HTMLElement) => void;
+  onLeave: () => void;
+  onClick: (word: string, el: HTMLElement) => void;
 }) {
   const text = sim === 'error' ? original : sim;
   return (
@@ -627,7 +664,16 @@ function Para({
         <Dots />
       ) : (
         <p class="lz-simplified">
-          <RichText text={text} lang={lang} ranks={ranks} names={names} level={level} onWord={onWord} />
+          <RichText
+            text={text}
+            lang={lang}
+            ranks={ranks}
+            names={names}
+            level={level}
+            onEnter={onEnter}
+            onLeave={onLeave}
+            onClick={onClick}
+          />
         </p>
       )}
       {showOriginal && sim !== undefined && sim !== 'error' && (
