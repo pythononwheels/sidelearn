@@ -72,7 +72,7 @@ const lesson = {
 
 test('capture all surfaces (dark + light)', async ({ context, extensionId }) => {
   await seedStorage(context.serviceWorkers()[0]!, {
-    settings: { onboarded: true, learnLang: 'fr', nativeLang: 'de', level: 'A2' },
+    settings: { onboarded: true, learnLang: 'fr', nativeLang: 'de', level: 'A2', serverEnabled: false },
     daily: { dateKey: dateKey(), lang: 'fr', articles: ARTICLES, streak: 3 },
     vocab,
     bookmarks: [{ url: 'https://lemonde.fr/article', title: 'Le Monde — un article', ts: now }],

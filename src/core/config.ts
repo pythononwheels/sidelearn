@@ -114,7 +114,7 @@ export const DEFAULT_SETTINGS: Settings = {
   reviewMode: 'words',
   dailyChallenge: true,
   dailySetSize: 2,
-  serverEnabled: false,
+  serverEnabled: true,
   serverUrl: 'https://api.sidelearn.pyrates.io',
   serverLevel: 'A2',
   onboarded: false,

@@ -22,7 +22,7 @@ const ARTICLES = ['Eins', 'Zwei', 'Drei', 'Vier'].map((n, i) => ({
 
 test.beforeEach(async ({ serviceWorker }) => {
   await seedStorage(serviceWorker, {
-    settings: { onboarded: true, learnLang: 'fr', nativeLang: 'de', level: 'A2' },
+    settings: { onboarded: true, learnLang: 'fr', nativeLang: 'de', level: 'A2', serverEnabled: false },
     daily: { dateKey: dateKey(), lang: 'fr', articles: ARTICLES, streak: 0 },
   });
 });

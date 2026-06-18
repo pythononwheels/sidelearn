@@ -249,8 +249,9 @@ export function App() {
     return () => void (cancelled = true);
   }, [settings?.dailyChallenge, settings?.serverEnabled, settings?.serverUrl, settings?.learnLang, settings?.serverLevel]);
 
-  // Daily set: prefer the server pool when available, else the local one.
-  const usingServer = !!(settings?.serverEnabled && serverDaily);
+  // Daily set: use the central server pool when it has content, else fall back
+  // to the local Wikipedia pipeline (so a missing server day never breaks it).
+  const usingServer = !!(settings?.serverEnabled && serverDaily && serverDaily.articles.length > 0);
   const dailyGoal = usingServer ? serverDaily!.goal : settings?.dailySetSize ?? 2;
   const dailyArticles: DailyArticle[] = usingServer
     ? serverDaily!.articles.map((a) => ({
@@ -805,7 +806,7 @@ export function App() {
               <DailyCard
                 articles={dailyArticles}
                 goal={dailyGoal}
-                level={settings.level}
+                level={usingServer ? settings.serverLevel : settings.level}
                 doneCount={dailyDoneCount}
                 allDone={dailyAllDone}
                 doneUrls={lessonsDone}

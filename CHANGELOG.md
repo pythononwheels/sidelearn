@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.65] — 2026-06-19
+
+### Changed
+- **Daily challenge now uses the central Sidelearn server by default.** When the
+  server has content for your language/day, the sidebar's daily challenge is the
+  pre-baked set (instant, multi-level); if the server has nothing for that day or
+  is unreachable, it **falls back to the local Wikipedia pipeline** automatically.
+  Toggle "Lektionen vom Sidelearn-Server" off for local-only. The daily card
+  shows the active reading level (server level when central).
+
 ## [0.6.64] — 2026-06-18
 
 ### Fixed
