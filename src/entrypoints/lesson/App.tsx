@@ -256,10 +256,12 @@ export function App() {
   async function extractVocab(i: number) {
     if (!ranks || level === null || !paras) return;
     const original = paras[i]!;
+    const skipCaps = params!.lang !== 'de';
     const seen = new Set<string>();
     const picks: Array<{ tok: string; rank: number }> = [];
     for (const tok of original.split(/[^\p{L}]+/u)) {
       if (tok.length < 4) continue;
+      if (skipCaps && /^\p{Lu}/u.test(tok)) continue;
       const low = tok.toLowerCase();
       if (seen.has(low) || names.has(low)) continue;
       const rank = rankOf(ranks, tok);
@@ -364,6 +366,7 @@ export function App() {
               readable={quizIdx === null}
               onRead={onReadCurrent}
               isLast={i === total - 1}
+              lang={params!.lang}
               ranks={ranks}
               names={names}
               level={level}
@@ -548,23 +551,29 @@ function WordPopover({
 /** Render text with borderline words underlined + clickable to translate. */
 function RichText({
   text,
+  lang,
   ranks,
   names,
   level,
   onWord,
 }: {
   text: string;
+  lang: Language;
   ranks: RankMap | null;
   names: Set<string>;
   level: CefrLevel;
   onWord: (word: string, el: HTMLElement) => void;
 }) {
   if (!ranks) return <>{text}</>;
+  // In languages that don't capitalise common nouns, a capitalised word is
+  // almost always a proper noun — skip it (not so in German, where all nouns are).
+  const skipCaps = lang !== 'de';
   const tokens = text.split(/(\p{L}[\p{L}\-']*)/u);
   return (
     <>
       {tokens.map((tok, i) => {
         if (i % 2 === 0 || tok.length < 3 || names.has(tok.toLowerCase())) return tok;
+        if (skipCaps && /^\p{Lu}/u.test(tok)) return tok;
         const rank = rankOf(ranks, tok);
         if (rank === undefined) return tok;
         const band = rankToBand(rank);
@@ -592,6 +601,7 @@ function Para({
   readable,
   onRead,
   isLast,
+  lang,
   ranks,
   names,
   level,
@@ -604,6 +614,7 @@ function Para({
   readable: boolean;
   onRead: () => void;
   isLast: boolean;
+  lang: Language;
   ranks: RankMap | null;
   names: Set<string>;
   level: CefrLevel;
@@ -616,7 +627,7 @@ function Para({
         <Dots />
       ) : (
         <p class="lz-simplified">
-          <RichText text={text} ranks={ranks} names={names} level={level} onWord={onWord} />
+          <RichText text={text} lang={lang} ranks={ranks} names={names} level={level} onWord={onWord} />
         </p>
       )}
       {showOriginal && sim !== undefined && sim !== 'error' && (

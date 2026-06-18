@@ -844,7 +844,7 @@ export function App() {
           </details>
 
           <details class="ll-section" name="ll-acc" onToggle={onSectionToggle}>
-            <summary>🔖 Sites ({bookmarks.length})</summary>
+            <summary>Sites ({bookmarks.length})</summary>
             <SitesList bookmarks={bookmarks} />
           </details>
         </>
@@ -881,7 +881,8 @@ function DailyCard({
   onLesson: () => void;
   onOpen: () => void;
 }) {
-  const teaser = article.extract.replace(/\s+/g, ' ').trim().slice(0, 120);
+  const clean = article.extract.replace(/\s+/g, ' ').trim();
+  const teaser = clean.length > 120 ? `${clean.slice(0, 120).replace(/[\s.,;:!?–-]+$/, '')}…` : clean;
   const tagTitle = est
     ? `≈ ${Math.round(est.aboveShare * 100)} % der bekannten Wörter über ${level} (von ${est.sample} geprüft)`
     : undefined;
@@ -905,7 +906,7 @@ function DailyCard({
             {article.thumbnail && <img class="ll-daily-thumb" src={article.thumbnail} alt="" />}
             <div class="ll-daily-text">
               <h3 class="ll-daily-title">{article.title}</h3>
-              {teaser && <p class="ll-daily-teaser">{teaser}…</p>}
+              {teaser && <p class="ll-daily-teaser">{teaser}</p>}
               {est && (
                 <span class={`ll-daily-tag t-${est.tag}`} title={tagTitle}>
                   {difficultyLabel(est.tag, level)}

@@ -9,6 +9,7 @@ stats.html
 # Playwright E2E artifacts (browsers live in a global cache, not here)
 test-results/
 playwright-report/
+tests/e2e/__screens__/
 
 # Data — downloaded sources (regenerate via `npm run data:wordlists`).
 # The small sample files in public/data/ ARE committed so the extension runs on clone.

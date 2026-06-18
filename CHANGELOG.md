@@ -3,9 +3,23 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.59] — 2026-06-18
+
+### Changed
+- **UI consistency pass** (from a dark+light screenshot review of every surface):
+  - "Sites" section header no longer uses the lone 🔖 emoji — consistent with the
+    other (icon-less) section headers.
+  - Daily-card teaser no longer shows doubled punctuation ("Munich.…"); it trims
+    and only adds an ellipsis when actually truncated.
+  - In the lesson, capitalised words (almost always proper nouns like
+    "Palace"/"Crystal") are no longer underlined or auto-collected as vocab — for
+    every learning language except German, where common nouns are capitalised.
+
 ## [Unreleased]
 
 ### Tooling
+- **Screenshot review run** (`tests/e2e/screens.spec.ts`) capturing every surface
+  in dark + light into `tests/e2e/__screens__/` (gitignored) for visual review.
 - **Playwright E2E harness** (`tests/e2e/`) that loads the built MV3 extension
   (`launchPersistentContext` + `--load-extension`) and drives the real side panel
   via its `chrome-extension://…/sidepanel.html` URL. A seeded smoke suite covers
