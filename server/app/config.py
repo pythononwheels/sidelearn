@@ -20,8 +20,10 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
-# Daily build hour (local server time, 0-23). The job also runs once on startup
-# if today's content is missing.
+# Auto-build: when "1", the container discovers + processes the daily set on
+# startup and on a daily cron. Default off — content is prepared manually via the
+# admin dashboard, so the container just boots and serves.
+AUTO_BUILD = os.getenv("SL_AUTO_BUILD", "0") == "1"
 BUILD_HOUR = int(os.getenv("SL_BUILD_HOUR", "4"))
 
 # Bump when the prepared-content shape changes so old rows are re-generated.

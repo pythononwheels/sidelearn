@@ -7,7 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import config, db, pipeline
+from . import admin, config, db, pipeline
 
 app = FastAPI(title="Sidelearn Content Server", version="0.1")
 
@@ -15,9 +15,11 @@ app = FastAPI(title="Sidelearn Content Server", version="0.1")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+app.include_router(admin.router)
 
 scheduler = BackgroundScheduler()
 
@@ -29,22 +31,20 @@ def _run_build() -> None:
 @app.on_event("startup")
 def _startup() -> None:
     db.init()
-    # Build today's content in the background if it's missing.
-    import threading
+    # By default the container just serves; content is prepared via the admin
+    # dashboard. Auto-build (startup + daily cron) is opt-in via SL_AUTO_BUILD=1.
+    if config.AUTO_BUILD:
+        import threading
 
-    threading.Thread(target=_run_build_if_missing, daemon=True).start()
-    scheduler.add_job(_run_build, "cron", hour=config.BUILD_HOUR, id="daily", replace_existing=True)
-    scheduler.start()
-
-
-def _run_build_if_missing() -> None:
-    if not db.daily_article_ids(pipeline.today_key(), config.LANGS[0]):
-        _run_build()
+        threading.Thread(target=_run_build, daemon=True).start()
+        scheduler.add_job(_run_build, "cron", hour=config.BUILD_HOUR, id="daily", replace_existing=True)
+        scheduler.start()
 
 
 @app.on_event("shutdown")
 def _shutdown() -> None:
-    scheduler.shutdown(wait=False)
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
 
 
 @app.get("/health")

@@ -53,6 +53,22 @@ Updates later: `cd /opt/sidelearn/server && ./deploy.sh` (git pull + rebuild).
 
 CORS is open (public data), so the extension can fetch cross-origin.
 
+## Admin dashboard
+
+The container boots and just **serves**; content is prepared manually at
+`/admin` (protect it with Caddy basicauth — see the snippet). Flow:
+
+1. **Entdecken** (per language/day) — fetches the Wikipedia pool + article text,
+   no LLM. Fast.
+2. **Verarbeiten** (per article, background) — simplifies to each level + makes
+   questions, vocab and a summary via the LLM. One failing level/article never
+   aborts the rest.
+
+`/admin` → language tabs + "Heute entdecken" + day list. `/admin/day?lang=&date=`
+→ article cards with level badges, "Verarbeiten" / "Alle verarbeiten", and
+"Ansehen" to inspect the prepared content. Set `SL_AUTO_BUILD=1` to instead
+discover+process automatically on startup and daily.
+
 ## Config
 
 See `.env.example`. Key vars: `LLM_PROVIDER` (`openai|gemini|mock`), the

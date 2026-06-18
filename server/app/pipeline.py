@@ -1,5 +1,12 @@
-"""The daily build: fetch each language's pool, store originals, and prepare a
-lesson per level via the LLM. Idempotent — skips work already in the DB."""
+"""Two-stage content prep, decoupled so it can be triggered manually:
+
+  1. discover(lang, day)   — fetch the day's pool + article text. No LLM. Fast.
+  2. process_article(id)   — simplify to each level + questions + vocab + summary
+                              via the LLM. Resilient (one failing level/article
+                              never aborts the rest).
+
+build_day() chains both and is only used when SL_AUTO_BUILD=1.
+"""
 
 import asyncio
 from datetime import date, datetime, timezone
@@ -7,6 +14,9 @@ from datetime import date, datetime, timezone
 import httpx
 
 from . import config, db, llm, wiki
+
+# Article ids currently being processed (so the admin UI can show "läuft").
+PROCESSING: set[str] = set()
 
 
 def today_key() -> str:
@@ -17,47 +27,63 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-async def build_day(day: date | None = None) -> dict[str, int]:
-    day = day or date.today()
+async def discover(lang: str, day: date) -> int:
+    """Fetch the day's pool for `lang` and store the original articles. No LLM."""
     dkey = day.strftime("%Y-%m-%d")
-    stats = {"articles": 0, "prepared": 0}
+    added = 0
     async with httpx.AsyncClient(timeout=30) as client:
-        for lang in config.LANGS:
-            pool = await wiki.fetch_pool(client, lang, day, config.POOL)
-            for rank, a in enumerate(pool):
-                if not db.has_article(a["id"]):
-                    paras = await wiki.fetch_paragraphs(client, lang, a["title"], config.MAX_PARAS)
-                    if not paras:
-                        continue
-                    db.upsert_article({**a, "paragraphs": paras}, _now())
-                    stats["articles"] += 1
-                db.upsert_daily(dkey, lang, rank, a["id"])
-                stats["prepared"] += _prepare_levels(a["id"], lang)
-    return stats
+        pool = await wiki.fetch_pool(client, lang, day, config.POOL)
+        for rank, a in enumerate(pool):
+            if not db.has_article(a["id"]):
+                paras = await wiki.fetch_paragraphs(client, lang, a["title"], config.MAX_PARAS)
+                if not paras:
+                    continue
+                db.upsert_article({**a, "paragraphs": paras}, _now())
+                added += 1
+            db.upsert_daily(dkey, lang, rank, a["id"])
+    return added
 
 
-def _prepare_levels(article_id: str, lang: str) -> int:
+def process_article(article_id: str, levels: list[str] | None = None, force: bool = False) -> dict:
+    """Prepare an article for each level via the LLM. Per-level try/except so one
+    failure doesn't abort the others. Returns {made, skipped, errors}."""
     art = db.get_article(article_id)
     if not art:
-        return 0
-    made = 0
-    for level in config.LEVELS:
-        if db.has_prepared(article_id, level):
-            continue
-        # LLM calls are blocking; run them off the event loop in build_day's caller.
-        data = llm.prepare(art["paragraphs"], lang, level)
-        db.upsert_prepared(article_id, level, data, _now())
-        made += 1
-    return made
+        return {"ok": False, "error": "article not found"}
+    levels = levels or config.LEVELS
+    made, skipped, errors = 0, 0, []
+    PROCESSING.add(article_id)
+    try:
+        for level in levels:
+            if not force and db.has_prepared(article_id, level):
+                skipped += 1
+                continue
+            try:
+                data = llm.prepare(art["paragraphs"], art["lang"], level)
+                db.upsert_prepared(article_id, level, data, _now())
+                made += 1
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{level}: {e}")
+    finally:
+        PROCESSING.discard(article_id)
+    return {"ok": True, "made": made, "skipped": skipped, "errors": errors}
 
 
-async def ensure_today() -> dict[str, int]:
-    """Build today's content if the first language has none yet."""
-    if db.daily_article_ids(today_key(), config.LANGS[0]):
-        return {"articles": 0, "prepared": 0}
-    # LLM prepare is synchronous/blocking — run the whole build in a thread.
-    return await asyncio.to_thread(_build_today_sync)
+def process_day(date_key: str, lang: str) -> dict:
+    """Process every (not-yet-prepared) article in a day's pool for `lang`."""
+    made, errors = 0, []
+    for aid in db.daily_article_ids(date_key, lang):
+        r = process_article(aid)
+        made += r.get("made", 0)
+        errors += r.get("errors", [])
+    return {"made": made, "errors": errors}
 
 
-def _build_today_sync() -> dict[str, int]:
-    return asyncio.run(build_day())
+async def build_day(day: date | None = None) -> dict:
+    """Discover + process all languages for a day (auto-build mode only)."""
+    day = day or date.today()
+    dkey = day.strftime("%Y-%m-%d")
+    for lang in config.LANGS:
+        await discover(lang, day)
+        await asyncio.to_thread(process_day, dkey, lang)
+    return {"ok": True}

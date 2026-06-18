@@ -137,6 +137,15 @@ def upsert_prepared(article_id: str, level: str, data: dict[str, Any], now: str)
         )
 
 
+def prepared_levels(article_id: str) -> list[str]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT level FROM prepared WHERE article_id=? AND schema_version=?",
+            (article_id, config.SCHEMA_VERSION),
+        ).fetchall()
+    return [r["level"] for r in rows]
+
+
 def get_prepared(article_id: str, level: str) -> Optional[dict[str, Any]]:
     with conn() as c:
         row = c.execute(
