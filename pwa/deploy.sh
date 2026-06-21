@@ -5,6 +5,15 @@
 #   SSH_TARGET=khz@pyrates.io ./pwa/deploy.sh
 #   SSH_TARGET=khz@pyrates.io ./pwa/deploy.sh --dry-run
 #
+# Host setup (once): sudo mkdir -p /opt/learny && sudo chown khz:khz /opt/learny
+# Caddy block to append to /etc/caddy/Caddyfile (then validate + reload) — minimal,
+# matching the other y-apps; the service worker handles caching/offline:
+#   learny.pyrates.io {
+#       import security_headers
+#       root * /opt/learny
+#       file_server
+#   }
+#
 # SAFETY: no --delete by default (rsync can only add/update — cannot remove
 # anything on the server). The path guard refuses any REMOTE_PATH whose leaf is
 # not 'learny' (so a typo can't touch sibling apps in shared /opt).
