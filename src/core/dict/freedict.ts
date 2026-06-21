@@ -7,6 +7,7 @@
  */
 
 import { dictFile, type Language } from '../config';
+import { dataUrl } from '../dataurl';
 import type { DictSense } from '../types';
 import { normalize } from '../difficulty/frequency';
 import { lemmaCandidates } from './lemmatize';
@@ -25,7 +26,7 @@ async function loadForms(learn: Language): Promise<Record<string, string>> {
   if (cached) return cached;
   let map: Record<string, string> = {};
   try {
-    const url = browser.runtime.getURL(`/data/forms-${learn}.json` as never);
+    const url = dataUrl(`/data/forms-${learn}.json`);
     const res = await fetch(url);
     if (res.ok) map = (await res.json()) as Record<string, string>;
   } catch {
@@ -42,7 +43,7 @@ async function loadGloss(learn: Language, native: Language): Promise<GlossMap> {
 
   let map: GlossMap = {};
   try {
-    const url = browser.runtime.getURL(`/data/gloss-${learn}-${native}.json` as never);
+    const url = dataUrl(`/data/gloss-${learn}-${native}.json`);
     const res = await fetch(url);
     if (res.ok) map = (await res.json()) as GlossMap;
   } catch {
@@ -59,7 +60,7 @@ async function loadDict(learn: Language, native: Language): Promise<DictMap> {
 
   let map: DictMap = {};
   try {
-    const url = browser.runtime.getURL(`/data/${dictFile(learn, native)}` as never);
+    const url = dataUrl(`/data/${dictFile(learn, native)}`);
     const res = await fetch(url);
     if (res.ok) map = (await res.json()) as DictMap;
   } catch {

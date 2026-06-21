@@ -72,6 +72,13 @@ def daily(
     _check_level(level)
     dkey = date_ or pipeline.today_key()
     ids = db.daily_article_ids(dkey, lang)
+    # If today's set isn't built yet (and no explicit date was asked), fall back
+    # to the most recent day that has content — so users always see a challenge.
+    if not ids and not date_:
+        recent = db.daily_dates(lang, 1)
+        if recent:
+            dkey = recent[0]
+            ids = db.daily_article_ids(dkey, lang)
     articles = []
     for aid in ids:
         art = db.get_article(aid)

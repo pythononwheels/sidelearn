@@ -10,6 +10,7 @@
  */
 
 import { freqFile, type Language } from '../config';
+import { dataUrl } from '../dataurl';
 
 type RankMap = Record<string, number>;
 
@@ -21,7 +22,7 @@ export async function loadRanks(lang: Language): Promise<RankMap> {
 
   let map: RankMap = {};
   try {
-    const url = browser.runtime.getURL(`/data/${freqFile(lang)}` as never);
+    const url = dataUrl(`/data/${freqFile(lang)}`);
     const res = await fetch(url);
     if (res.ok) map = (await res.json()) as RankMap;
   } catch {

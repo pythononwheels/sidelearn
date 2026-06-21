@@ -3,13 +3,15 @@
  * highlighter doesn't mark names that have no meaningful translation.
  */
 
+import { dataUrl } from './dataurl';
+
 let cache: Set<string> | null = null;
 
 export async function loadNames(): Promise<Set<string>> {
   if (cache) return cache;
   let list: string[] = [];
   try {
-    const url = browser.runtime.getURL('/data/names.json' as never);
+    const url = dataUrl('/data/names.json');
     const res = await fetch(url);
     if (res.ok) list = (await res.json()) as string[];
   } catch {
