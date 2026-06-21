@@ -23,9 +23,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon/*.png'],
       manifest: {
-        name: 'Sidelearn',
-        short_name: 'Sidelearn',
-        description: 'Lies echte Texte auf deinem Sprachniveau.',
+        name: 'Learny',
+        short_name: 'Learny',
+        description: 'Language learning on the side — lies echte Texte auf deinem Sprachniveau.',
         start_url: '.',
         scope: '.',
         display: 'standalone',

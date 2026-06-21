@@ -1,5 +1,6 @@
 /**
- * Sidelearn Learn — mobile PWA. Server-powered (no local LLM): the daily
+ * Learny — mobile PWA (part of the Sidelearn family). Server-powered (no local
+ * LLM): the daily
  * challenge and lessons come pre-baked from the content server; word lookups use
  * the bundled dictionary. Personal progress stays on-device.
  */
@@ -91,7 +92,7 @@ function Home({
   return (
     <main class="sl-main">
       <header class="sl-head">
-        <span class="sl-brand"><span class="sl-logo" /> Sidelearn</span>
+        <span class="sl-brand"><span class="sl-logo" /> Learny</span>
         <div class="sl-pick">
           <select value={settings.learn} onChange={(e) => onPatch({ learn: e.currentTarget.value as Language })}>
             {LANGUAGES.filter((l) => l !== settings.native).map((l) => (

@@ -1,14 +1,14 @@
-# Caddy stanza for sidelearn.pyrates.io — the Learn PWA (static).
+# Caddy stanza for learny.pyrates.io — the Learny PWA (static).
 # Append to /etc/caddy/Caddyfile, then: sudo systemctl reload caddy
-# Files deployed by pwa/deploy.sh to /opt/sidelearn-learn.
-# DNS sidelearn.pyrates.io already points to this host (87.106.94.219).
+# Files deployed by pwa/deploy.sh to /opt/learny.
+# PREREQUISITE: DNS A record learny.pyrates.io → 87.106.94.219.
 
-sidelearn.pyrates.io {
+learny.pyrates.io {
     import security_headers
     encode zstd gzip
-    root * /opt/sidelearn-learn
+    root * /opt/learny
 
-    # SW + manifest must always revalidate so updates roll out; data + hashed
+    # SW + manifest + shell must revalidate so updates roll out; data + hashed
     # assets are immutable and cached long.
     @nocache path /sw.js /manifest.webmanifest /index.html
     header @nocache Cache-Control "no-cache"
