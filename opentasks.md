@@ -37,6 +37,17 @@ Status: `open` · `hold` · `closed` · `archive`
 
 ## Ideas (pipeline)
 
+- [open] **Learn-PWA** (`pwa/`, Vite+Preact+vite-plugin-pwa) — v1 done: mobile
+  daily challenge from the content server, lesson reader (level switch A2-C1,
+  tap-to-translate via bundled dict, per-paragraph quiz), on-device progress,
+  offline SW, rubber-band/safe-area, update banner. Reuses src/core via
+  core/dataurl.ts. Build `npm run pwa:build` → .output/pwa; smoke `PWA_URL=… npx
+  playwright test pwa`. **Next:** gamification (XP/streak/weekly recap), TTS of
+  the simplified text (on-device), vocab from server (translations+examples) →
+  vocab trainer, deploy to learn.sidelearn.pyrates.io (rsync /opt + Caddy),
+  privacy-first share card; then continue the sidebar.
+
+
 - [open] **Sidelearn content server** — MVP done (`server/`, FastAPI+Docker):
   daily Wikipedia pool per language, pre-baked simplifications A2–C1 + MC + vocab
   + summary via cloud LLM (OpenAI/Gemini/mock), SQLite, `/daily /lesson /archive
