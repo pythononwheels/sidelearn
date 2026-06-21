@@ -44,9 +44,24 @@ cd /opt/sidelearn/server
 cp .env.example .env        # set LLM_PROVIDER=gemini + GEMINI_API_KEY
 ./deploy.sh                 # build + up + health on 127.0.0.1:9990
 
-# Caddy (append the snippet, then reload)
-sudo tee -a /etc/caddy/Caddyfile < api.sidelearn.pyrates.io.caddy
-sudo systemctl reload caddy
+# Caddy: append this block to /etc/caddy/Caddyfile, then validate + reload.
+# (Config is NOT committed — the host's Caddyfile is the source of truth.)
+sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+```
+
+Caddy block (the `/admin*` basicauth hash via
+`caddy hash-password --plaintext '…'`):
+
+```
+api.sidelearn.pyrates.io {
+    import security_headers
+    encode zstd gzip
+    @admin path /admin*
+    basicauth @admin {
+        khz <BCRYPT_HASH>
+    }
+    reverse_proxy localhost:9990
+}
 ```
 
 Updates later: `cd /opt/sidelearn/server && ./deploy.sh` (git pull + rebuild).
@@ -56,7 +71,7 @@ CORS is open (public data), so the extension can fetch cross-origin.
 ## Admin dashboard
 
 The container boots and just **serves**; content is prepared manually at
-`/admin` (protect it with Caddy basicauth — see the snippet). Flow:
+`/admin` (protect it with the Caddy basicauth above). Flow:
 
 1. **Entdecken** (per language/day) — fetches the Wikipedia pool + article text,
    no LLM. Fast.

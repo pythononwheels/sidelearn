@@ -30,3 +30,6 @@ data/sources/
 *.log
 .idea/
 .vscode/
+
+# Caddy site snippets are documented in the READMEs, not committed as config.
+*.caddy
