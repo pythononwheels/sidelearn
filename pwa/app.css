@@ -177,9 +177,19 @@ a { color: var(--ll-accent); }
 }
 .sl-para.past { opacity: 0.55; }
 .sl-para.current { box-shadow: var(--ll-shadow); border-color: transparent; }
-.sl-text { margin: 0; font-size: 19px; line-height: 1.6; }
+.sl-text { margin: 0; font-size: 19px; line-height: 1.7; }
 .sl-word { cursor: pointer; border-radius: 4px; }
 .sl-word:active { background: var(--ll-accent-soft); }
+.sl-word.mark {
+  text-decoration: underline dotted var(--ll-accent);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+}
+.sl-hint { margin: 0 0 14px; font-size: 13px; color: var(--ll-text-soft); }
+.sl-hint-mark {
+  text-decoration: underline dotted var(--ll-accent);
+  text-underline-offset: 3px; text-decoration-thickness: 2px;
+}
 .sl-read {
   margin-top: 14px; font: inherit; font-weight: 700; font-size: 15px; padding: 10px 24px;
   border-radius: 14px; border: none; background: var(--ll-accent); color: #fff; cursor: pointer;

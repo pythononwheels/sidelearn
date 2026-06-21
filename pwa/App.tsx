@@ -8,7 +8,9 @@
 import { type ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { LANGUAGES, LANG_LABELS, type Language } from '@/core/config';
-import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
+import { CEFR_LEVELS, isAboveLevel, rankToBand, type CefrLevel } from '@/core/difficulty/banding';
+import { loadRanks, rankOf } from '@/core/difficulty/frequency';
+import { loadNames } from '@/core/names';
 import { resolveWord } from '@/core/wordinfo';
 import type { WordInfo } from '@/core/types';
 import {
@@ -307,8 +309,23 @@ function Lesson({
   const [quizIdx, setQuizIdx] = useState<number | null>(null);
   const [answer, setAnswer] = useState<number | null>(null);
   const [pop, setPop] = useState<{ word: string; x: number; y: number } | null>(null);
+  const [ranks, setRanks] = useState<Record<string, number> | null>(null);
+  const [names, setNames] = useState<Set<string>>(new Set());
   // Award XP only for a lesson not yet credited (no farming by re-reading).
   const creditable = useRef(!isLessonCredited(article.url));
+
+  // Load frequency ranks + names so we can mark words above the user's level
+  // (visible reading aid, like the live pages).
+  useEffect(() => {
+    void loadRanks(settings.learn).then(setRanks);
+    void loadNames().then(setNames);
+  }, [settings.learn]);
+
+  const isHard = (w: string): boolean => {
+    if (!ranks || w.length < 3 || names.has(w.toLowerCase())) return false;
+    const r = rankOf(ranks, w);
+    return r !== undefined && isAboveLevel(rankToBand(r), settings.level);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -370,11 +387,16 @@ function Lesson({
         Absatz {Math.min(visible, total)} / {total}
         {total >= 8 ? ' · Auszug' : ''}
       </p>
+      <p class="sl-hint">💡 Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
 
       {lesson.paragraphs.slice(0, visible).map((p, i) => (
         <div key={i} class={`sl-para ${i === lastIdx && !completed ? 'current' : 'past'}`}>
           <p class="sl-text">
-            <TapText text={p.simplified} onWord={(word, x, y) => setPop({ word, x, y })} />
+            <TapText
+              text={p.simplified}
+              isHard={isHard}
+              onWord={(word, x, y) => setPop({ word, x, y })}
+            />
           </p>
           {i === lastIdx && !completed && quizIdx === null && (
             <button class="sl-read" onClick={onRead}>
@@ -447,14 +469,22 @@ function Frame({
 
 /* ------------------------------------------------------ tappable words --- */
 
-function TapText({ text, onWord }: { text: string; onWord: (w: string, x: number, y: number) => void }) {
+function TapText({
+  text,
+  isHard,
+  onWord,
+}: {
+  text: string;
+  isHard: (w: string) => boolean;
+  onWord: (w: string, x: number, y: number) => void;
+}) {
   const tokens = text.split(/(\p{L}[\p{L}\-']*)/u);
   return (
     <>
       {tokens.map((tok, i) =>
         i % 2 === 1 ? (
           <span
-            class="sl-word"
+            class={`sl-word ${isHard(tok) ? 'mark' : ''}`}
             onClick={(e) => {
               const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
               onWord(tok, r.left, r.bottom);
