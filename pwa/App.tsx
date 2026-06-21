@@ -184,7 +184,7 @@ function Home({
         </div>
       </header>
 
-      {/* Hero: today's lesson */}
+      {/* Hero: today's lesson — a calm summary, no competing button */}
       <section class="lr-hero">
         <div class="lr-hero-top">
           <span class="lr-hero-eyebrow">Deine Tageslektion</span>
@@ -195,51 +195,41 @@ function Home({
         ) : articles.length === 0 ? (
           <p class="lr-hero-text">Heute gibt es noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später nochmal vorbei.</p>
         ) : allDone ? (
-          <>
-            <p class="lr-hero-text">Heute geschafft! 🎉 Lies gern noch weiter.</p>
-            <button class="lr-cta" onClick={() => next && open(next)}>Weiterlesen →</button>
-          </>
+          <p class="lr-hero-text">Heute geschafft! 🎉 Du kannst gern noch weiterlesen.</p>
         ) : (
-          <>
-            <p class="lr-hero-text">
-              Lies <b>{goal}</b> kurze Artikel — wir vereinfachen sie für dich auf {settings.level}.
-            </p>
-            <button class="lr-cta" onClick={() => next && open(next)}>
-              {doneCount > 0 || (next && getProgress(next.url)) ? 'Weiterlesen →' : "Los geht's →"}
-            </button>
-          </>
+          <p class="lr-hero-text">
+            Lies <b>{goal}</b> von {articles.length} kurzen Artikeln — wir vereinfachen sie für dich auf {settings.level}.
+          </p>
         )}
       </section>
 
-      {/* Article picker */}
+      {/* Article list = the actual challenge. Next-to-read is the primary one. */}
       {articles.length > 0 && (
-        <>
-          <h2 class="lr-section">Wähle einen Artikel</h2>
-          <ul class="lr-list">
-            {articles.map((a) => {
-              const done = isCompleted(a.url);
-              const started = !done && !!getProgress(a.url);
-              return (
-                <li key={a.id}>
-                  <button class={`lr-item ${done ? 'done' : ''}`} onClick={() => open(a)}>
-                    {a.thumbnail ? (
-                      <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
-                    ) : (
-                      <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>
-                    )}
-                    <span class="lr-item-body">
-                      <span class="lr-item-title">{a.title}</span>
-                      <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
-                    </span>
-                    <span class={`lr-item-state ${done ? 'done' : ''}`}>
-                      {done ? '✓' : started ? 'weiter' : 'lesen ›'}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </>
+        <ul class="lr-list">
+          {articles.map((a) => {
+            const done = isCompleted(a.url);
+            const started = !done && !!getProgress(a.url);
+            const isNext = !done && a.url === next?.url && !allDone;
+            return (
+              <li key={a.id}>
+                <button class={`lr-item ${done ? 'done' : ''} ${isNext ? 'primary' : ''}`} onClick={() => open(a)}>
+                  {a.thumbnail ? (
+                    <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
+                  ) : (
+                    <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>
+                  )}
+                  <span class="lr-item-body">
+                    <span class="lr-item-title">{a.title}</span>
+                    <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
+                  </span>
+                  <span class={`lr-item-state ${done ? 'done' : ''}`}>
+                    {done ? '✓' : started ? 'weiter ›' : isNext ? 'Start ›' : 'lesen ›'}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {/* Subtle progress + vocab (no flame) */}
