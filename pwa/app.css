@@ -39,6 +39,27 @@ a { color: var(--ll-accent); }
   border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text);
 }
 
+/* Gamify card ----------------------------------------------------------- */
+.sl-gamify {
+  border: 1px solid var(--ll-border); background: var(--ll-surface);
+  border-radius: 16px; padding: 14px 16px; margin-bottom: 16px;
+}
+.sl-g-row { display: flex; align-items: center; gap: 14px; }
+.sl-g-streak { font-size: 20px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
+.sl-flame { font-size: 18px; }
+.sl-g-level { flex: 1; }
+.sl-g-lvl-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.sl-g-bar { height: 8px; border-radius: 999px; background: var(--ll-bg); overflow: hidden; }
+.sl-g-bar > span { display: block; height: 100%; background: var(--ll-accent-grad); }
+.sl-g-bar.goal > span { background: #2f9e6b; }
+.sl-g-goal { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.sl-g-goal .sl-g-bar { flex: 1; }
+.sl-g-goal-num { font-size: 12px; font-weight: 700; color: var(--ll-text-soft); white-space: nowrap; }
+.sl-g-week { display: flex; align-items: flex-end; gap: 6px; height: 32px; margin-top: 12px; }
+.sl-g-day { flex: 1; display: flex; align-items: flex-end; justify-content: center; }
+.sl-g-daybar { width: 100%; max-width: 22px; border-radius: 4px 4px 0 0; background: var(--ll-accent-soft); }
+.sl-g-day:last-child .sl-g-daybar { background: var(--ll-accent); }
+
 /* Daily ----------------------------------------------------------------- */
 .sl-daily-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .sl-eyebrow { font-size: 13px; font-weight: 700; color: var(--ll-accent-strong); letter-spacing: .02em; }

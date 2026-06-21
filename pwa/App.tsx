@@ -6,7 +6,7 @@
  */
 
 import { type ComponentChildren } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { LANGUAGES, LANG_LABELS, type Language } from '@/core/config';
 import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
 import { resolveWord } from '@/core/wordinfo';
@@ -18,6 +18,7 @@ import {
   type ServerLesson,
 } from '@/core/serverapi';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type PwaSettings } from './store';
+import { award, creditLesson, isLessonCredited, getStats, XP, type Stats } from './gamify';
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
@@ -107,6 +108,8 @@ function Home({
         </div>
       </header>
 
+      <GamifyCard key={`g${tick}`} />
+
       <section class="sl-daily" key={tick}>
         <div class="sl-daily-top">
           <span class="sl-eyebrow">Tägliche Challenge</span>
@@ -175,6 +178,8 @@ function Lesson({
   const [quizIdx, setQuizIdx] = useState<number | null>(null);
   const [answer, setAnswer] = useState<number | null>(null);
   const [pop, setPop] = useState<{ word: string; x: number; y: number } | null>(null);
+  // Award XP only for a lesson not yet credited (no farming by re-reading).
+  const creditable = useRef(!isLessonCredited(article.url));
 
   useEffect(() => {
     let alive = true;
@@ -200,8 +205,17 @@ function Lesson({
   const lastIdx = visible - 1;
 
   function advance() {
-    if (visible < total) setVisible((v) => v + 1);
-    else setCompleted(true);
+    if (visible < total) {
+      if (creditable.current) award(XP.paragraph);
+      setVisible((v) => v + 1);
+    } else {
+      if (creditable.current) {
+        award(XP.lesson);
+        creditLesson(article.url);
+        creditable.current = false;
+      }
+      setCompleted(true);
+    }
   }
   function onRead() {
     const q = lesson!.paragraphs[lastIdx]?.question;
@@ -250,6 +264,7 @@ function Lesson({
             if (answer !== null) return;
             setAnswer(idx);
             const ok = idx === lesson.paragraphs[quizIdx]!.question!.correct;
+            if (ok && creditable.current) award(XP.correct);
             setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
           }}
           onNext={() => {
@@ -421,6 +436,40 @@ function Updater() {
     <div class="sl-update" onClick={apply}>
       Neue Version verfügbar — tippen zum Aktualisieren.
     </div>
+  );
+}
+
+function GamifyCard() {
+  const s: Stats = getStats();
+  const goalPct = Math.min(100, Math.round((s.todayXp / s.goal) * 100));
+  const maxDay = Math.max(1, ...s.last7.map((d) => d.xp));
+  return (
+    <section class="sl-gamify">
+      <div class="sl-g-row">
+        <div class="sl-g-streak" title="Tage in Folge aktiv">
+          <span class="sl-flame">🔥</span> {s.streak}
+        </div>
+        <div class="sl-g-level">
+          <div class="sl-g-lvl-top">
+            <span>Level {s.level}</span>
+            <span class="sl-muted">{s.intoLevel}/{s.levelSpan} XP</span>
+          </div>
+          <div class="sl-g-bar"><span style={{ width: `${(s.intoLevel / s.levelSpan) * 100}%` }} /></div>
+        </div>
+      </div>
+      <div class="sl-g-goal">
+        <span class="sl-muted">Heute</span>
+        <div class="sl-g-bar goal"><span style={{ width: `${goalPct}%` }} /></div>
+        <span class="sl-g-goal-num">{s.todayXp}/{s.goal} XP</span>
+      </div>
+      <div class="sl-g-week">
+        {s.last7.map((d) => (
+          <div class="sl-g-day">
+            <div class="sl-g-daybar" style={{ height: `${Math.round((d.xp / maxDay) * 28) + 2}px` }} />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

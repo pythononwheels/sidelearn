@@ -20,16 +20,25 @@
 set -euo pipefail
 
 SSH_TARGET="${SSH_TARGET:?set SSH_TARGET, e.g. SSH_TARGET=khz@pyrates.io}"
-REMOTE_PATH="${REMOTE_PATH:-/opt/learny}"
+# ENV selects the target: prod (learny.pyrates.io / /opt/learny) or
+# dev (dev.learny.pyrates.io / /opt/learny-dev). REMOTE_PATH overrides.
+ENV="${ENV:-prod}"
+case "$ENV" in
+  prod) DEFAULT_PATH="/opt/learny" ;;
+  dev)  DEFAULT_PATH="/opt/learny-dev" ;;
+  *) echo "✗ ENV must be 'prod' or 'dev' (got '$ENV')." >&2; exit 1 ;;
+esac
+REMOTE_PATH="${REMOTE_PATH:-$DEFAULT_PATH}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DRY=""
 [ "${1:-}" = "--dry-run" ] && DRY="--dry-run"
 
 leaf="$(basename "${REMOTE_PATH%/}")"
-if [ "$leaf" != "learny" ]; then
-  echo "✗ Refusing REMOTE_PATH='$REMOTE_PATH' — leaf must be 'learny'." >&2
+if [ "$leaf" != "learny" ] && [ "$leaf" != "learny-dev" ]; then
+  echo "✗ Refusing REMOTE_PATH='$REMOTE_PATH' — leaf must be 'learny' or 'learny-dev'." >&2
   exit 1
 fi
+echo "→ Target: $ENV → ${SSH_TARGET}:${REMOTE_PATH%/}/"
 
 echo "→ Building PWA…"
 ( cd "$ROOT" && npm run pwa:build )
