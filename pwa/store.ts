@@ -10,12 +10,13 @@ export interface PwaSettings {
   learn: Language;
   native: Language;
   level: CefrLevel;
+  onboarded: boolean;
 }
 
 const SETTINGS_KEY = 'sl_pwa_settings';
 const PROGRESS_KEY = 'sl_pwa_progress';
 
-const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2' };
+const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', onboarded: false };
 
 export function getSettings(): PwaSettings {
   try {

@@ -11,13 +11,20 @@ const URL = process.env.PWA_URL;
 test.skip(!URL, 'set PWA_URL to a served .output/pwa');
 
 test('daily list renders and a word lookup works', async ({ page }) => {
+  // Skip onboarding by seeding settings before the app boots.
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'sl_pwa_settings',
+      JSON.stringify({ learn: 'fr', native: 'de', level: 'A2', onboarded: true }),
+    );
+  });
   await page.goto(URL!);
-  await expect(page.locator('.sl-brand')).toBeVisible();
-  // Daily list (or an empty-state message) appears.
-  await expect(page.locator('.sl-item').first()).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('.lr-brand')).toBeVisible();
+  // Article list (or an empty-state message) appears.
+  await expect(page.locator('.lr-item').first()).toBeVisible({ timeout: 20000 });
 
   // Open the first lesson → simplified paragraph renders.
-  await page.locator('.sl-item').first().click();
+  await page.locator('.lr-item').first().click();
   await expect(page.locator('.sl-text').first()).toBeVisible({ timeout: 20000 });
 
   // Level switcher present.

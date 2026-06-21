@@ -18,7 +18,7 @@ import {
   type ServerLesson,
 } from '@/core/serverapi';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type PwaSettings } from './store';
-import { award, creditLesson, isLessonCredited, getStats, XP, type Stats } from './gamify';
+import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
@@ -38,7 +38,9 @@ export function App() {
   return (
     <div class="sl-shell">
       <Updater />
-      {view ? (
+      {!settings.onboarded ? (
+        <Onboarding settings={settings} onDone={(p) => patch({ ...p, onboarded: true })} />
+      ) : view ? (
         <Lesson
           key={view.id + settings.level}
           article={view}
@@ -52,6 +54,68 @@ export function App() {
         <Home settings={settings} onPatch={patch} onOpen={setView} onDeck={() => setDeckOpen(true)} />
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------ Onboarding --- */
+
+function Onboarding({
+  settings,
+  onDone,
+}: {
+  settings: PwaSettings;
+  onDone: (p: Partial<PwaSettings>) => void;
+}) {
+  const [step, setStep] = useState(0);
+  const [learn, setLearn] = useState<Language>(settings.learn);
+  const [level, setLevel] = useState<CefrLevel>(settings.level);
+
+  const levelHint: Record<string, string> = {
+    A2: 'Anfänger:in — einfache Sätze',
+    B1: 'Mittelstufe — Alltagstexte',
+    B2: 'Fortgeschritten — komplexere Texte',
+    C1: 'Sehr gut — anspruchsvolle Texte',
+  };
+
+  return (
+    <main class="lr-onb">
+      <div class="lr-onb-logo" />
+      {step === 0 ? (
+        <>
+          <h1 class="lr-onb-h">Willkommen bei Learny 👋</h1>
+          <p class="lr-onb-p">Lies jeden Tag echte Texte — vereinfacht auf dein Niveau. Welche Sprache möchtest du lernen?</p>
+          <div class="lr-onb-grid">
+            {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
+              <button
+                class={`lr-onb-choice ${learn === l ? 'sel' : ''}`}
+                onClick={() => setLearn(l)}
+              >
+                {LANG_LABELS[l]}
+              </button>
+            ))}
+          </div>
+          <button class="lr-onb-next" onClick={() => setStep(1)}>Weiter →</button>
+        </>
+      ) : (
+        <>
+          <h1 class="lr-onb-h">Wie gut bist du schon?</h1>
+          <p class="lr-onb-p">Kein Stress — du kannst das Niveau jederzeit ändern.</p>
+          <div class="lr-onb-levels">
+            {(['A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
+              <button
+                class={`lr-onb-level ${level === l ? 'sel' : ''}`}
+                onClick={() => setLevel(l)}
+              >
+                <span class="lr-onb-level-name">{l}</span>
+                <span class="lr-onb-level-hint">{levelHint[l]}</span>
+              </button>
+            ))}
+          </div>
+          <button class="lr-onb-next" onClick={() => onDone({ learn, level })}>Los geht's 🎉</button>
+          <button class="lr-onb-back" onClick={() => setStep(0)}>← zurück</button>
+        </>
+      )}
+    </main>
   );
 }
 
@@ -95,12 +159,18 @@ function Home({
   const articles = daily?.articles ?? [];
   const goal = daily?.goal ?? 2;
   const doneCount = articles.filter((a) => isCompleted(a.url)).length;
+  const allDone = articles.length > 0 && doneCount >= goal;
+  const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
+  const stats = getStats();
+
+  const open = (a: typeof articles[number]) =>
+    onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail });
 
   return (
-    <main class="sl-main">
-      <header class="sl-head">
-        <span class="sl-brand"><span class="sl-logo" /> Learny</span>
-        <div class="sl-pick">
+    <main class="sl-main" key={tick}>
+      <header class="lr-head">
+        <span class="lr-brand"><span class="lr-logo" /> Learny</span>
+        <div class="lr-pick">
           <select value={settings.learn} onChange={(e) => onPatch({ learn: e.currentTarget.value as Language })}>
             {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
               <option value={l}>{LANG_LABELS[l]}</option>
@@ -114,54 +184,75 @@ function Home({
         </div>
       </header>
 
-      <GamifyCard key={`g${tick}`} />
-
-      <section class="sl-daily" key={tick}>
-        <div class="sl-daily-top">
-          <span class="sl-eyebrow">Tägliche Challenge</span>
-          <span class="sl-count">{Math.min(doneCount, goal)}/{goal}</span>
+      {/* Hero: today's lesson */}
+      <section class="lr-hero">
+        <div class="lr-hero-top">
+          <span class="lr-hero-eyebrow">Deine Tageslektion</span>
+          {articles.length > 0 && <span class="lr-hero-count">{Math.min(doneCount, goal)}/{goal}</span>}
         </div>
-        <p class="sl-intro">
-          Lies <b>{goal}</b> von {articles.length} Artikeln auf deinem Sprachniveau{' '}
-          <span class="sl-lvl">{settings.level}</span>.
-        </p>
-
         {loading ? (
           <Dots />
         ) : articles.length === 0 ? (
-          <p class="sl-muted">Heute noch keine Lektionen für {LANG_LABELS[settings.learn]}.</p>
+          <p class="lr-hero-text">Heute gibt es noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später nochmal vorbei.</p>
+        ) : allDone ? (
+          <>
+            <p class="lr-hero-text">Heute geschafft! 🎉 Lies gern noch weiter.</p>
+            <button class="lr-cta" onClick={() => next && open(next)}>Weiterlesen →</button>
+          </>
         ) : (
-          <ul class="sl-list">
+          <>
+            <p class="lr-hero-text">
+              Lies <b>{goal}</b> kurze Artikel — wir vereinfachen sie für dich auf {settings.level}.
+            </p>
+            <button class="lr-cta" onClick={() => next && open(next)}>
+              {doneCount > 0 || (next && getProgress(next.url)) ? 'Weiterlesen →' : "Los geht's →"}
+            </button>
+          </>
+        )}
+      </section>
+
+      {/* Article picker */}
+      {articles.length > 0 && (
+        <>
+          <h2 class="lr-section">Wähle einen Artikel</h2>
+          <ul class="lr-list">
             {articles.map((a) => {
               const done = isCompleted(a.url);
               const started = !done && !!getProgress(a.url);
               return (
                 <li key={a.id}>
-                  <button
-                    class={`sl-item ${done ? 'done' : ''}`}
-                    onClick={() => onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail })}
-                  >
+                  <button class={`lr-item ${done ? 'done' : ''}`} onClick={() => open(a)}>
                     {a.thumbnail ? (
-                      <img class="sl-thumb" src={a.thumbnail} alt="" />
+                      <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
                     ) : (
-                      <span class="sl-thumb sl-thumb-ph" />
+                      <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>
                     )}
-                    <span class="sl-item-body">
-                      <span class="sl-item-title">{a.title}</span>
-                      <span class="sl-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
+                    <span class="lr-item-body">
+                      <span class="lr-item-title">{a.title}</span>
+                      <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
                     </span>
-                    <span class="sl-item-state">{done ? '✓' : started ? 'weiter' : 'lesen'}</span>
+                    <span class={`lr-item-state ${done ? 'done' : ''}`}>
+                      {done ? '✓' : started ? 'weiter' : 'lesen ›'}
+                    </span>
                   </button>
                 </li>
               );
             })}
           </ul>
-        )}
-      </section>
+        </>
+      )}
 
-      <button class="sl-deckbtn" onClick={onDeck}>
-        📓 Meine Vokabeln ({getDeck().length})
-      </button>
+      {/* Subtle progress + vocab (no flame) */}
+      <section class="lr-foot">
+        <div class="lr-foot-prog">
+          <div class="lr-foot-top">
+            <span>Level {stats.level}</span>
+            <span class="sl-muted">heute {stats.todayXp}/{stats.goal} XP</span>
+          </div>
+          <div class="lr-foot-bar"><span style={{ width: `${Math.min(100, (stats.todayXp / stats.goal) * 100)}%` }} /></div>
+        </div>
+        <button class="lr-vocab" onClick={onDeck}>Meine Vokabeln · {getDeck().length}</button>
+      </section>
     </main>
   );
 }
@@ -497,40 +588,6 @@ function Updater() {
     <div class="sl-update" onClick={apply}>
       Neue Version verfügbar — tippen zum Aktualisieren.
     </div>
-  );
-}
-
-function GamifyCard() {
-  const s: Stats = getStats();
-  const goalPct = Math.min(100, Math.round((s.todayXp / s.goal) * 100));
-  const maxDay = Math.max(1, ...s.last7.map((d) => d.xp));
-  return (
-    <section class="sl-gamify">
-      <div class="sl-g-row">
-        <div class="sl-g-streak" title="Tage in Folge aktiv">
-          <span class="sl-flame">🔥</span> {s.streak}
-        </div>
-        <div class="sl-g-level">
-          <div class="sl-g-lvl-top">
-            <span>Level {s.level}</span>
-            <span class="sl-muted">{s.intoLevel}/{s.levelSpan} XP</span>
-          </div>
-          <div class="sl-g-bar"><span style={{ width: `${(s.intoLevel / s.levelSpan) * 100}%` }} /></div>
-        </div>
-      </div>
-      <div class="sl-g-goal">
-        <span class="sl-muted">Heute</span>
-        <div class="sl-g-bar goal"><span style={{ width: `${goalPct}%` }} /></div>
-        <span class="sl-g-goal-num">{s.todayXp}/{s.goal} XP</span>
-      </div>
-      <div class="sl-g-week">
-        {s.last7.map((d) => (
-          <div class="sl-g-day">
-            <div class="sl-g-daybar" style={{ height: `${Math.round((d.xp / maxDay) * 28) + 2}px` }} />
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
