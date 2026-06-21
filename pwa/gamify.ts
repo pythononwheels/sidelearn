@@ -8,9 +8,9 @@
 const DAYS_KEY = 'sl_pwa_days';
 const CREDITED_KEY = 'sl_pwa_credited';
 
-export const XP = { paragraph: 2, correct: 5, lesson: 10 };
-export const DAILY_GOAL = 30; // XP per day
-const LEVEL_SPAN = 100; // XP per level
+export const XP = { paragraph: 10, correct: 20, lesson: 50, merken: 5 };
+export const DAILY_GOAL = 100; // XP per day
+const LEVEL_SPAN = 500; // XP per level
 
 export function todayKey(d = new Date()): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');

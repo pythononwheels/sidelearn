@@ -153,6 +153,30 @@ a { color: var(--ll-accent); }
 }
 .sl-pop-trans { margin: 0; }
 .sl-muted { color: var(--ll-text-soft); font-size: 13px; }
+.sl-merken {
+  margin-top: 10px; width: 100%; font: inherit; font-weight: 700; font-size: 13px;
+  padding: 8px; border-radius: 10px; border: 1px solid var(--ll-border);
+  background: var(--ll-accent-soft); color: var(--ll-accent-strong); cursor: pointer;
+}
+.sl-merken.saved { color: #2f9e6b; background: var(--ll-bg); }
+
+/* Deck button + view ---------------------------------------------------- */
+.sl-deckbtn {
+  width: 100%; margin-top: 16px; font: inherit; font-weight: 700; font-size: 14px;
+  padding: 14px; border-radius: 16px; border: 1px solid var(--ll-border);
+  background: var(--ll-surface); color: var(--ll-accent); cursor: pointer;
+}
+.sl-deck { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sl-deck-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border: 1px solid var(--ll-border); border-radius: 12px; background: var(--ll-surface);
+}
+.sl-deck-word { font-weight: 700; }
+.sl-deck-trans { flex: 1; color: var(--ll-text-soft); font-size: 14px; }
+.sl-deck-x {
+  border: none; background: none; color: var(--ll-text-muted); font-size: 20px;
+  line-height: 1; cursor: pointer; padding: 0 4px;
+}
 
 /* Update banner --------------------------------------------------------- */
 .sl-update {

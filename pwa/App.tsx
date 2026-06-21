@@ -19,6 +19,7 @@ import {
 } from '@/core/serverapi';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type PwaSettings } from './store';
 import { award, creditLesson, isLessonCredited, getStats, XP, type Stats } from './gamify';
+import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
@@ -26,6 +27,7 @@ const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
 export function App() {
   const [settings, setSettings] = useState<PwaSettings>(getSettings());
   const [view, setView] = useState<{ id: string; title: string; url: string; thumb?: string } | null>(null);
+  const [deckOpen, setDeckOpen] = useState(false);
 
   const patch = (p: Partial<PwaSettings>) => {
     const next = { ...settings, ...p };
@@ -44,8 +46,10 @@ export function App() {
           onLevel={(level) => patch({ level })}
           onBack={() => setView(null)}
         />
+      ) : deckOpen ? (
+        <DeckView onBack={() => setDeckOpen(false)} />
       ) : (
-        <Home settings={settings} onPatch={patch} onOpen={setView} />
+        <Home settings={settings} onPatch={patch} onOpen={setView} onDeck={() => setDeckOpen(true)} />
       )}
     </div>
   );
@@ -57,10 +61,12 @@ function Home({
   settings,
   onPatch,
   onOpen,
+  onDeck,
 }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
   onOpen: (a: { id: string; title: string; url: string; thumb?: string }) => void;
+  onDeck: () => void;
 }) {
   const [daily, setDaily] = useState<ServerDaily | null>(null);
   const [loading, setLoading] = useState(true);
@@ -152,6 +158,48 @@ function Home({
           </ul>
         )}
       </section>
+
+      <button class="sl-deckbtn" onClick={onDeck}>
+        📓 Meine Vokabeln ({getDeck().length})
+      </button>
+    </main>
+  );
+}
+
+/* ------------------------------------------------------------- Deck view --- */
+
+function DeckView({ onBack }: { onBack: () => void }) {
+  const [deck, setDeck] = useState<DeckEntry[]>(getDeck());
+  return (
+    <main class="sl-main">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Meine Vokabeln</span>
+      </header>
+      {deck.length === 0 ? (
+        <p class="sl-muted">
+          Noch keine Vokabeln. Tippe beim Lesen ein Wort an und drücke „★ merken".
+        </p>
+      ) : (
+        <ul class="sl-deck">
+          {deck.map((e) => (
+            <li class="sl-deck-item" key={e.lang + e.word}>
+              <span class="sl-deck-word">{e.word}</span>
+              <span class="sl-deck-trans">{e.translation || '—'}</span>
+              <button
+                class="sl-deck-x"
+                aria-label="entfernen"
+                onClick={() => {
+                  removeFromDeck(e.lang, e.word);
+                  setDeck(getDeck());
+                }}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
@@ -351,6 +399,7 @@ function WordPopover({
   onClose: () => void;
 }) {
   const [info, setInfo] = useState<WordInfo | null>(null);
+  const [saved, setSaved] = useState(inDeck(settings.learn, pop.word));
   useEffect(() => {
     let alive = true;
     void resolveWord(pop.word, settings.learn, settings.native, settings.level).then(
@@ -360,6 +409,15 @@ function WordPopover({
       alive = false;
     };
   }, [pop.word]);
+
+  const translation = info?.senses[0]?.translations.slice(0, 4).join(', ') ?? '';
+  function merken() {
+    if (saved) return;
+    if (addToDeck({ word: pop.word, translation, lang: settings.learn, ts: Date.now() })) {
+      award(XP.merken);
+    }
+    setSaved(true);
+  }
 
   return (
     <>
@@ -371,11 +429,14 @@ function WordPopover({
         </div>
         {info === null ? (
           <Dots />
-        ) : info.senses.length ? (
-          <p class="sl-pop-trans">{info.senses[0]!.translations.slice(0, 4).join(', ')}</p>
+        ) : translation ? (
+          <p class="sl-pop-trans">{translation}</p>
         ) : (
           <p class="sl-muted">keine Wörterbuch-Übersetzung</p>
         )}
+        <button class={`sl-merken ${saved ? 'saved' : ''}`} disabled={saved} onClick={merken}>
+          {saved ? '✓ gemerkt' : '★ merken'}
+        </button>
       </div>
     </>
   );
