@@ -5,7 +5,7 @@
  */
 
 import { type ComponentChildren } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { LANGUAGES, LANG_LABELS, type Language } from '@/core/config';
 import { CEFR_LEVELS, type CefrLevel } from '@/core/difficulty/banding';
 import { resolveWord } from '@/core/wordinfo';
@@ -404,23 +404,21 @@ function Quiz({
 /* -------------------------------------------------------------- update --- */
 
 function Updater() {
-  return <Banner />;
-}
-
-function Banner() {
   const [show, setShow] = useState(false);
-  const reg = useRef(false);
   useEffect(() => {
-    if (reg.current) return;
-    reg.current = true;
-    // vite-plugin-pwa autoUpdate refreshes silently; we surface a hint when a
-    // new SW takes control so the user knows content refreshed.
-    navigator.serviceWorker?.addEventListener?.('controllerchange', () => setShow(true));
+    const h = () => setShow(true);
+    window.addEventListener('sl-need-refresh', h);
+    return () => window.removeEventListener('sl-need-refresh', h);
   }, []);
   if (!show) return null;
+  const apply = () => {
+    const u = (window as unknown as { __slUpdate?: (r?: boolean) => Promise<void> }).__slUpdate;
+    if (u) void u(true);
+    else location.reload();
+  };
   return (
-    <div class="sl-update" onClick={() => location.reload()}>
-      Neue Version geladen — tippen zum Aktualisieren.
+    <div class="sl-update" onClick={apply}>
+      Neue Version verfügbar — tippen zum Aktualisieren.
     </div>
   );
 }

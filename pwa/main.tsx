@@ -4,8 +4,14 @@ import '@/ui/tokens.css';
 import './app.css';
 import { App } from './App';
 
-// Auto-update the service worker in the background; the in-app banner
-// (useUpdate) tells the user when a refresh will pick up a new version.
-registerSW({ immediate: true });
+// Register the SW. onNeedRefresh fires only when a NEW version is waiting (not
+// on first install), so the in-app banner shows only for real updates.
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    window.dispatchEvent(new Event('sl-need-refresh'));
+  },
+});
+(window as unknown as { __slUpdate?: (r?: boolean) => Promise<void> }).__slUpdate = updateSW;
 
 render(<App />, document.getElementById('app')!);
