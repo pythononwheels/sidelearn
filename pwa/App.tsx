@@ -31,10 +31,11 @@ type ArticleRef = { id: string; title: string; url: string; thumb?: string };
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
 
+type Overlay = { kind: 'lesson'; article: ArticleRef } | { kind: 'deck' } | { kind: 'trainer' } | null;
+
 export function App() {
   const [settings, setSettings] = useState<PwaSettings>(getSettings());
-  const [view, setView] = useState<ArticleRef | null>(null);
-  const [deckOpen, setDeckOpen] = useState(false);
+  const [overlay, setOverlay] = useState<Overlay>(null);
   const [tab, setTab] = useState<Tab>('home');
 
   const patch = (p: Partial<PwaSettings>) => {
@@ -49,51 +50,61 @@ export function App() {
 
   if (!settings.onboarded) {
     return (
-      <div class="sl-shell">
+      <div class="app-col">
         <Updater />
         <Onboarding settings={settings} onDone={(p) => patch({ ...p, onboarded: true })} />
       </div>
     );
   }
 
-  // Focused full views (no tab bar).
-  if (view) {
-    return (
-      <div class="sl-shell">
-        <Updater />
-        <Lesson
-          key={view.id + settings.level}
-          article={view}
-          settings={settings}
-          onLevel={(level) => patch({ level })}
-          onBack={() => setView(null)}
-        />
-      </div>
+  const openLesson = (article: ArticleRef) => setOverlay({ kind: 'lesson', article });
+  const goTab = (t: Tab) => { setOverlay(null); setTab(t); };
+
+  let content: ComponentChildren;
+  if (overlay?.kind === 'lesson') {
+    content = (
+      <Lesson
+        key={overlay.article.id + settings.level}
+        article={overlay.article}
+        settings={settings}
+        onLevel={(level) => patch({ level })}
+        onBack={() => setOverlay(null)}
+      />
     );
-  }
-  if (deckOpen) {
-    return (
-      <div class="sl-shell">
-        <DeckView onBack={() => setDeckOpen(false)} />
-      </div>
+  } else if (overlay?.kind === 'deck') {
+    content = <DeckView onBack={() => setOverlay(null)} />;
+  } else if (overlay?.kind === 'trainer') {
+    content = <TrainerView settings={settings} onBack={() => setOverlay(null)} />;
+  } else if (tab === 'home') {
+    content = (
+      <HomeTab
+        settings={settings}
+        onPatch={patch}
+        onOpen={openLesson}
+        onTrainer={() => setOverlay({ kind: 'trainer' })}
+        onDeck={() => setOverlay({ kind: 'deck' })}
+      />
     );
+  } else if (tab === 'challenges') {
+    content = <ChallengesTab settings={settings} onOpen={openLesson} />;
+  } else if (tab === 'report') {
+    content = <ReportTab onDeck={() => setOverlay({ kind: 'deck' })} />;
+  } else {
+    content = <SettingsTab settings={settings} onPatch={patch} />;
   }
 
   return (
-    <div class="sl-shell">
+    <div class="app-col">
       <Updater />
-      {tab === 'home' && <HomeTab settings={settings} onPatch={patch} onOpen={setView} />}
-      {tab === 'challenges' && <ChallengesTab settings={settings} onOpen={setView} />}
-      {tab === 'report' && <ReportTab onDeck={() => setDeckOpen(true)} />}
-      {tab === 'settings' && <SettingsTab settings={settings} onPatch={patch} />}
-      <TabBar tab={tab} onTab={setTab} />
+      {content}
+      <TabBar tab={overlay ? null : tab} onTab={goTab} />
     </div>
   );
 }
 
 /* --------------------------------------------------------------- TabBar --- */
 
-function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
+function TabBar({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab) => void }) {
   const items: { id: Tab; label: string; icon: ComponentChildren }[] = [
     { id: 'home', label: 'Home', icon: <IconHome /> },
     { id: 'challenges', label: 'Challenges', icon: <IconTarget /> },
@@ -235,10 +246,12 @@ function ArticleList({ articles, next, allDone, onOpen }: {
 
 /* ------------------------------------------------------------- Home tab --- */
 
-function HomeTab({ settings, onPatch, onOpen }: {
+function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
   onOpen: (a: ArticleRef) => void;
+  onTrainer: () => void;
+  onDeck: () => void;
 }) {
   const { daily, loading } = useDaily(settings.learn, settings.level);
   const [tick, setTick] = useState(0); // refresh progress after returning from a lesson
@@ -290,6 +303,81 @@ function HomeTab({ settings, onPatch, onOpen }: {
 
       {articles.length > 0 && (
         <ArticleList articles={articles} next={next} allDone={allDone} onOpen={onOpen} />
+      )}
+
+      <p class="lr-section" style={{ marginTop: '24px' }}>Üben & entdecken</p>
+      <div class="lr-tiles">
+        <button class="lr-tile" onClick={onTrainer}>
+          <span class="lr-tile-emoji">🎯</span>
+          <span class="lr-tile-t">Vokabeltest</span>
+          <span class="lr-tile-s">{getDeck().length} Wörter</span>
+        </button>
+        <button class="lr-tile" onClick={onDeck}>
+          <span class="lr-tile-emoji">📕</span>
+          <span class="lr-tile-t">Wörterbuch</span>
+          <span class="lr-tile-s">Gemerkte ansehen</span>
+        </button>
+      </div>
+    </main>
+  );
+}
+
+/* --------------------------------------------------------------- Trainer --- */
+
+function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
+  const all = getDeck().filter((d) => d.lang === settings.learn);
+  const [order] = useState(() => all.map((_, i) => i).sort(() => Math.random() - 0.5));
+  const [pos, setPos] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const card = all[order[pos] ?? -1];
+
+  function answer(known: boolean) {
+    if (known) {
+      setScore((s) => s + 1);
+      award(XP.merken);
+    }
+    if (pos + 1 >= order.length) setDone(true);
+    else { setPos((p) => p + 1); setRevealed(false); }
+  }
+
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Vokabeltest</span>
+      </header>
+
+      {all.length === 0 ? (
+        <p class="sl-muted">
+          Noch keine Vokabeln zum Üben. Tippe beim Lesen ein Wort an und drücke „★ merken".
+        </p>
+      ) : done ? (
+        <section class="sl-done">
+          <h2>Fertig 🎉</h2>
+          <p>{score} von {all.length} gewusst.</p>
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </section>
+      ) : (
+        <>
+          <p class="sl-progress">Karte {pos + 1} / {all.length}</p>
+          <div class="tr-card" onClick={() => setRevealed(true)}>
+            <span class="tr-word">{card?.word}</span>
+            {revealed ? (
+              <span class="tr-trans">{card?.translation || '—'}</span>
+            ) : (
+              <span class="tr-tap">tippen zum Aufdecken</span>
+            )}
+          </div>
+          {revealed && (
+            <div class="tr-actions">
+              <button class="tr-again" onClick={() => answer(false)}>Nochmal</button>
+              <button class="tr-known" onClick={() => answer(true)}>Gewusst ✓</button>
+            </div>
+          )}
+        </>
       )}
     </main>
   );

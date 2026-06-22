@@ -84,14 +84,21 @@ a { color: var(--ll-accent); }
 h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 
 .sl-shell { min-height: 100vh; }
-.sl-main {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px
-           calc(env(safe-area-inset-bottom, 0px) + 28px);
+/* Phone-width app column, centred on desktop so it reads like a mobile app. */
+.app-col {
+  max-width: 480px; margin: 0 auto; position: relative; min-height: 100vh; background: var(--ll-bg);
 }
-/* Tab screens leave room for the fixed bottom nav. */
-.sl-main.with-nav { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); }
+@media (min-width: 520px) {
+  body { background: color-mix(in srgb, var(--ll-bg) 78%, #777 10%); }
+  .app-col { box-shadow: 0 0 0 1px var(--ll-border), 0 30px 80px rgba(0,0,0,.18); }
+}
+.sl-main {
+  margin: 0 auto;
+  /* Always leave room for the fixed bottom nav (present on every screen). */
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px
+           calc(env(safe-area-inset-bottom, 0px) + 92px);
+}
+.sl-main.with-nav { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); }
 
 /* Onboarding ------------------------------------------------------------ */
 .lr-onb {
@@ -305,6 +312,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 /* ====================================================================== */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  max-width: 480px; margin: 0 auto;        /* centred with the app column */
   display: flex; justify-content: space-around;
   background: var(--ll-surface); border-top: 1px solid var(--ll-border);
   padding: 8px 6px calc(env(safe-area-inset-bottom, 0px) + 8px);
@@ -363,3 +371,31 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text); cursor: pointer;
 }
 .pill-day.on { background: var(--ll-accent); color: var(--ll-accent-ink); border-color: transparent; }
+
+/* Home quick-action tiles ---------------------------------------------- */
+.lr-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lr-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  padding: 16px; border-radius: 18px; border: 1px solid var(--ll-border);
+  background: var(--ll-surface); color: var(--ll-text); cursor: pointer; text-align: left; font: inherit;
+}
+.lr-tile:active { transform: scale(0.99); }
+.lr-tile-emoji { font-size: 24px; margin-bottom: 4px; }
+.lr-tile-t { font-size: 15px; font-weight: 800; font-family: var(--font-head); }
+.lr-tile-s { font-size: 12px; color: var(--ll-text-soft); }
+
+/* Vocab trainer -------------------------------------------------------- */
+.tr-card {
+  margin-top: 8px; border: 1px solid var(--ll-border); background: var(--ll-surface);
+  border-radius: 20px; box-shadow: var(--ll-shadow); padding: 40px 20px; min-height: 200px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; cursor: pointer;
+}
+.tr-word { font-size: 30px; font-weight: 800; font-family: var(--font-head); text-align: center; }
+.tr-trans { font-size: 22px; color: var(--ll-accent-strong); font-weight: 700; text-align: center; }
+.tr-tap { font-size: 13px; color: var(--ll-text-muted); }
+.tr-actions { display: flex; gap: 10px; margin-top: 14px; }
+.tr-again, .tr-known {
+  flex: 1; font: inherit; font-weight: 800; font-size: 15px; padding: 14px; border-radius: 14px; cursor: pointer;
+}
+.tr-again { border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text); }
+.tr-known { border: none; background: var(--ll-accent); color: var(--ll-accent-ink); box-shadow: var(--btn3d, none); }
