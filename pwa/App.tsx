@@ -36,6 +36,7 @@ import {
   type AdvanceResult,
 } from './progress';
 import { pseudoWordsFor } from './pseudowords';
+import { getActivity, logActivity, type Activity } from './activity';
 
 type Tab = 'home' | 'challenges' | 'report' | 'settings';
 type ArticleRef = { id: string; title: string; url: string; thumb?: string };
@@ -50,6 +51,7 @@ type Overlay =
   | { kind: 'surprise' }
   | { kind: 'cloze' }
   | { kind: 'test' }
+  | { kind: 'route' }
   | null;
 
 export function App() {
@@ -108,6 +110,15 @@ export function App() {
         onBack={() => setOverlay(null)}
       />
     );
+  } else if (overlay?.kind === 'route') {
+    content = (
+      <RouteView
+        settings={settings}
+        onTest={() => setOverlay({ kind: 'test' })}
+        onHome={() => goTab('home')}
+        onBack={() => setOverlay(null)}
+      />
+    );
   } else if (tab === 'home') {
     content = (
       <HomeTab
@@ -118,6 +129,7 @@ export function App() {
         onDeck={() => setOverlay({ kind: 'deck' })}
         onSurprise={() => setOverlay({ kind: 'surprise' })}
         onCloze={() => setOverlay({ kind: 'cloze' })}
+        onRoute={() => setOverlay({ kind: 'route' })}
       />
     );
   } else if (tab === 'challenges') {
@@ -128,6 +140,7 @@ export function App() {
         settings={settings}
         onDeck={() => setOverlay({ kind: 'deck' })}
         onTest={() => setOverlay({ kind: 'test' })}
+        onRoute={() => setOverlay({ kind: 'route' })}
       />
     );
   } else {
@@ -184,6 +197,7 @@ const IconBulb = () => (<svg {...svg}><path d="M9 18h6M10 22h4" /><path d="M12 2
 const IconStar = () => (<svg {...svg}><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z" /></svg>);
 const IconRefresh = () => (<svg {...svg}><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></svg>);
 const IconArrowRight = () => (<svg {...svg}><path d="M5 12h14M13 6l6 6-6 6" /></svg>);
+const IconRoute = () => (<svg {...svg}><circle cx="6" cy="19" r="3" /><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" /><circle cx="18" cy="5" r="3" /></svg>);
 
 /* ------------------------------------------------------------ Onboarding --- */
 
@@ -301,7 +315,7 @@ function ArticleList({ articles, next, allDone, onOpen }: {
 
 /* ------------------------------------------------------------- Home tab --- */
 
-function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onCloze }: {
+function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onCloze, onRoute }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
   onOpen: (a: ArticleRef) => void;
@@ -309,6 +323,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
   onDeck: () => void;
   onSurprise: () => void;
   onCloze: () => void;
+  onRoute: () => void;
 }) {
   const { daily, loading } = useDaily(settings.learn, settings.level);
   const [tick, setTick] = useState(0); // refresh progress after returning from a lesson
@@ -388,6 +403,15 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
           <span class="lr-tile-s">Gemerkte ansehen</span>
         </button>
       </div>
+
+      <button class="lr-route-cta" onClick={onRoute}>
+        <span class="lr-route-ico"><IconRoute /></span>
+        <span class="lr-route-body">
+          <span class="lr-route-t">Deine Lernroute</span>
+          <span class="lr-route-s">Was du gelesen & geübt hast</span>
+        </span>
+        <span class="lr-route-arrow"><IconArrowRight /></span>
+      </button>
     </main>
   );
 }
@@ -697,6 +721,8 @@ function LevelTestView({ settings, onAdvance, onBack }: {
     const passed = vocabPass && readingPass;
     let adv: AdvanceResult | null = null;
     if (passed) { adv = advanceStage(settings.level); onAdvance(adv); }
+    logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'bestanden' : 'nicht bestanden' });
+    if (adv?.levelUp) logActivity({ type: 'levelup', level: adv.level, detail: adv.level });
     setResult({ passed, adv });
     setPhase('result');
   }
@@ -795,6 +821,90 @@ function LevelTestView({ settings, onAdvance, onBack }: {
   );
 }
 
+/* -------------------------------------------------------------- Lernroute --- */
+
+function timeAgo(ts: number): string {
+  const d = Math.floor((Date.now() - ts) / 86400000);
+  if (d <= 0) return 'heute';
+  if (d === 1) return 'gestern';
+  if (d < 7) return `vor ${d} Tagen`;
+  if (d < 14) return 'letzte Woche';
+  return `vor ${Math.floor(d / 7)} Wochen`;
+}
+
+function RouteNode({ variant, icon, title, sub, onClick }: {
+  variant: string;
+  icon: ComponentChildren;
+  title: string;
+  sub?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <div class={`rn ${variant}`}>
+      <div class="rn-rail"><span class="rn-dot">{icon}</span></div>
+      <button class="rn-card" disabled={!onClick} onClick={onClick}>
+        <span class="rn-title">{title}</span>
+        {sub && <span class="rn-sub">{sub}</span>}
+      </button>
+    </div>
+  );
+}
+
+function RouteView({ settings, onTest, onHome, onBack }: {
+  settings: PwaSettings;
+  onTest: () => void;
+  onHome: () => void;
+  onBack: () => void;
+}) {
+  const { daily } = useDaily(settings.learn, settings.level);
+  const prog = getStageProgress(settings.level);
+  const events: Activity[] = getActivity();
+
+  const arts = daily?.articles ?? [];
+  const goal = daily?.goal ?? 2;
+  const doneCount = arts.filter((a) => isCompleted(a.url)).length;
+  const allDone = arts.length > 0 && doneCount >= goal;
+
+  // The pulsing "next" node at the top.
+  let now: { title: string; sub: string; icon: ComponentChildren; onClick?: () => void };
+  if (prog.ready) {
+    now = { title: 'Etappen-Test', sub: `${prog.label} · bereit`, icon: <IconTarget />, onClick: onTest };
+  } else if (!allDone) {
+    now = { title: 'Tageslektion', sub: `${doneCount}/${goal} gelesen — weiterlesen`, icon: <IconBook />, onClick: onHome };
+  } else {
+    now = { title: 'Heute geschafft!', sub: 'Komm morgen für neue Artikel wieder', icon: <IconSparkles /> };
+  }
+
+  function nodeFor(a: Activity) {
+    if (a.type === 'levelup') return { variant: 'levelup', icon: <IconStar />, title: `Aufgestiegen: ${a.level}`, sub: timeAgo(a.ts) };
+    if (a.type === 'test') return a.ok
+      ? { variant: 'test-ok', icon: <IconSparkles />, title: `Etappen-Test bestanden`, sub: `${a.level} · ${timeAgo(a.ts)}` }
+      : { variant: 'test-no', icon: <IconRefresh />, title: `Etappen-Test versucht`, sub: `${a.level} · ${timeAgo(a.ts)}` };
+    return { variant: 'lesson', icon: <IconBook />, title: a.title || 'Artikel gelesen', sub: [a.detail, `${a.level} · ${timeAgo(a.ts)}`].filter(Boolean).join(' · ') };
+  }
+
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Lernroute</span>
+      </header>
+
+      <div class="route">
+        <RouteNode variant="now" icon={now.icon} title={now.title} sub={now.sub} onClick={now.onClick} />
+        {events.length === 0 ? (
+          <p class="sl-muted" style={{ marginTop: '8px' }}>Hier erscheint deine Reise — lies einen Artikel, dann geht's los.</p>
+        ) : (
+          events.map((a) => {
+            const n = nodeFor(a);
+            return <RouteNode key={a.id} variant={n.variant} icon={n.icon} title={n.title} sub={n.sub} />;
+          })
+        )}
+      </div>
+    </main>
+  );
+}
+
 /* ----------------------------------------------------------- Challenges --- */
 
 function ChallengesTab({ settings, onOpen }: {
@@ -846,10 +956,11 @@ function ChallengesTab({ settings, onOpen }: {
 
 /* --------------------------------------------------------------- Report --- */
 
-function ReportTab({ settings, onDeck, onTest }: {
+function ReportTab({ settings, onDeck, onTest, onRoute }: {
   settings: PwaSettings;
   onDeck: () => void;
   onTest: () => void;
+  onRoute: () => void;
 }) {
   const s = getStats();
   const deck = getDeck().length;
@@ -898,6 +1009,7 @@ function ReportTab({ settings, onDeck, onTest }: {
         <div class="rep-row"><span>Level-Fortschritt</span><b>{s.intoLevel} / {s.levelSpan} XP</b></div>
       </div>
 
+      <button class="lr-vocab" onClick={onRoute}>Lernroute ansehen →</button>
       <button class="lr-vocab" onClick={onDeck}>Meine Vokabeln · {deck} →</button>
     </main>
   );
@@ -1146,6 +1258,12 @@ function Lesson({
         award(XP.lesson);
         creditMastery(settings.level, MASTERY.lesson);
         creditLesson(article.url);
+        logActivity({
+          type: 'lesson',
+          level: settings.level,
+          title: article.title,
+          detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
+        });
         creditable.current = false;
       }
       setCompleted(true);

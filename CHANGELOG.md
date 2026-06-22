@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.71] — 2026-06-22
+
+### Added (Learny PWA) — Phase C
+- **Lernroute** — a vertical Duolingo-style journey of what you've read and how
+  your Etappen-Tests went. A pulsing "next action" node at the top (Tageslektion
+  or Etappen-Test), then your history (lessons, test pass/fail, level-ups) on a
+  connected timeline with type icons. Reachable from Home and Report.
+- On-device **activity log** (activity.ts) feeding the route; lessons and tests
+  log automatically.
+
 ## [0.6.70] — 2026-06-22
 
 ### Added (Learny PWA) — Phase B
