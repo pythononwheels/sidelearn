@@ -207,25 +207,37 @@ async def surprise(
     if area not in wiki.AREAS:
         raise HTTPException(400, f"unknown area {area!r}; allowed: {sorted(wiki.AREAS)}")
 
+    # Try a few candidates so a random too-short article (or a one-off prepare
+    # hiccup) doesn't surface as a user-facing error. Cheap checks (length) skip
+    # for free; the expensive LLM prepare is attempted at most MAX_PREPARES times.
+    MAX_CANDIDATES, MAX_PREPARES = 4, 2
+    prepares = 0
     async with httpx.AsyncClient(timeout=30) as client:
-        art = await wiki.fetch_random_in_area(client, lang, area)
-        if not art:
-            raise HTTPException(404, "no article found for this area — try again")
-        fresh = not db.has_article(art["id"])
-        if fresh:
-            paras = await wiki.fetch_paragraphs(client, lang, art["title"], config.MAX_PARAS)
-            if len(paras) < 3:
-                raise HTTPException(404, "article too short — try again")
-            db.upsert_article({**art, "paragraphs": paras}, datetime.now(timezone.utc).isoformat())
+        for _ in range(MAX_CANDIDATES):
+            art = await wiki.fetch_random_in_area(client, lang, area)
+            if not art:
+                continue
 
-    if not db.has_prepared(art["id"], level):
-        if db.telemetry_count_today("surprise") >= config.SURPRISE_DAILY_CAP:
-            raise HTTPException(429, "daily surprise budget reached — try a built lesson")
-        await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise")
-        if not db.has_prepared(art["id"], level):
-            raise HTTPException(502, "could not prepare this article — try again")
+            # Already in the library and prepared for this level → free, return.
+            if db.has_prepared(art["id"], level):
+                return lesson(art["id"], level)
 
-    return lesson(art["id"], level)
+            if not db.has_article(art["id"]):
+                paras = await wiki.fetch_paragraphs(client, lang, art["title"], config.MAX_PARAS)
+                if len(paras) < 3:
+                    continue  # too short — try another candidate (no LLM spent)
+                db.upsert_article({**art, "paragraphs": paras}, datetime.now(timezone.utc).isoformat())
+
+            if db.telemetry_count_today("surprise") >= config.SURPRISE_DAILY_CAP:
+                raise HTTPException(429, "daily surprise budget reached — try a built lesson")
+            if prepares >= MAX_PREPARES:
+                break
+            prepares += 1
+            await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise")
+            if db.has_prepared(art["id"], level):
+                return lesson(art["id"], level)
+
+    raise HTTPException(404, "couldn't find a good article right now — try again")
 
 
 @app.get("/random")
