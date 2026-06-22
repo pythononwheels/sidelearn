@@ -19,12 +19,12 @@ test('daily list renders and a word lookup works', async ({ page }) => {
     );
   });
   await page.goto(URL!);
-  await expect(page.locator('.lr-brand')).toBeVisible();
-  // Article list (or an empty-state message) appears.
-  await expect(page.locator('.lr-item').first()).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('.h2-hero')).toBeVisible();
+  // The daily lesson card's Start button appears once the daily set loads.
+  await expect(page.locator('.h2-go')).toBeVisible({ timeout: 20000 });
 
-  // Open the first lesson → simplified paragraph renders.
-  await page.locator('.lr-item').first().click();
+  // Open the daily lesson → simplified paragraph renders.
+  await page.locator('.h2-go').click();
   await expect(page.locator('.sl-text').first()).toBeVisible({ timeout: 20000 });
 
   // Level switcher present.

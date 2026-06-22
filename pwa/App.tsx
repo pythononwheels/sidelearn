@@ -28,13 +28,17 @@ import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
 import { THEMES, applyTheme } from './theme';
 import {
-  advanceStage,
   bandRankRange,
-  creditMastery,
-  getProgress as getStageProgress,
-  MASTERY,
-  type AdvanceResult,
-} from './progress';
+  completeActivity,
+  getRouteProgress as getStageProgress,
+  nodeType,
+  ETAPPEN_PER_LEVEL,
+  NODES_PER_ETAPPE,
+  NODES_PER_LEVEL,
+  STAGE_LEVELS,
+  type CompleteResult,
+  type NodeType,
+} from './route';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
 import { pop, celebrate } from './confetti';
@@ -43,7 +47,7 @@ type Tab = 'home' | 'challenges' | 'report' | 'settings';
 type ArticleRef = { id: string; title: string; url: string; thumb?: string };
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
-const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
+const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 type Overlay =
   | { kind: 'lesson'; article: ArticleRef }
@@ -104,19 +108,23 @@ export function App() {
   } else if (overlay?.kind === 'cloze') {
     content = <ClozeView settings={settings} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'test') {
-    content = (
+    content = getStageProgress(settings.level).nodeType === 'aufstieg' ? (
       <LevelTestView
         settings={settings}
         onAdvance={(r) => { if (r.levelUp) patch({ level: r.level }); }}
         onBack={() => setOverlay(null)}
       />
+    ) : (
+      <EtappenTest settings={settings} onBack={() => setOverlay(null)} />
     );
   } else if (overlay?.kind === 'route') {
     content = (
       <RouteView
         settings={settings}
+        onLesson={() => goTab('home')}
+        onTrainer={() => setOverlay({ kind: 'trainer' })}
+        onCloze={() => setOverlay({ kind: 'cloze' })}
         onTest={() => setOverlay({ kind: 'test' })}
-        onHome={() => goTab('home')}
         onBack={() => setOverlay(null)}
       />
     );
@@ -203,6 +211,11 @@ const IconBolt = () => (<svg {...svg}><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></s
 const IconNewspaper = () => (<svg {...svg}><path d="M4 5h13a1 1 0 0 1 1 1v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z" /><path d="M18 8h1.5a1.5 1.5 0 0 1 1.5 1.5V18a2 2 0 0 1-2 2" /><path d="M7 9h7M7 13h7M7 17h4" /></svg>);
 const IconGap = () => (<svg {...svg}><path d="M3 12h4" /><rect x="9" y="9" width="6" height="6" rx="1.4" /><path d="M17 12h4" /></svg>);
 const IconCards = () => (<svg {...svg}><rect x="3" y="8" width="13" height="11" rx="2" /><path d="M7 8V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3" /></svg>);
+const IconFlag = () => (<svg {...svg}><path d="M5 21V4" /><path d="M5 4h12l-2.5 4 2.5 4H5" /></svg>);
+const IconSummit = () => (<svg {...svg}><path d="M3 20h18" /><path d="M5 20l5-12 3 6 2-3 4 9" /><path d="m10 8 1.6 2.2L13 8" /></svg>);
+const IconChest = () => (<svg {...svg}><path d="M4 10 6 5h12l2 5" /><rect x="3.5" y="10" width="17" height="9" rx="1.5" /><path d="M3.5 13.5h17" /><rect x="10.5" y="12" width="3" height="3" rx="0.6" /></svg>);
+const IconCheck = () => (<svg {...svg}><path d="M20 6 9 17l-5-5" /></svg>);
+const IconLock = () => (<svg {...svg}><rect x="4.5" y="10.5" width="15" height="9.5" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></svg>);
 const IconFlame = () => (<svg {...svg}><path d="M12 2c1 4 4 5 4 9a4 4 0 0 1-8 0c0-1 .3-1.8.8-2.5C8 10 7 11 7 13a5 5 0 0 0 10 0c0-5-5-7-5-11z" /></svg>);
 
 type Pose = 'yay' | 'sad' | 'party' | 'think';
@@ -233,6 +246,7 @@ function Onboarding({
   const [level, setLevel] = useState<CefrLevel>(settings.level);
 
   const levelHint: Record<string, string> = {
+    A1: 'Ganz neu — erste Wörter & Sätze',
     A2: 'Anfänger:in — einfache Sätze',
     B1: 'Mittelstufe — Alltagstexte',
     B2: 'Fortgeschritten — komplexere Texte',
@@ -263,7 +277,7 @@ function Onboarding({
           <h1 class="lr-onb-h">Wie gut bist du schon?</h1>
           <p class="lr-onb-p">Kein Stress — du kannst das Niveau jederzeit ändern.</p>
           <div class="lr-onb-levels">
-            {(['A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
+            {(['A1', 'A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
               <button
                 class={`lr-onb-level ${level === l ? 'sel' : ''}`}
                 onClick={() => setLevel(l)}
@@ -421,8 +435,8 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
       <button class="lr-route-cta" onClick={onRoute}>
         <span class="lr-route-ico"><IconRoute /></span>
         <span class="lr-route-body">
-          <span class="lr-route-t">Deine Lernroute</span>
-          <span class="lr-route-s">Nächster Schritt: {prog.label}</span>
+          <span class="lr-route-t">Deine Lernroute · {prog.label}</span>
+          <span class="lr-route-s">Als Nächstes: {NODE_META[prog.nodeType].label}</span>
         </span>
         <span class="lr-route-arrow"><IconArrowRight /></span>
       </button>
@@ -446,10 +460,9 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
     if (known) {
       setScore((s) => s + 1);
       award(XP.merken);
-      creditMastery(settings.level, MASTERY.merken);
       if (e) { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); pop(r.left + r.width / 2, r.top + r.height / 2); }
     }
-    if (pos + 1 >= order.length) setDone(true);
+    if (pos + 1 >= order.length) { setDone(true); completeActivity(settings.level, 'vocab'); }
     else { setPos((p) => p + 1); setRevealed(false); }
   }
 
@@ -593,7 +606,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
     if (picked !== null) return;
     setPicked(opt);
     if (questions && opt === questions[pos]!.answer) {
-      setScore((s) => s + 1); award(XP.merken); creditMastery(settings.level, MASTERY.clozeCorrect);
+      setScore((s) => s + 1); award(XP.merken);
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
       pop(r.left + r.width / 2, r.top + r.height / 2);
     }
@@ -604,7 +617,13 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
   }
 
   const q = questions?.[pos];
-  const done = questions !== null && pos >= questions.length;
+  const done = questions !== null && questions.length > 0 && pos >= questions.length;
+
+  // Completing a Lückentext-Runde advances a 'cloze' route node (once).
+  const credited = useRef(false);
+  useEffect(() => {
+    if (done && !credited.current) { credited.current = true; completeActivity(settings.level, 'cloze'); }
+  }, [done]);
 
   return (
     <main class="sl-main with-nav">
@@ -664,7 +683,7 @@ function shuffleInPlace<T>(a: T[]): T[] {
 
 function LevelTestView({ settings, onAdvance, onBack }: {
   settings: PwaSettings;
-  onAdvance: (r: AdvanceResult) => void;
+  onAdvance: (r: CompleteResult) => void;
   onBack: () => void;
 }) {
   const [phase, setPhase] = useState<'vocab' | 'reading' | 'result'>('vocab');
@@ -727,7 +746,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
   }
 
   // --- result ---
-  const [result, setResult] = useState<{ passed: boolean; adv: AdvanceResult | null } | null>(null);
+  const [result, setResult] = useState<{ passed: boolean; adv: CompleteResult | null } | null>(null);
 
   function conclude() {
     const reals = items?.filter((i) => i.real) ?? [];
@@ -738,8 +757,8 @@ function LevelTestView({ settings, onAdvance, onBack }: {
     const rt = questions?.length ?? 0;
     const readingPass = rt ? correctRef.current / rt >= 0.6 : true;
     const passed = vocabPass && readingPass;
-    let adv: AdvanceResult | null = null;
-    if (passed) { adv = advanceStage(settings.level); onAdvance(adv); celebrate(); }
+    let adv: CompleteResult | null = null;
+    if (passed) { adv = completeActivity(settings.level, 'aufstieg'); onAdvance(adv); celebrate(); }
     logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'bestanden' : 'nicht bestanden' });
     if (adv?.levelUp) logActivity({ type: 'levelup', level: adv.level, detail: adv.level });
     setResult({ passed, adv });
@@ -840,6 +859,102 @@ function LevelTestView({ settings, onAdvance, onBack }: {
   );
 }
 
+/* ------------------------------------------------------ Etappenabschlusstest --- */
+
+function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
+  const [questions, setQuestions] = useState<LessonQuestion[] | null>(null);
+  const [qpos, setQpos] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
+  const correct = useRef(0);
+  const [result, setResult] = useState<{ passed: boolean } | null>(null);
+  const optsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
+      const art = daily?.articles[0];
+      if (!art) { if (alive) setQuestions([]); return; }
+      const lesson = await fetchServerLesson(SERVER, art.id, settings.level);
+      if (!alive) return;
+      if (!lesson) { setQuestions([]); return; }
+      const qs = (await buildLessonQuestions(lesson, settings)).filter(Boolean) as LessonQuestion[];
+      setQuestions(shuffleInPlace(qs).slice(0, 5));
+    })();
+    return () => { alive = false; };
+  }, [settings.learn, settings.level]);
+
+  function answer(i: number) {
+    if (picked !== null || !questions) return;
+    setPicked(i);
+    if (i === questions[qpos]!.correct) {
+      correct.current += 1;
+      const el = optsRef.current?.querySelector('.sl-quiz-opt.correct');
+      if (el) { const r = el.getBoundingClientRect(); pop(r.left + r.width / 2, r.top + r.height / 2); }
+    }
+  }
+  function nextQ() {
+    if (!questions) return;
+    if (qpos + 1 >= questions.length) {
+      const total = questions.length;
+      const passed = total > 0 && correct.current / total >= 0.8; // ≥4/5
+      if (passed) { completeActivity(settings.level, 'etappentest'); celebrate(); }
+      logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'Etappe geschafft' : 'Etappentest' });
+      setResult({ passed });
+    } else { setQpos(qpos + 1); setPicked(null); }
+  }
+
+  const q = questions?.[qpos];
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Etappentest</span>
+      </header>
+
+      {result ? (
+        <section class="sl-done">
+          {result.passed ? (
+            <><span class="sl-done-ico"><IconSparkles /></span><h2>Etappe geschafft!</h2>
+              <p>Nächste Etappe: <b>{getStageProgress(settings.level).label}</b>.</p></>
+          ) : (
+            <><span class="sl-done-ico muted"><IconRefresh /></span><h2>Fast!</h2>
+              <p>Du brauchst 4 von 5 richtig. Lies/üb noch etwas und versuch's nochmal.</p></>
+          )}
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </section>
+      ) : questions === null ? (
+        <Dots />
+      ) : questions.length === 0 ? (
+        <>
+          <p class="sl-muted">Gerade keine Fragen verfügbar — lies erst eine Tageslektion.</p>
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </>
+      ) : q ? (
+        <>
+          <p class="lr-section" style={{ marginTop: 0 }}>Kurzer Check · {Q_LABEL[q.kind]}</p>
+          <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
+          <div class="sl-quiz">
+            <p class="sl-quiz-q">{q.q}</p>
+            <div class="sl-quiz-opts" ref={optsRef}>
+              {q.options.map((opt, i) => {
+                let cls = '';
+                if (picked !== null) cls = i === q.correct ? 'correct' : i === picked ? 'wrong' : 'dim';
+                return (
+                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={() => answer(i)}>{opt}</button>
+                );
+              })}
+            </div>
+            {picked !== null && (
+              <button class="sl-read" onClick={nextQ}>{qpos + 1 >= questions.length ? 'Auswerten ✓' : 'Weiter →'}</button>
+            )}
+          </div>
+        </>
+      ) : null}
+    </main>
+  );
+}
+
 /* -------------------------------------------------------------- Lernroute --- */
 
 function timeAgo(ts: number): string {
@@ -851,55 +966,71 @@ function timeAgo(ts: number): string {
   return `vor ${Math.floor(d / 7)} Wochen`;
 }
 
-function RouteNode({ variant, icon, title, sub, onClick }: {
-  variant: string;
-  icon: ComponentChildren;
-  title: string;
-  sub?: string;
-  onClick?: () => void;
-}) {
-  return (
-    <div class={`rn ${variant}`}>
-      <div class="rn-rail"><span class="rn-dot">{icon}</span></div>
-      <button class="rn-card" disabled={!onClick} onClick={onClick}>
-        <span class="rn-title">{title}</span>
-        {sub && <span class="rn-sub">{sub}</span>}
-      </button>
-    </div>
-  );
-}
+const NODE_META: Record<NodeType, { label: string; Icon: () => ComponentChildren }> = {
+  lesson: { label: 'Artikel lesen', Icon: IconNewspaper },
+  vocab: { label: 'Vokabeltest', Icon: IconCards },
+  cloze: { label: 'Lückentext', Icon: IconGap },
+  etappentest: { label: 'Etappentest', Icon: IconFlag },
+  aufstieg: { label: 'Aufstiegstest', Icon: IconSummit },
+};
 
-function RouteView({ settings, onTest, onHome, onBack }: {
+type NodeState = 'done' | 'current' | 'locked';
+
+function RouteView({ settings, onLesson, onTrainer, onCloze, onTest, onBack }: {
   settings: PwaSettings;
+  onLesson: () => void;
+  onTrainer: () => void;
+  onCloze: () => void;
   onTest: () => void;
-  onHome: () => void;
   onBack: () => void;
 }) {
-  const { daily } = useDaily(settings.learn, settings.level);
   const prog = getStageProgress(settings.level);
-  const events: Activity[] = getActivity();
+  const level = prog.level;
+  const current = Math.min(prog.node, NODES_PER_LEVEL - 1);
+  const curRef = useRef<HTMLDivElement>(null);
 
-  const arts = daily?.articles ?? [];
-  const goal = daily?.goal ?? 2;
-  const doneCount = arts.filter((a) => isCompleted(a.url)).length;
-  const allDone = arts.length > 0 && doneCount >= goal;
+  // Center the current node on open.
+  useEffect(() => {
+    curRef.current?.scrollIntoView({ block: 'center' });
+  }, []);
 
-  // The pulsing "next" node at the top.
-  let now: { title: string; sub: string; icon: ComponentChildren; onClick?: () => void };
-  if (prog.ready) {
-    now = { title: 'Etappen-Test', sub: `${prog.label} · bereit`, icon: <IconTarget />, onClick: onTest };
-  } else if (!allDone) {
-    now = { title: 'Tageslektion', sub: `${doneCount}/${goal} gelesen — weiterlesen`, icon: <IconBook />, onClick: onHome };
-  } else {
-    now = { title: 'Heute geschafft!', sub: 'Komm morgen für neue Artikel wieder', icon: <IconSparkles /> };
-  }
+  const launch = (t: NodeType) => {
+    if (t === 'lesson') onLesson();
+    else if (t === 'vocab') onTrainer();
+    else if (t === 'cloze') onCloze();
+    else onTest();
+  };
 
-  function nodeFor(a: Activity) {
-    if (a.type === 'levelup') return { variant: 'levelup', icon: <IconStar />, title: `Aufgestiegen: ${a.level}`, sub: timeAgo(a.ts) };
-    if (a.type === 'test') return a.ok
-      ? { variant: 'test-ok', icon: <IconSparkles />, title: `Etappen-Test bestanden`, sub: `${a.level} · ${timeAgo(a.ts)}` }
-      : { variant: 'test-no', icon: <IconRefresh />, title: `Etappen-Test versucht`, sub: `${a.level} · ${timeAgo(a.ts)}` };
-    return { variant: 'lesson', icon: <IconBook />, title: a.title || 'Artikel gelesen', sub: [a.detail, `${a.level} · ${timeAgo(a.ts)}`].filter(Boolean).join(' · ') };
+  const levelIdx = STAGE_LEVELS.indexOf(level);
+  const rows: ComponentChildren[] = [];
+  for (let e = 0; e < ETAPPEN_PER_LEVEL; e++) {
+    const etappeDone = prog.node >= (e + 1) * NODES_PER_ETAPPE;
+    rows.push(
+      <div class="rt-etappe" key={`e${e}`}>
+        <span class="rt-etappe-n">Etappe {e + 1}</span>
+        <span class={`rt-chest ${etappeDone ? 'done' : ''}`}><IconChest /></span>
+      </div>,
+    );
+    for (let p = 0; p < NODES_PER_ETAPPE; p++) {
+      const i = e * NODES_PER_ETAPPE + p;
+      const t = nodeType(level, i);
+      const state: NodeState = i < prog.node ? 'done' : i === current && prog.node < NODES_PER_LEVEL ? 'current' : 'locked';
+      const M = NODE_META[t];
+      rows.push(
+        <div class={`rn ${state}`} key={i}>
+          <div class="rn-rail">
+            <span class="rn-dot" ref={state === 'current' ? curRef : undefined}>
+              {state === 'done' ? <IconCheck /> : state === 'locked' ? <IconLock /> : <M.Icon />}
+            </span>
+          </div>
+          <button class="rn-card" disabled={state !== 'current'} onClick={() => state === 'current' && launch(t)}>
+            <span class="rn-title">{M.label}</span>
+            <span class="rn-sub">{state === 'current' ? 'Jetzt dran · tippen' : state === 'done' ? 'erledigt' : 'gesperrt'}</span>
+          </button>
+          {state === 'current' && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={62} />}
+        </div>,
+      );
+    }
   }
 
   return (
@@ -908,18 +1039,11 @@ function RouteView({ settings, onTest, onHome, onBack }: {
         <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
         <span class="sl-lessontitle">Lernroute</span>
       </header>
-
-      <div class="route">
-        <RouteNode variant="now" icon={now.icon} title={now.title} sub={now.sub} onClick={now.onClick} />
-        {events.length === 0 ? (
-          <p class="sl-muted" style={{ marginTop: '8px' }}>Hier erscheint deine Reise — lies einen Artikel, dann geht's los.</p>
-        ) : (
-          events.map((a) => {
-            const n = nodeFor(a);
-            return <RouteNode key={a.id} variant={n.variant} icon={n.icon} title={n.title} sub={n.sub} />;
-          })
-        )}
+      <div class="rt-head">
+        <b>{level}</b><span>Etappe {prog.etappe}/{ETAPPEN_PER_LEVEL}</span>
+        {levelIdx > 0 && <span class="rt-prev">{STAGE_LEVELS.slice(0, levelIdx).join(' ✓ ')} ✓</span>}
       </div>
+      <div class="route">{rows}</div>
     </main>
   );
 }
@@ -1287,7 +1411,6 @@ function Lesson({
     } else {
       if (creditable.current) {
         award(XP.lesson);
-        creditMastery(settings.level, MASTERY.lesson);
         creditLesson(article.url);
         logActivity({
           type: 'lesson',
@@ -1295,6 +1418,7 @@ function Lesson({
           title: article.title,
           detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
         });
+        completeActivity(settings.level, 'lesson');
         creditable.current = false;
       }
       freshDone.current = true;
@@ -1355,7 +1479,7 @@ function Lesson({
               if (answer !== null) return;
               setAnswer(idx);
               const ok = idx === questions[quizIdx]!.correct;
-              if (ok && creditable.current) { award(XP.correct); creditMastery(settings.level, MASTERY.quizCorrect); }
+              if (ok && creditable.current) award(XP.correct);
               setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
             }}
             onNext={() => {
@@ -1517,7 +1641,6 @@ function WordPopover({
     if (saved || !translation) return;
     if (addToDeck({ word: pop.word, translation, lang: settings.learn, context: pop.sentence, ts: Date.now() })) {
       award(XP.merken);
-      creditMastery(settings.level, MASTERY.merken);
     }
     setSaved(true);
   }

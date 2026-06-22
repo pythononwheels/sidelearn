@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.74] — 2026-06-22
+
+### Added (Learny) — 10-Etappen progression, Lernroute, A1
+- **A1 level** end-to-end: server supports A1 (`SL_LEVELS`, prompt) and prepares
+  any allowed-but-unbuilt level **on demand** in `/lesson` (cap-guarded); A1
+  selectable in onboarding/settings (default stays A2).
+- **New progression model** (`pwa/route.ts`, replaces the 3-Etappen `progress.ts`):
+  each level = **10 Etappen × 3 typed nodes** (Artikel → Vokabel/Lückentext →
+  Etappentest), with a full **Aufstiegstest** at Etappe 10 → level-up. Nodes are
+  completed by doing the matching activity. Migrates old `sl_pwa_stage` data.
+- **Lernroute redesign:** vertical typed-node path, grouped into 10 Etappen
+  (chest per Etappe), states done/current/locked, **auto-centred on the current
+  node**, Gurki at the current step; tap the current node to launch its activity.
+  Home shows the next step; ring reads "Etappe X/10 · % bis zum nächsten Ziel".
+- **Etappenabschlusstest:** quick 5-question mixed check (≥4/5 to pass) at each
+  Etappe end; the per-correct mastery-points system is removed.
+
 ## [0.6.73] — 2026-06-22
 
 ### Changed (Learny PWA) — Home redesign + mascot

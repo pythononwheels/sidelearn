@@ -511,7 +511,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 
 /* Lernroute timeline */
 .route { margin-top: 6px; }
-.rn { display: flex; align-items: stretch; gap: 14px; }
+.rn { position: relative; display: flex; align-items: stretch; gap: 14px; }
 .rn-rail { position: relative; width: 44px; flex: none; display: flex; justify-content: center; }
 .rn-rail::before {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
@@ -535,16 +535,33 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn-title { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
 .rn-sub { font-size: 12.5px; color: var(--ll-text-soft); }
 
-.rn.now .rn-dot { background: var(--ll-accent); color: var(--ll-accent-ink); }
-.rn.now .rn-card { background: var(--ll-accent-soft); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
-.rn.now .rn-dot::after {
+/* Node states */
+.rn.done .rn-dot { background: var(--ll-accent); color: var(--ll-accent-ink); }
+.rn.locked .rn-dot { background: var(--ll-border); color: var(--ll-text-muted); }
+.rn.locked .rn-title { color: var(--ll-text-soft); }
+.rn.current .rn-dot { width: 52px; height: 52px; background: var(--ll-accent); color: var(--ll-accent-ink); }
+.rn.current .rn-dot svg { width: 26px; height: 26px; }
+.rn.current .rn-card { background: var(--ll-accent-soft); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+.rn.current .rn-sub { color: var(--ll-accent-strong); font-weight: 700; }
+.rn.current .rn-dot::after {
   content: ''; position: absolute; inset: -6px; border-radius: 50%;
   border: 2px solid var(--ll-accent); animation: rn-ring 1.6s ease-out infinite;
 }
-@keyframes rn-ring { 0% { transform: scale(.9); opacity: .6; } 100% { transform: scale(1.45); opacity: 0; } }
-.rn.test-ok .rn-dot { background: var(--ll-mint-soft, #e2f6ee); color: var(--lr-ok, #2f9e6b); }
-.rn.test-no .rn-dot { color: var(--ll-text-soft); }
-.rn.levelup .rn-dot { background: var(--ll-accent); color: var(--ll-accent-ink); }
+@keyframes rn-ring { 0% { transform: scale(.9); opacity: .6; } 100% { transform: scale(1.5); opacity: 0; } }
+.rn-gurki { position: absolute; right: 8px; top: -12px; width: 62px; pointer-events: none; }
+
+/* Etappe divider + chest */
+.rt-etappe { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; padding-left: 4px; }
+.rt-etappe-n { font-family: var(--font-head); font-weight: 800; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ll-text-soft); }
+.rt-etappe::after { content: ''; flex: 1; height: 1px; background: var(--ll-border); }
+.rt-chest { display: inline-flex; color: var(--ll-text-muted); }
+.rt-chest svg { width: 18px; height: 18px; }
+.rt-chest.done { color: var(--ll-accent-strong); }
+
+.rt-head { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 8px; }
+.rt-head b { font-family: var(--font-head); font-size: 22px; }
+.rt-head span { font-size: 13px; color: var(--ll-text-soft); font-weight: 700; }
+.rt-head .rt-prev { margin-left: auto; color: var(--lr-ok, #2f9e6b); font-size: 12px; }
 
 /* Yes/No vocabulary grid (Etappen-Test) */
 .tst-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px; }
