@@ -5,18 +5,20 @@
 
 import { type Language } from '@/core/config';
 import { type CefrLevel } from '@/core/difficulty/banding';
+import { type ThemeId } from './theme';
 
 export interface PwaSettings {
   learn: Language;
   native: Language;
   level: CefrLevel;
+  theme: ThemeId;
   onboarded: boolean;
 }
 
 const SETTINGS_KEY = 'sl_pwa_settings';
 const PROGRESS_KEY = 'sl_pwa_progress';
 
-const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', onboarded: false };
+const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', theme: 'warm', onboarded: false };
 
 export function getSettings(): PwaSettings {
   try {

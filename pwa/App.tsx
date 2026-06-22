@@ -13,6 +13,7 @@ import { loadRanks, rankOf } from '@/core/difficulty/frequency';
 import { loadNames } from '@/core/names';
 import { resolveWord } from '@/core/wordinfo';
 import {
+  fetchServerArchive,
   fetchServerDaily,
   fetchServerLesson,
   fetchWordTranslation,
@@ -22,14 +23,19 @@ import {
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type PwaSettings } from './store';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
+import { THEMES, applyTheme } from './theme';
+
+type Tab = 'home' | 'challenges' | 'report' | 'settings';
+type ArticleRef = { id: string; title: string; url: string; thumb?: string };
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
 
 export function App() {
   const [settings, setSettings] = useState<PwaSettings>(getSettings());
-  const [view, setView] = useState<{ id: string; title: string; url: string; thumb?: string } | null>(null);
+  const [view, setView] = useState<ArticleRef | null>(null);
   const [deckOpen, setDeckOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>('home');
 
   const patch = (p: Partial<PwaSettings>) => {
     const next = { ...settings, ...p };
@@ -37,12 +43,24 @@ export function App() {
     saveSettings(next);
   };
 
-  return (
-    <div class="sl-shell">
-      <Updater />
-      {!settings.onboarded ? (
+  useEffect(() => {
+    applyTheme(settings.theme);
+  }, [settings.theme]);
+
+  if (!settings.onboarded) {
+    return (
+      <div class="sl-shell">
+        <Updater />
         <Onboarding settings={settings} onDone={(p) => patch({ ...p, onboarded: true })} />
-      ) : view ? (
+      </div>
+    );
+  }
+
+  // Focused full views (no tab bar).
+  if (view) {
+    return (
+      <div class="sl-shell">
+        <Updater />
         <Lesson
           key={view.id + settings.level}
           article={view}
@@ -50,14 +68,56 @@ export function App() {
           onLevel={(level) => patch({ level })}
           onBack={() => setView(null)}
         />
-      ) : deckOpen ? (
+      </div>
+    );
+  }
+  if (deckOpen) {
+    return (
+      <div class="sl-shell">
         <DeckView onBack={() => setDeckOpen(false)} />
-      ) : (
-        <Home settings={settings} onPatch={patch} onOpen={setView} onDeck={() => setDeckOpen(true)} />
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div class="sl-shell">
+      <Updater />
+      {tab === 'home' && <HomeTab settings={settings} onPatch={patch} onOpen={setView} />}
+      {tab === 'challenges' && <ChallengesTab settings={settings} onOpen={setView} />}
+      {tab === 'report' && <ReportTab onDeck={() => setDeckOpen(true)} />}
+      {tab === 'settings' && <SettingsTab settings={settings} onPatch={patch} />}
+      <TabBar tab={tab} onTab={setTab} />
     </div>
   );
 }
+
+/* --------------------------------------------------------------- TabBar --- */
+
+function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
+  const items: { id: Tab; label: string; icon: ComponentChildren }[] = [
+    { id: 'home', label: 'Home', icon: <IconHome /> },
+    { id: 'challenges', label: 'Challenges', icon: <IconTarget /> },
+    { id: 'report', label: 'Report', icon: <IconChart /> },
+    { id: 'settings', label: 'Mehr', icon: <IconGear /> },
+  ];
+  return (
+    <nav class="tabbar">
+      {items.map((it) => (
+        <button class={`tabbtn ${tab === it.id ? 'on' : ''}`} onClick={() => onTab(it.id)}>
+          {it.icon}
+          <span>{it.label}</span>
+          {tab === it.id && <span class="dot" />}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+const svg = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } as const;
+const IconHome = () => (<svg {...svg}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></svg>);
+const IconTarget = () => (<svg {...svg}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>);
+const IconChart = () => (<svg {...svg}><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="12" y="8" width="3" height="10" /><rect x="17" y="5" width="3" height="13" /></svg>);
+const IconGear = () => (<svg {...svg}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>);
 
 /* ------------------------------------------------------------ Onboarding --- */
 
@@ -121,37 +181,67 @@ function Onboarding({
   );
 }
 
-/* ---------------------------------------------------------------- Home --- */
+/* ----------------------------------------------------------- ArticleList --- */
 
-function Home({
-  settings,
-  onPatch,
-  onOpen,
-  onDeck,
-}: {
-  settings: PwaSettings;
-  onPatch: (p: Partial<PwaSettings>) => void;
-  onOpen: (a: { id: string; title: string; url: string; thumb?: string }) => void;
-  onDeck: () => void;
-}) {
+function useDaily(learn: Language, level: CefrLevel, date?: string) {
   const [daily, setDaily] = useState<ServerDaily | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tick, setTick] = useState(0); // re-render after returning from a lesson
-
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    void fetchServerDaily(SERVER, settings.learn, settings.level).then((d) => {
-      if (alive) {
-        setDaily(d);
-        setLoading(false);
-      }
+    void fetchServerDaily(SERVER, learn, level, date).then((d) => {
+      if (alive) { setDaily(d); setLoading(false); }
     });
-    return () => {
-      alive = false;
-    };
-  }, [settings.learn, settings.level]);
+    return () => { alive = false; };
+  }, [learn, level, date]);
+  return { daily, loading };
+}
 
+function ArticleList({ articles, next, allDone, onOpen }: {
+  articles: ServerDaily['articles'];
+  next?: ServerDaily['articles'][number];
+  allDone: boolean;
+  onOpen: (a: ArticleRef) => void;
+}) {
+  return (
+    <ul class="lr-list">
+      {articles.map((a) => {
+        const done = isCompleted(a.url);
+        const started = !done && !!getProgress(a.url);
+        const isNext = !done && a.url === next?.url && !allDone;
+        return (
+          <li key={a.id}>
+            <button class={`lr-item ${done ? 'done' : ''} ${isNext ? 'primary' : ''}`}
+              onClick={() => onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail })}>
+              {a.thumbnail ? (
+                <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
+              ) : (
+                <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>
+              )}
+              <span class="lr-item-body">
+                <span class="lr-item-title">{a.title}</span>
+                <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
+              </span>
+              <span class={`lr-item-state ${done ? 'done' : ''}`}>
+                {done ? '✓' : started ? 'weiter ›' : isNext ? 'Start ›' : 'lesen ›'}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/* ------------------------------------------------------------- Home tab --- */
+
+function HomeTab({ settings, onPatch, onOpen }: {
+  settings: PwaSettings;
+  onPatch: (p: Partial<PwaSettings>) => void;
+  onOpen: (a: ArticleRef) => void;
+}) {
+  const { daily, loading } = useDaily(settings.learn, settings.level);
+  const [tick, setTick] = useState(0); // refresh progress after returning from a lesson
   useEffect(() => {
     const onVis = () => document.visibilityState === 'visible' && setTick((t) => t + 1);
     document.addEventListener('visibilitychange', onVis);
@@ -163,13 +253,9 @@ function Home({
   const doneCount = articles.filter((a) => isCompleted(a.url)).length;
   const allDone = articles.length > 0 && doneCount >= goal;
   const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
-  const stats = getStats();
-
-  const open = (a: typeof articles[number]) =>
-    onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail });
 
   return (
-    <main class="sl-main" key={tick}>
+    <main class="sl-main with-nav" key={tick}>
       <header class="lr-head">
         <span class="lr-brand"><span class="lr-logo" /> Learny</span>
         <div class="lr-pick">
@@ -179,14 +265,11 @@ function Home({
             ))}
           </select>
           <select value={settings.level} onChange={(e) => onPatch({ level: e.currentTarget.value as CefrLevel })}>
-            {CEFR_LEVELS.map((l) => (
-              <option value={l}>{l}</option>
-            ))}
+            {CEFR_LEVELS.map((l) => (<option value={l}>{l}</option>))}
           </select>
         </div>
       </header>
 
-      {/* Hero: today's lesson — a calm summary, no competing button */}
       <section class="lr-hero">
         <div class="lr-hero-top">
           <span class="lr-hero-eyebrow">Deine Tageslektion</span>
@@ -205,46 +288,148 @@ function Home({
         )}
       </section>
 
-      {/* Article list = the actual challenge. Next-to-read is the primary one. */}
       {articles.length > 0 && (
-        <ul class="lr-list">
-          {articles.map((a) => {
-            const done = isCompleted(a.url);
-            const started = !done && !!getProgress(a.url);
-            const isNext = !done && a.url === next?.url && !allDone;
-            return (
-              <li key={a.id}>
-                <button class={`lr-item ${done ? 'done' : ''} ${isNext ? 'primary' : ''}`} onClick={() => open(a)}>
-                  {a.thumbnail ? (
-                    <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
-                  ) : (
-                    <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>
-                  )}
-                  <span class="lr-item-body">
-                    <span class="lr-item-title">{a.title}</span>
-                    <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
-                  </span>
-                  <span class={`lr-item-state ${done ? 'done' : ''}`}>
-                    {done ? '✓' : started ? 'weiter ›' : isNext ? 'Start ›' : 'lesen ›'}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <ArticleList articles={articles} next={next} allDone={allDone} onOpen={onOpen} />
       )}
+    </main>
+  );
+}
 
-      {/* Subtle progress + vocab (no flame) */}
-      <section class="lr-foot">
-        <div class="lr-foot-prog">
-          <div class="lr-foot-top">
-            <span>Level {stats.level}</span>
-            <span class="sl-muted">heute {stats.todayXp}/{stats.goal} XP</span>
-          </div>
-          <div class="lr-foot-bar"><span style={{ width: `${Math.min(100, (stats.todayXp / stats.goal) * 100)}%` }} /></div>
+/* ----------------------------------------------------------- Challenges --- */
+
+function ChallengesTab({ settings, onOpen }: {
+  settings: PwaSettings;
+  onOpen: (a: ArticleRef) => void;
+}) {
+  const [dates, setDates] = useState<string[] | null>(null);
+  const [sel, setSel] = useState<string | undefined>(undefined); // undefined = today
+  useEffect(() => {
+    let alive = true;
+    void fetchServerArchive(SERVER, settings.learn).then((d) => alive && setDates(d));
+    return () => { alive = false; };
+  }, [settings.learn]);
+
+  const { daily, loading } = useDaily(settings.learn, settings.level, sel);
+  const articles = daily?.articles ?? [];
+  const goal = daily?.goal ?? 2;
+  const doneCount = articles.filter((a) => isCompleted(a.url)).length;
+  const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
+
+  const days = dates ?? [];
+  return (
+    <main class="sl-main with-nav">
+      <h1 class="tab-screen-title">Challenges</h1>
+      <p class="lr-section">Heutige & frühere Tageslektionen</p>
+      {days.length > 0 && (
+        <div class="lr-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => setSel(undefined)}>Heute</button>
+          {days.map((d) => (
+            <button class={`pill-day ${sel === d ? 'on' : ''}`} onClick={() => setSel(d)}>
+              {d.slice(5)}
+            </button>
+          ))}
         </div>
-        <button class="lr-vocab" onClick={onDeck}>Meine Vokabeln · {getDeck().length}</button>
-      </section>
+      )}
+      {daily && articles.length > 0 && (
+        <p class="lr-section" style={{ marginTop: 0 }}>{doneCount}/{goal} gelesen</p>
+      )}
+      {loading ? (
+        <Dots />
+      ) : articles.length === 0 ? (
+        <p class="sl-muted">Keine Lektionen für diesen Tag.</p>
+      ) : (
+        <ArticleList articles={articles} next={next} allDone={doneCount >= goal} onOpen={onOpen} />
+      )}
+    </main>
+  );
+}
+
+/* --------------------------------------------------------------- Report --- */
+
+function ReportTab({ onDeck }: { onDeck: () => void }) {
+  const s = getStats();
+  const deck = getDeck().length;
+  const maxDay = Math.max(1, ...s.last7.map((d) => d.xp));
+  const acc = s.streak; // streak kept here (not as a home flame)
+  return (
+    <main class="sl-main with-nav">
+      <h1 class="tab-screen-title">Report</h1>
+      <div class="rep-kpis">
+        <div class="rep-kpi"><b>{s.level}</b><span>Level</span></div>
+        <div class="rep-kpi"><b>{s.totalXp}</b><span>XP gesamt</span></div>
+        <div class="rep-kpi"><b>{deck}</b><span>Vokabeln</span></div>
+        <div class="rep-kpi"><b>{acc}</b><span>Tage-Streak</span></div>
+      </div>
+
+      <div class="rep-card">
+        <h3>XP · letzte 7 Tage</h3>
+        <div class="rep-week">
+          {s.last7.map((d) => (
+            <div class="rep-day">
+              <div class="rep-bar" style={{ height: `${Math.round((d.xp / maxDay) * 92)}%` }} />
+              <span class="rep-day-l">{['Mo','Di','Mi','Do','Fr','Sa','So'][new Date(d.key).getDay() === 0 ? 6 : new Date(d.key).getDay() - 1]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="rep-card">
+        <h3>Heute</h3>
+        <div class="rep-row"><span>XP heute</span><b>{s.todayXp} / {s.goal}</b></div>
+        <div class="rep-row"><span>Level-Fortschritt</span><b>{s.intoLevel} / {s.levelSpan} XP</b></div>
+      </div>
+
+      <button class="lr-vocab" onClick={onDeck}>Meine Vokabeln · {deck} →</button>
+    </main>
+  );
+}
+
+/* -------------------------------------------------------------- Settings --- */
+
+function SettingsTab({ settings, onPatch }: {
+  settings: PwaSettings;
+  onPatch: (p: Partial<PwaSettings>) => void;
+}) {
+  return (
+    <main class="sl-main with-nav">
+      <h1 class="tab-screen-title">Einstellungen</h1>
+
+      <div class="set-group">
+        <p class="set-label">Sprache lernen</p>
+        <div class="set-grid">
+          {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
+            <button class={`set-choice ${settings.learn === l ? 'sel' : ''}`} onClick={() => onPatch({ learn: l })}>
+              {LANG_LABELS[l]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="set-group">
+        <p class="set-label">Niveau</p>
+        <div class="set-grid">
+          {LEVELS.map((l) => (
+            <button class={`set-choice ${settings.level === l ? 'sel' : ''}`} onClick={() => onPatch({ level: l })}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="set-group">
+        <p class="set-label">Theme</p>
+        <div class="theme-grid">
+          {THEMES.map((t) => (
+            <button class={`theme-card ${settings.theme === t.id ? 'sel' : ''}`} onClick={() => onPatch({ theme: t.id })}>
+              <span class="theme-prev" style={{ background: t.bg }} />
+              <span class="theme-dots"><i style={{ background: t.dots[0] }} /><i style={{ background: t.dots[1] }} /></span>
+              <span class="theme-name">{t.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p class="sl-muted">Learny · Teil der Sidelearn-Familie · Texte: Wikipedia (CC BY-SA)</p>
     </main>
   );
 }

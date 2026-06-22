@@ -51,15 +51,34 @@ export async function fetchServerDaily(
   serverUrl: string,
   lang: Language,
   level: CefrLevel,
+  date?: string,
 ): Promise<ServerDaily | null> {
   try {
-    const res = await fetch(`${base(serverUrl)}/daily?lang=${lang}&level=${level}`, {
-      headers: { accept: 'application/json' },
-    });
+    const q = new URLSearchParams({ lang, level });
+    if (date) q.set('date', date);
+    const res = await fetch(`${base(serverUrl)}/daily?${q}`, { headers: { accept: 'application/json' } });
     if (!res.ok) return null;
     return (await res.json()) as ServerDaily;
   } catch {
     return null;
+  }
+}
+
+/** Past days that have content (for the Challenges archive). */
+export async function fetchServerArchive(
+  serverUrl: string,
+  lang: Language,
+  limit = 30,
+): Promise<string[]> {
+  try {
+    const res = await fetch(`${base(serverUrl)}/archive?lang=${lang}&limit=${limit}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const d = (await res.json()) as { dates?: string[] };
+    return d.dates ?? [];
+  } catch {
+    return [];
   }
 }
 
