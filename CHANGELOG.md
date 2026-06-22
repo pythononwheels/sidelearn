@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.69] — 2026-06-22
+
+### Changed (Learny PWA) — Phase A
+- Swept remaining emojis to consistent SVG line icons (onboarding, done screens,
+  hint bulb, ★ merken, 🎯 test button); success screens get a sparkles badge.
+- Lesson done-screen is now gamified with the daily progress ("X von Y der
+  Tageslektion geschafft") and direct buttons: **Nächster Artikel →** (opens the
+  next unread daily article) and **Zur Übersicht**.
+
 ## [0.6.68] — 2026-06-22
 
 ### Added (Learny PWA) — staged learning progress + Etappen-Test

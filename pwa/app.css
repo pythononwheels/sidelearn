@@ -247,8 +247,16 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .sl-quiz-opt.wrong { border-color: #d2603f; color: #d2603f; }
 .sl-quiz-opt.dim { opacity: 0.5; }
 
-.sl-done { text-align: center; padding: 20px; border-radius: 18px; background: var(--ll-accent-soft); margin-bottom: 14px; }
+.sl-done { text-align: center; padding: 22px 20px; border-radius: 18px; background: var(--ll-accent-soft); margin-bottom: 14px; }
 .sl-done h2 { margin: 0 0 6px; }
+.sl-done-score { margin: 0; color: var(--ll-text-soft); font-size: 14px; }
+.sl-done-daily { margin: 8px 0 0; font-weight: 700; }
+.sl-done-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.sl-done-actions .sl-read { margin-top: 0; width: 100%; display: inline-flex; align-items: center; justify-content: center; }
+.sl-read.ghost { background: transparent; color: var(--ll-accent-strong); box-shadow: none; border: 1px solid var(--ll-border); }
+.sl-read.ghost:active { background: var(--ll-surface); }
+.sl-btn-ico { display: inline-flex; vertical-align: -4px; margin-left: 6px; }
+.sl-btn-ico svg { width: 18px; height: 18px; }
 .sl-credit { font-size: 12px; color: var(--ll-text-soft); text-align: center; margin-top: 24px; }
 
 /* Word popover ---------------------------------------------------------- */
@@ -410,6 +418,21 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   background: var(--ll-accent); color: var(--ll-accent-ink, #fff);
   font: inherit; font-weight: 800; cursor: pointer;
 }
+
+/* Success / status icons on done screens & inline icon helpers */
+.sl-done-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; margin: 0 auto 10px; border-radius: 50%;
+  background: var(--ll-accent-soft); color: var(--ll-accent-strong);
+}
+.sl-done-ico svg { width: 30px; height: 30px; }
+.sl-done-ico.muted { color: var(--ll-text-soft); }
+.sl-hint-ico { display: inline-flex; vertical-align: -3px; color: var(--ll-accent-strong); }
+.sl-hint-ico svg { width: 16px; height: 16px; }
+.sl-merken-ico { display: inline-flex; vertical-align: -3px; margin-right: 6px; }
+.sl-merken-ico svg { width: 16px; height: 16px; }
+.rep-test-ico { display: inline-flex; vertical-align: -4px; margin-right: 8px; }
+.rep-test-ico svg { width: 18px; height: 18px; }
 
 /* Yes/No vocabulary grid (Etappen-Test) */
 .tst-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px; }

@@ -88,6 +88,8 @@ export function App() {
         settings={settings}
         onLevel={(level) => patch({ level })}
         onBack={() => setOverlay(null)}
+        onOpen={openLesson}
+        onHome={() => goTab('home')}
       />
     );
   } else if (overlay?.kind === 'deck') {
@@ -177,6 +179,11 @@ const IconBook = () => (<svg {...svg}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H2
 const IconWrench = () => (<svg {...svg}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>);
 const IconBall = () => (<svg {...svg}><circle cx="12" cy="12" r="9" /><path d="M12 7.5l3.3 2.4-1.25 3.85h-4.1L8.7 9.9z" /><path d="M12 7.5V4M15.3 9.9l2.95-1.45M14.05 13.75l2.45 2.5M9.95 13.75l-2.45 2.5M8.7 9.9 5.75 8.45" /></svg>);
 const IconLandmark = () => (<svg {...svg}><path d="M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M3 10l9-6 9 6M3.5 10h17" /></svg>);
+const IconSparkles = () => (<svg {...svg}><path d="M12 3l1.6 5.1a2 2 0 0 0 1.3 1.3L20 11l-5.1 1.6a2 2 0 0 0-1.3 1.3L12 19l-1.6-5.1a2 2 0 0 0-1.3-1.3L4 11l5.1-1.6a2 2 0 0 0 1.3-1.3z" /><path d="M19 4v3M20.5 5.5h-3" /></svg>);
+const IconBulb = () => (<svg {...svg}><path d="M9 18h6M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z" /></svg>);
+const IconStar = () => (<svg {...svg}><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z" /></svg>);
+const IconRefresh = () => (<svg {...svg}><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></svg>);
+const IconArrowRight = () => (<svg {...svg}><path d="M5 12h14M13 6l6 6-6 6" /></svg>);
 
 /* ------------------------------------------------------------ Onboarding --- */
 
@@ -203,7 +210,7 @@ function Onboarding({
       <div class="lr-onb-logo" />
       {step === 0 ? (
         <>
-          <h1 class="lr-onb-h">Willkommen bei Learny 👋</h1>
+          <h1 class="lr-onb-h">Willkommen bei Learny</h1>
           <p class="lr-onb-p">Lies jeden Tag echte Texte — vereinfacht auf dein Niveau. Welche Sprache möchtest du lernen?</p>
           <div class="lr-onb-grid">
             {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
@@ -232,7 +239,7 @@ function Onboarding({
               </button>
             ))}
           </div>
-          <button class="lr-onb-next" onClick={() => onDone({ learn, level })}>Los geht's 🎉</button>
+          <button class="lr-onb-next" onClick={() => onDone({ learn, level })}>Los geht's</button>
           <button class="lr-onb-back" onClick={() => setStep(0)}>← zurück</button>
         </>
       )}
@@ -343,7 +350,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
         ) : articles.length === 0 ? (
           <p class="lr-hero-text">Heute gibt es noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später nochmal vorbei.</p>
         ) : allDone ? (
-          <p class="lr-hero-text">Heute geschafft! 🎉 Du kannst gern noch weiterlesen.</p>
+          <p class="lr-hero-text">Heute geschafft! Du kannst gern noch weiterlesen.</p>
         ) : (
           <p class="lr-hero-text">
             Lies <b>{goal}</b> von {articles.length} kurzen Artikeln — wir vereinfachen sie für dich auf {settings.level}.
@@ -420,7 +427,8 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
         </p>
       ) : done ? (
         <section class="sl-done">
-          <h2>Fertig 🎉</h2>
+          <span class="sl-done-ico"><IconSparkles /></span>
+          <h2>Fertig</h2>
           <p>{score} von {all.length} gewusst.</p>
           <button class="sl-read" onClick={onBack}>Zurück</button>
         </section>
@@ -568,7 +576,8 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
         <p class="sl-muted">Gerade kein Lückentext verfügbar — schau, dass es eine Tageslektion gibt, und versuch es nochmal.</p>
       ) : done ? (
         <section class="sl-done">
-          <h2>Geschafft 🎉</h2>
+          <span class="sl-done-ico"><IconSparkles /></span>
+          <h2>Geschafft</h2>
           <p>{score} von {questions.length} richtig.</p>
           <button class="sl-read" onClick={onBack}>Zurück</button>
         </section>
@@ -764,7 +773,8 @@ function LevelTestView({ settings, onAdvance, onBack }: {
         <section class="sl-done">
           {result.passed ? (
             <>
-              <h2>Bestanden! 🎉</h2>
+              <span class="sl-done-ico"><IconSparkles /></span>
+              <h2>Bestanden!</h2>
               {result.adv?.levelUp ? (
                 <p>Glückwunsch — du steigst auf <b>{result.adv.level}</b> auf. Deine Texte werden ab jetzt auf diesem Niveau angepasst.</p>
               ) : (
@@ -773,7 +783,8 @@ function LevelTestView({ settings, onAdvance, onBack }: {
             </>
           ) : (
             <>
-              <h2>Noch nicht ganz 💪</h2>
+              <span class="sl-done-ico muted"><IconRefresh /></span>
+              <h2>Noch nicht ganz</h2>
               <p>Kein Problem — lies und übe noch etwas weiter und versuch's dann nochmal.</p>
             </>
           )}
@@ -856,7 +867,7 @@ function ReportTab({ settings, onDeck, onTest }: {
         </div>
         <div class="rep-stage-bar"><i style={{ width: `${Math.round(prog.ratio * 100)}%` }} /></div>
         {prog.ready ? (
-          <button class="rep-stage-test" onClick={onTest}>Etappen-Test starten 🎯</button>
+          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>Etappen-Test starten</button>
         ) : (
           <p class="rep-stage-hint">Lies & übe weiter — bei 100 % schaltet der Etappen-Test frei.</p>
         )}
@@ -987,12 +998,17 @@ function Lesson({
   settings,
   onLevel,
   onBack,
+  onOpen,
+  onHome,
 }: {
   article: { id: string; title: string; url: string; thumb?: string };
   settings: PwaSettings;
   onLevel: (l: CefrLevel) => void;
   onBack: () => void;
+  onOpen: (a: ArticleRef) => void;
+  onHome: () => void;
 }) {
+  const { daily } = useDaily(settings.learn, settings.level);
   const [lesson, setLesson] = useState<ServerLesson | null>(null);
   const [error, setError] = useState(false);
   const saved = getProgress(article.url);
@@ -1081,7 +1097,7 @@ function Lesson({
         Absatz {Math.min(visible, total)} / {total}
         {total >= 8 ? ' · Auszug' : ''}
       </p>
-      <p class="sl-hint">💡 Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
+      <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
 
       {lesson.paragraphs.slice(0, visible).map((p, i) => (
         <div key={i} class={`sl-para ${i === lastIdx && !completed ? 'current' : 'past'}`}>
@@ -1120,12 +1136,36 @@ function Lesson({
         />
       )}
 
-      {completed && (
-        <section class="sl-done">
-          <h2>Geschafft 🎉</h2>
-          {score.answered > 0 && <p>Quiz: {score.correct} / {score.answered} richtig</p>}
-        </section>
-      )}
+      {completed && (() => {
+        const arts = daily?.articles ?? [];
+        const inDaily = arts.some((a) => a.url === article.url);
+        const goal = daily?.goal ?? 2;
+        const doneCount = arts.filter((a) => isCompleted(a.url)).length;
+        const allDone = inDaily && doneCount >= goal;
+        const next = arts.find((a) => !isCompleted(a.url) && a.url !== article.url);
+        return (
+          <section class="sl-done">
+            <span class="sl-done-ico"><IconSparkles /></span>
+            <h2>{allDone ? 'Tagesziel erreicht!' : 'Geschafft'}</h2>
+            {score.answered > 0 && <p class="sl-done-score">Quiz: {score.correct} / {score.answered} richtig</p>}
+            {inDaily && (
+              <p class="sl-done-daily">
+                {allDone
+                  ? `${doneCount} von ${goal} der Tageslektion gelesen.`
+                  : `${doneCount} von ${goal} der Tageslektion geschafft${next ? ' — noch einer fehlt.' : '.'}`}
+              </p>
+            )}
+            <div class="sl-done-actions">
+              {inDaily && !allDone && next && (
+                <button class="sl-read primary" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail })}>
+                  Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
+                </button>
+              )}
+              <button class={`sl-read ${inDaily && !allDone && next ? 'ghost' : ''}`} onClick={onHome}>Zur Übersicht</button>
+            </div>
+          </section>
+        );
+      })()}
 
       <footer class="sl-credit">
         Quelle: <a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
@@ -1274,7 +1314,7 @@ function WordPopover({
           <p class="sl-muted">keine Übersetzung gefunden</p>
         )}
         <button class={`sl-merken ${saved ? 'saved' : ''}`} disabled={saved || !translation} onClick={merken}>
-          {saved ? '✓ gemerkt' : '★ merken'}
+          <span class="sl-merken-ico"><IconStar /></span>{saved ? 'gemerkt' : 'merken'}
         </button>
       </div>
     </>
