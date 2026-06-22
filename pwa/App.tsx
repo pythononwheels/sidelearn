@@ -145,6 +145,15 @@ const IconTarget = () => (<svg {...svg}><circle cx="12" cy="12" r="10" /><circle
 const IconChart = () => (<svg {...svg}><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="12" y="8" width="3" height="10" /><rect x="17" y="5" width="3" height="13" /></svg>);
 const IconGear = () => (<svg {...svg}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>);
 
+// Tile / area icons (same line-icon language as the nav above).
+const dot = { fill: 'currentColor', stroke: 'none' } as const;
+const IconDice = () => (<svg {...svg}><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.25" {...dot} /><circle cx="15.5" cy="8.5" r="1.25" {...dot} /><circle cx="12" cy="12" r="1.25" {...dot} /><circle cx="8.5" cy="15.5" r="1.25" {...dot} /><circle cx="15.5" cy="15.5" r="1.25" {...dot} /></svg>);
+const IconPuzzle = () => (<svg {...svg}><path d="M19.44 7.85c-.05.32.06.65.29.88l1.57 1.57c.47.47.7 1.09.7 1.7s-.23 1.24-.7 1.71l-1.61 1.61a.98.98 0 0 1-.84.28c-.47-.07-.8-.48-.97-.93a2.5 2.5 0 1 0-3.21 3.22c.45.16.86.5.93.97a.98.98 0 0 1-.28.84l-1.61 1.6a2.4 2.4 0 0 1-1.7.71 2.4 2.4 0 0 1-1.71-.7l-1.57-1.57a1.03 1.03 0 0 0-.88-.29c-.49.07-.84.5-1.02.97a2.5 2.5 0 1 1-3.23-3.24c.46-.18.89-.52.96-1.02a1.03 1.03 0 0 0-.29-.88l-1.57-1.56A2.4 2.4 0 0 1 2 12c0-.62.24-1.24.71-1.7l1.52-1.53c.24-.24.58-.35.92-.3.51.07.87.48 1.11.94a2.5 2.5 0 1 0 3.31-3.3c-.46-.24-.87-.6-.95-1.12a1.02 1.02 0 0 1 .31-.91l1.52-1.53A2.4 2.4 0 0 1 12 2c.62 0 1.23.24 1.7.71l1.57 1.56c.23.23.56.34.88.29.49-.07.84-.5 1.02-.97a2.5 2.5 0 1 1 3.24 3.24c-.46.18-.9.53-.97 1.02z" /></svg>);
+const IconBook = () => (<svg {...svg}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg>);
+const IconWrench = () => (<svg {...svg}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>);
+const IconBall = () => (<svg {...svg}><circle cx="12" cy="12" r="9" /><path d="M12 7.5l3.3 2.4-1.25 3.85h-4.1L8.7 9.9z" /><path d="M12 7.5V4M15.3 9.9l2.95-1.45M14.05 13.75l2.45 2.5M9.95 13.75l-2.45 2.5M8.7 9.9 5.75 8.45" /></svg>);
+const IconLandmark = () => (<svg {...svg}><path d="M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M3 10l9-6 9 6M3.5 10h17" /></svg>);
+
 /* ------------------------------------------------------------ Onboarding --- */
 
 function Onboarding({
@@ -319,28 +328,31 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
       </section>
 
       {articles.length > 0 && (
-        <ArticleList articles={articles} next={next} allDone={allDone} onOpen={onOpen} />
+        <>
+          <ArticleList articles={articles} next={next} allDone={allDone} onOpen={onOpen} />
+          <p class="lr-credit-line">Aus den meistgelesenen Wikipedia-Artikeln des Tages · CC BY-SA</p>
+        </>
       )}
 
       <p class="lr-section" style={{ marginTop: '24px' }}>Üben & entdecken</p>
       <div class="lr-tiles">
         <button class="lr-tile" onClick={onSurprise}>
-          <span class="lr-tile-emoji">🎲</span>
+          <span class="lr-tile-ico"><IconDice /></span>
           <span class="lr-tile-t">Zufallsartikel</span>
           <span class="lr-tile-s">Technik · Sport · …</span>
         </button>
         <button class="lr-tile" onClick={onCloze}>
-          <span class="lr-tile-emoji">🧩</span>
+          <span class="lr-tile-ico"><IconPuzzle /></span>
           <span class="lr-tile-t">Lückentext</span>
           <span class="lr-tile-s">Wörter einsetzen</span>
         </button>
         <button class="lr-tile" onClick={onTrainer}>
-          <span class="lr-tile-emoji">🎯</span>
+          <span class="lr-tile-ico"><IconTarget /></span>
           <span class="lr-tile-t">Vokabeltest</span>
           <span class="lr-tile-s">{getDeck().length} Wörter</span>
         </button>
         <button class="lr-tile" onClick={onDeck}>
-          <span class="lr-tile-emoji">📕</span>
+          <span class="lr-tile-ico"><IconBook /></span>
           <span class="lr-tile-t">Wörterbuch</span>
           <span class="lr-tile-s">Gemerkte ansehen</span>
         </button>
@@ -412,10 +424,10 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
 /* -------------------------------------------------------------- Surprise --- */
 
-const AREAS: { id: string; label: string; emoji: string; sub: string }[] = [
-  { id: 'technik', label: 'Technik', emoji: '🔧', sub: 'Erfindungen, Computer …' },
-  { id: 'sport', label: 'Sport', emoji: '⚽', sub: 'Fußball, Olympia …' },
-  { id: 'geschichte', label: 'Geschichte', emoji: '🏛️', sub: 'Antike, Mittelalter …' },
+const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string }[] = [
+  { id: 'technik', label: 'Technik', icon: <IconWrench />, sub: 'Erfindungen, Computer …' },
+  { id: 'sport', label: 'Sport', icon: <IconBall />, sub: 'Fußball, Olympia …' },
+  { id: 'geschichte', label: 'Geschichte', icon: <IconLandmark />, sub: 'Antike, Mittelalter …' },
 ];
 
 function SurpriseView({ settings, onOpen, onBack }: {
@@ -460,7 +472,7 @@ function SurpriseView({ settings, onOpen, onBack }: {
           <div class="lr-tiles" style={{ marginTop: '10px' }}>
             {AREAS.map((a) => (
               <button class="lr-tile" onClick={() => pick(a.id)}>
-                <span class="lr-tile-emoji">{a.emoji}</span>
+                <span class="lr-tile-ico">{a.icon}</span>
                 <span class="lr-tile-t">{a.label}</span>
                 <span class="lr-tile-s">{a.sub}</span>
               </button>

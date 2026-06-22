@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.67] — 2026-06-22
+
+### Changed (Learny PWA)
+- Quick-action tiles and the Zufallsartikel area picker now use consistent SVG
+  line icons (in soft accent chips) instead of emojis.
+- Added a small source-credit line under the daily list: "Aus den
+  meistgelesenen Wikipedia-Artikeln des Tages · CC BY-SA".
+
 ## [0.6.66] — 2026-06-22
 
 ### Added (Learny PWA)
