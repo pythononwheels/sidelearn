@@ -66,6 +66,60 @@ def prepare(paragraphs: list[str], lang_code: str, level: str) -> tuple[dict[str
     return data, _meta(model, tin, tout, t0, "ok", None, raw[:4000])
 
 
+WORD_SYSTEM = (
+    "You are a precise bilingual dictionary for a {native} speaker reading {lang}. "
+    "Given a {lang} WORD and the SENTENCE it appears in, reply with MINIFIED JSON "
+    'matching {{"translation":"","alternatives":["",""],"example":"","pos":""}}:\n'
+    "- 'translation': the {native} meaning of the word AS USED in this sentence "
+    "(1-4 words, the contextually correct sense — not just the most common one).\n"
+    "- 'alternatives': up to 3 OTHER common {native} meanings the word can have in "
+    "different contexts (omit if none).\n"
+    "- 'example': one short, simple {lang} example sentence using the word.\n"
+    "- 'pos': part of speech in {native} (e.g. Verb, Substantiv).\n"
+    "JSON only, no markdown."
+)
+
+
+def translate_word(
+    word: str, sentence: str, lang_code: str, native_code: str
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Context-aware word translation. Returns (data, meta); data None on error."""
+    lang = config.LANG_NAMES.get(lang_code, lang_code)
+    native = config.LANG_NAMES.get(native_code, native_code)
+    system = WORD_SYSTEM.format(lang=lang, native=native)
+    user = json.dumps({"word": word, "sentence": sentence}, ensure_ascii=False)
+    model = (
+        config.OPENAI_MODEL
+        if config.PROVIDER == "openai"
+        else config.GEMINI_MODEL
+        if config.PROVIDER == "gemini"
+        else "mock"
+    )
+    t0 = time.monotonic()
+    try:
+        if config.PROVIDER == "openai":
+            raw, tin, tout = _openai(system, user, temperature=0.2)
+        elif config.PROVIDER == "gemini":
+            raw, tin, tout = _gemini(system, user, temperature=0.2)
+        else:
+            raw, tin, tout = json.dumps({"translation": word, "alternatives": [], "example": "", "pos": ""}), 0, 0
+    except Exception as e:  # noqa: BLE001
+        return None, _meta(model, 0, 0, t0, "error", str(e), "")
+    d = _parse(raw)
+    translation = d.get("translation") if isinstance(d.get("translation"), str) else ""
+    if not translation.strip():
+        # Empty/garbled — treat as failure so we don't cache junk; client falls back.
+        return None, _meta(model, tin, tout, t0, "error", "empty translation", raw[:1000])
+    data = {
+        "word": word,
+        "translation": translation,
+        "alternatives": [a for a in (d.get("alternatives") or []) if isinstance(a, str) and a.strip()][:3],
+        "example": d.get("example", "") if isinstance(d.get("example"), str) else "",
+        "pos": d.get("pos", "") if isinstance(d.get("pos"), str) else "",
+    }
+    return data, _meta(model, tin, tout, t0, "ok", None, raw[:1000])
+
+
 def _meta(model, tin, tout, t0, status, error, excerpt) -> dict[str, Any]:
     return {
         "model": model,
@@ -79,7 +133,7 @@ def _meta(model, tin, tout, t0, status, error, excerpt) -> dict[str, Any]:
     }
 
 
-def _openai(system: str, user: str) -> tuple[str, int, int]:
+def _openai(system: str, user: str, temperature: float = 0.4) -> tuple[str, int, int]:
     from openai import OpenAI
 
     client = OpenAI(api_key=config.OPENAI_API_KEY)
@@ -87,13 +141,13 @@ def _openai(system: str, user: str) -> tuple[str, int, int]:
         model=config.OPENAI_MODEL,
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         response_format={"type": "json_object"},
-        temperature=0.4,
+        temperature=temperature,
     )
     u = resp.usage
     return resp.choices[0].message.content or "{}", getattr(u, "prompt_tokens", 0), getattr(u, "completion_tokens", 0)
 
 
-def _gemini(system: str, user: str) -> tuple[str, int, int]:
+def _gemini(system: str, user: str, temperature: float = 0.4) -> tuple[str, int, int]:
     from google import genai
     from google.genai import types
 
@@ -104,7 +158,7 @@ def _gemini(system: str, user: str) -> tuple[str, int, int]:
         config=types.GenerateContentConfig(
             system_instruction=system,
             response_mime_type="application/json",
-            temperature=0.4,
+            temperature=temperature,
         ),
     )
     u = resp.usage_metadata
@@ -116,14 +170,38 @@ def _gemini(system: str, user: str) -> tuple[str, int, int]:
 
 
 def _parse(raw: str) -> dict[str, Any]:
+    """Extract the FIRST balanced {...} object. Small models sometimes append
+    repeated/garbled fragments after the valid JSON, which a greedy regex would
+    swallow — so we brace-match (string-aware) instead."""
     raw = re.sub(r"```(?:json)?", "", raw)
-    m = re.search(r"\{[\s\S]*\}", raw)
-    if not m:
+    start = raw.find("{")
+    if start < 0:
         return {}
-    try:
-        return json.loads(m.group(0))
-    except Exception:
-        return {}
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(raw)):
+        c = raw[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(raw[start : i + 1])
+                except Exception:
+                    return {}
+    return {}
 
 
 def _normalize(data: dict[str, Any], paragraphs: list[str]) -> dict[str, Any]:

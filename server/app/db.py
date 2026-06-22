@@ -54,6 +54,15 @@ CREATE TABLE IF NOT EXISTS telemetry (
   excerpt TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_telemetry_ts ON telemetry (ts);
+CREATE TABLE IF NOT EXISTS word_cache (
+  lang TEXT NOT NULL,
+  native TEXT NOT NULL,
+  word TEXT NOT NULL,
+  shash TEXT NOT NULL,
+  data TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (lang, native, word, shash)
+);
 """
 
 
@@ -216,6 +225,36 @@ def telemetry_by_lang() -> list[dict[str, Any]]:
                FROM telemetry GROUP BY lang ORDER BY lang"""
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def telemetry_count_today(fn: str) -> int:
+    from datetime import datetime, timezone
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with conn() as c:
+        row = c.execute(
+            "SELECT count(*) n FROM telemetry WHERE fn=? AND ts LIKE ?", (fn, today + "%")
+        ).fetchone()
+    return row["n"]
+
+
+def get_word_cache(lang: str, native: str, word: str, shash: str) -> Optional[dict[str, Any]]:
+    with conn() as c:
+        row = c.execute(
+            "SELECT data FROM word_cache WHERE lang=? AND native=? AND word=? AND shash=?",
+            (lang, native, word.lower(), shash),
+        ).fetchone()
+    return json.loads(row["data"]) if row else None
+
+
+def put_word_cache(lang: str, native: str, word: str, shash: str, data: dict[str, Any], now: str) -> None:
+    with conn() as c:
+        c.execute(
+            """INSERT INTO word_cache (lang, native, word, shash, data, created_at)
+               VALUES (?,?,?,?,?,?)
+               ON CONFLICT(lang, native, word, shash) DO UPDATE SET data=excluded.data""",
+            (lang, native, word.lower(), shash, json.dumps(data, ensure_ascii=False), now),
+        )
 
 
 def telemetry_recent(limit: int = 25) -> list[dict[str, Any]]:

@@ -3,11 +3,14 @@
 import asyncio
 from datetime import date
 
+import hashlib
+from datetime import datetime, timezone
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import admin, config, db, pipeline
+from . import admin, config, db, llm, pipeline
 
 app = FastAPI(title="Sidelearn Content Server", version="0.1")
 
@@ -140,6 +143,47 @@ def archive(lang: str = Query(...), limit: int = Query(30, le=120)) -> dict:
     _check_lang(lang)
     dates = db.daily_dates(lang, limit)
     return {"lang": lang, "dates": dates}
+
+
+@app.get("/translate")
+def translate(
+    lang: str = Query(...),
+    native: str = Query(...),
+    word: str = Query(...),
+    sentence: str = Query(""),
+) -> dict:
+    """Context-aware word translation (+ alternatives), cached. Falls back to a
+    capped daily budget for fresh LLM calls."""
+    _check_lang(lang)
+    if native not in config.LANGS:
+        raise HTTPException(400, f"unknown native {native!r}")
+    word = word.strip()
+    if not word:
+        raise HTTPException(400, "empty word")
+    shash = hashlib.sha1(sentence.strip().lower().encode("utf-8")).hexdigest()[:12]
+
+    cached = db.get_word_cache(lang, native, word, shash)
+    if cached:
+        return {**cached, "cached": True}
+
+    if db.telemetry_count_today("translate") >= config.TRANSLATE_DAILY_CAP:
+        raise HTTPException(429, "daily translation budget reached — try later")
+
+    now = datetime.now(timezone.utc).isoformat()
+    data, meta = llm.translate_word(word, sentence, lang, native)
+    db.add_telemetry(
+        {
+            "ts": now, "provider": config.PROVIDER, "model": meta["model"], "fn": "translate",
+            "level": None, "lang": lang, "article_id": None, "article_url": None,
+            "input_tokens": meta["input_tokens"], "output_tokens": meta["output_tokens"],
+            "cost_usd": meta["cost_usd"], "ms": meta["ms"], "status": meta["status"],
+            "error": meta["error"], "excerpt": meta["excerpt"],
+        }
+    )
+    if not data:
+        raise HTTPException(502, "translation failed")
+    db.put_word_cache(lang, native, word, shash, data, now)
+    return {**data, "cached": False}
 
 
 @app.get("/random")

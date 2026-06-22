@@ -44,6 +44,11 @@ def cost_usd(model: str, in_tokens: int, out_tokens: int) -> float:
     pin, pout = PRICES.get(model, DEFAULT_PRICE)
     return in_tokens / 1_000_000 * pin + out_tokens / 1_000_000 * pout
 
+
+# Max uncached on-demand word translations per day (cost guard). Cached lookups
+# don't count. Each call is tiny (~150 tokens), so this stays well under a euro.
+TRANSLATE_DAILY_CAP = int(os.getenv("SL_TRANSLATE_DAILY_CAP", "3000"))
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",
