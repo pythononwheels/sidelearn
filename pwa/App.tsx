@@ -141,6 +141,7 @@ export function App() {
         onSurprise={() => setOverlay({ kind: 'surprise' })}
         onCloze={() => setOverlay({ kind: 'cloze' })}
         onRoute={() => setOverlay({ kind: 'route' })}
+        onTest={() => setOverlay({ kind: 'test' })}
       />
     );
   } else if (tab === 'challenges') {
@@ -228,10 +229,12 @@ const Gurki = ({ pose = 'yay', size = 92 }: { pose?: Pose; size?: number }) => (
 const HYPE = [
   "Bereit? Heute wird's gut!",
   'Schön, dass du da bist!',
-  'Ein Artikel reicht für heute.',
-  'Komm, wir lesen was Cooles!',
+  'Komm, wir lesen was Neues.',
   'Gurki glaubt an dich.',
   'Kleine Schritte, große Wirkung.',
+  'Ein Häppchen Wissen gefällig?',
+  'Heute schon schlauer als gestern.',
+  'Lesen macht stark — wie eine Gurke.',
 ];
 
 /* ------------------------------------------------------------ Onboarding --- */
@@ -351,7 +354,7 @@ function ArticleList({ articles, next, allDone, onOpen }: {
 
 /* ------------------------------------------------------------- Home tab --- */
 
-function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onCloze, onRoute }: {
+function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onCloze, onRoute, onTest }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
   onOpen: (a: ArticleRef) => void;
@@ -360,6 +363,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
   onSurprise: () => void;
   onCloze: () => void;
   onRoute: () => void;
+  onTest: () => void;
 }) {
   const { daily, loading } = useDaily(settings.learn, settings.level);
   const [tick, setTick] = useState(0); // refresh progress after returning from a lesson
@@ -377,9 +381,24 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
 
   const stats = getStats();
   const prog = getStageProgress(settings.level);
+  const level = prog.level;
   const pct = Math.round(prog.ratio * 100);
   const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
   const pose: Pose = allDone ? 'party' : 'yay';
+  const bubble = allDone
+    ? 'Tagesziel erreicht — Gurki ist stolz.'
+    : articles.length > 0 && doneCount > 0 && doneCount >= goal - 1
+    ? 'Nur noch einer bis zum Ziel!'
+    : hype;
+
+  const launchNode = (t: NodeType) => {
+    if (t === 'lesson') { if (next) onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }); }
+    else if (t === 'vocab') onTrainer();
+    else if (t === 'cloze') onCloze();
+    else onTest();
+  };
+  const cur = Math.min(prog.node, NODES_PER_LEVEL - 1);
+  const miniIdx = [cur - 1, cur, cur + 1].filter((i) => i >= 0 && i < NODES_PER_LEVEL);
 
   return (
     <main class="sl-main with-nav h2" key={tick}>
@@ -405,7 +424,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
         </div>
         <b class="h2-title">{stats.streak > 0 ? `Tag ${stats.streak} — stark!` : 'Willkommen zurück!'}</b>
         <span class="h2-sub">{pct}% bis zum nächsten Ziel</span>
-        <div class="h2-bubble">{hype}</div>
+        <div class="h2-bubble">{bubble}</div>
       </section>
 
       {loading ? (
@@ -434,14 +453,27 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
         <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico"><IconCards /></span><span class="lr-tile-t">Vokabeln</span></button>
       </div>
 
-      <button class="lr-route-cta" onClick={onRoute}>
-        <span class="lr-route-ico"><IconRoute /></span>
-        <span class="lr-route-body">
-          <span class="lr-route-t">Deine Lernroute · {prog.label}</span>
-          <span class="lr-route-s">Als Nächstes: {NODE_META[prog.nodeType].label}</span>
-        </span>
-        <span class="lr-route-arrow"><IconArrowRight /></span>
+      <button class="mini-head" onClick={onRoute}>
+        <span class="mini-head-t">Deine Lernroute</span>
+        <span class="mini-head-s">{prog.label} · alle ansehen →</span>
       </button>
+      <div class="route mini">
+        {miniIdx.map((i) => {
+          const t = nodeType(level, i);
+          const state: 'done' | 'current' | 'locked' = i < prog.node ? 'done' : i === cur && prog.node < NODES_PER_LEVEL ? 'current' : 'locked';
+          const M = NODE_META[t];
+          return (
+            <div class={`rn ${state}`} key={i}>
+              <div class="rn-rail"><span class="rn-dot">{state === 'done' ? <IconCheck /> : state === 'locked' ? <IconLock /> : <M.Icon />}</span></div>
+              <button class="rn-card" disabled={state !== 'current'} onClick={() => state === 'current' && launchNode(t)}>
+                <span class="rn-title">{M.label}</span>
+                <span class="rn-sub">{state === 'current' ? 'Jetzt dran · tippen' : state === 'done' ? 'erledigt' : 'gesperrt'}</span>
+              </button>
+              {state === 'current' && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
+            </div>
+          );
+        })}
+      </div>
     </main>
   );
 }

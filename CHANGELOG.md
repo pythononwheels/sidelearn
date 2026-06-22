@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.76] — 2026-06-22
+
+### Changed (Learny PWA)
+- **Lernroute-Vorschau auf Home**: kurzer vertikaler Abschnitt (vorheriger ·
+  aktueller mit Gurki · nächster Knoten) statt der CTA-Zeile; aktueller Knoten
+  ist antippbar und startet die passende Aktivität, Kopf führt zur vollen Route.
+- **Sprüche**: kontextabhängige Bubble (Tagesziel / fast geschafft / Begrüßung),
+  erweiterte Liste; „Komm, wir lesen was Neues." statt „… was Cooles.".
+
 ## [0.6.75] — 2026-06-22
 
 ### Added (Learny PWA)

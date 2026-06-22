@@ -520,6 +520,16 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .lr-route-arrow { color: var(--ll-text-soft); display: inline-flex; }
 .lr-route-arrow svg { width: 18px; height: 18px; }
 
+/* Home mini-route (current segment) */
+.mini-head {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; margin: 18px 0 2px;
+  background: none; border: none; padding: 0 2px; font: inherit; cursor: pointer; text-align: left;
+}
+.mini-head-t { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
+.mini-head-s { font-size: 12px; color: var(--ll-text-soft); margin-left: auto; font-weight: 700; }
+.route.mini { margin-top: 4px; }
+.route.mini .rn-card { padding-bottom: 12px; }
+
 /* Lernroute timeline */
 .route { margin-top: 6px; }
 .rn { position: relative; display: flex; align-items: stretch; gap: 14px; }
