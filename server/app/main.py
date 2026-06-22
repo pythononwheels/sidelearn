@@ -6,6 +6,7 @@ from datetime import date
 import hashlib
 from datetime import datetime, timezone
 
+import httpx
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -184,6 +185,47 @@ def translate(
         raise HTTPException(502, "translation failed")
     db.put_word_cache(lang, native, word, shash, data, now)
     return {**data, "cached": False}
+
+
+@app.get("/areas")
+def areas() -> dict:
+    """Topic areas available for /surprise (with the languages each supports)."""
+    return {a: sorted(by_lang.keys()) for a, by_lang in wiki.AREAS.items()}
+
+
+@app.get("/surprise")
+async def surprise(
+    lang: str = Query(...),
+    level: str = Query("A2"),
+    area: str = Query("technik"),
+) -> dict:
+    """A random topical article, prepared on demand for `level` and returned as a
+    lesson. Caches into the normal article/prepared tables, so repeats are free
+    and the pool grows into a reusable library. Capped per day (cost guard)."""
+    _check_lang(lang)
+    _check_level(level)
+    if area not in wiki.AREAS:
+        raise HTTPException(400, f"unknown area {area!r}; allowed: {sorted(wiki.AREAS)}")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        art = await wiki.fetch_random_in_area(client, lang, area)
+        if not art:
+            raise HTTPException(404, "no article found for this area — try again")
+        fresh = not db.has_article(art["id"])
+        if fresh:
+            paras = await wiki.fetch_paragraphs(client, lang, art["title"], config.MAX_PARAS)
+            if len(paras) < 3:
+                raise HTTPException(404, "article too short — try again")
+            db.upsert_article({**art, "paragraphs": paras}, datetime.now(timezone.utc).isoformat())
+
+    if not db.has_prepared(art["id"], level):
+        if db.telemetry_count_today("surprise") >= config.SURPRISE_DAILY_CAP:
+            raise HTTPException(429, "daily surprise budget reached — try a built lesson")
+        await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise")
+        if not db.has_prepared(art["id"], level):
+            raise HTTPException(502, "could not prepare this article — try again")
+
+    return lesson(art["id"], level)
 
 
 @app.get("/random")

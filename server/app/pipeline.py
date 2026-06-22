@@ -44,9 +44,13 @@ async def discover(lang: str, day: date) -> int:
     return added
 
 
-def process_article(article_id: str, levels: list[str] | None = None, force: bool = False) -> dict:
+def process_article(
+    article_id: str, levels: list[str] | None = None, force: bool = False, fn: str = "prepare"
+) -> dict:
     """Prepare an article for each level via the LLM. Per-level try/except so one
-    failure doesn't abort the others. Returns {made, skipped, errors}."""
+    failure doesn't abort the others. `fn` tags telemetry (e.g. "surprise" for
+    on-demand prepares, so they can be counted/capped separately). Returns
+    {made, skipped, errors}."""
     art = db.get_article(article_id)
     if not art:
         return {"ok": False, "error": "article not found"}
@@ -64,7 +68,7 @@ def process_article(article_id: str, levels: list[str] | None = None, force: boo
                     "ts": _now(),
                     "provider": config.PROVIDER,
                     "model": meta["model"],
-                    "fn": "prepare",
+                    "fn": fn,
                     "level": level,
                     "lang": art["lang"],
                     "article_id": article_id,

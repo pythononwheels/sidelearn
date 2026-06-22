@@ -16,10 +16,13 @@ import {
   fetchServerArchive,
   fetchServerDaily,
   fetchServerLesson,
+  fetchSurprise,
   fetchWordTranslation,
   type ServerDaily,
   type ServerLesson,
 } from '@/core/serverapi';
+import { buildClozeQuestions } from '@/core/cloze';
+import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type PwaSettings } from './store';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
@@ -31,7 +34,13 @@ type ArticleRef = { id: string; title: string; url: string; thumb?: string };
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
 
-type Overlay = { kind: 'lesson'; article: ArticleRef } | { kind: 'deck' } | { kind: 'trainer' } | null;
+type Overlay =
+  | { kind: 'lesson'; article: ArticleRef }
+  | { kind: 'deck' }
+  | { kind: 'trainer' }
+  | { kind: 'surprise' }
+  | { kind: 'cloze' }
+  | null;
 
 export function App() {
   const [settings, setSettings] = useState<PwaSettings>(getSettings());
@@ -75,6 +84,10 @@ export function App() {
     content = <DeckView onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'trainer') {
     content = <TrainerView settings={settings} onBack={() => setOverlay(null)} />;
+  } else if (overlay?.kind === 'surprise') {
+    content = <SurpriseView settings={settings} onOpen={openLesson} onBack={() => setOverlay(null)} />;
+  } else if (overlay?.kind === 'cloze') {
+    content = <ClozeView settings={settings} onBack={() => setOverlay(null)} />;
   } else if (tab === 'home') {
     content = (
       <HomeTab
@@ -83,6 +96,8 @@ export function App() {
         onOpen={openLesson}
         onTrainer={() => setOverlay({ kind: 'trainer' })}
         onDeck={() => setOverlay({ kind: 'deck' })}
+        onSurprise={() => setOverlay({ kind: 'surprise' })}
+        onCloze={() => setOverlay({ kind: 'cloze' })}
       />
     );
   } else if (tab === 'challenges') {
@@ -246,12 +261,14 @@ function ArticleList({ articles, next, allDone, onOpen }: {
 
 /* ------------------------------------------------------------- Home tab --- */
 
-function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck }: {
+function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onCloze }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
   onOpen: (a: ArticleRef) => void;
   onTrainer: () => void;
   onDeck: () => void;
+  onSurprise: () => void;
+  onCloze: () => void;
 }) {
   const { daily, loading } = useDaily(settings.learn, settings.level);
   const [tick, setTick] = useState(0); // refresh progress after returning from a lesson
@@ -307,6 +324,16 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck }: {
 
       <p class="lr-section" style={{ marginTop: '24px' }}>Üben & entdecken</p>
       <div class="lr-tiles">
+        <button class="lr-tile" onClick={onSurprise}>
+          <span class="lr-tile-emoji">🎲</span>
+          <span class="lr-tile-t">Zufallsartikel</span>
+          <span class="lr-tile-s">Technik · Sport · …</span>
+        </button>
+        <button class="lr-tile" onClick={onCloze}>
+          <span class="lr-tile-emoji">🧩</span>
+          <span class="lr-tile-t">Lückentext</span>
+          <span class="lr-tile-s">Wörter einsetzen</span>
+        </button>
         <button class="lr-tile" onClick={onTrainer}>
           <span class="lr-tile-emoji">🎯</span>
           <span class="lr-tile-t">Vokabeltest</span>
@@ -379,6 +406,159 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
           )}
         </>
       )}
+    </main>
+  );
+}
+
+/* -------------------------------------------------------------- Surprise --- */
+
+const AREAS: { id: string; label: string; emoji: string; sub: string }[] = [
+  { id: 'technik', label: 'Technik', emoji: '🔧', sub: 'Erfindungen, Computer …' },
+  { id: 'sport', label: 'Sport', emoji: '⚽', sub: 'Fußball, Olympia …' },
+  { id: 'geschichte', label: 'Geschichte', emoji: '🏛️', sub: 'Antike, Mittelalter …' },
+];
+
+function SurpriseView({ settings, onOpen, onBack }: {
+  settings: PwaSettings;
+  onOpen: (a: ArticleRef) => void;
+  onBack: () => void;
+}) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  async function pick(area: string) {
+    setError(false);
+    setLoading(area);
+    const l = await fetchSurprise(SERVER, settings.learn, settings.level, area);
+    if (l) {
+      onOpen({ id: l.id, title: l.title, url: l.url, thumb: l.thumbnail });
+    } else {
+      setLoading(null);
+      setError(true);
+    }
+  }
+
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Zufallsartikel</span>
+      </header>
+
+      {loading ? (
+        <section class="sl-done">
+          <Dots />
+          <p class="sl-muted" style={{ marginTop: '12px' }}>
+            Wir suchen einen {AREAS.find((a) => a.id === loading)?.label}-Artikel und
+            vereinfachen ihn auf {settings.level} … einen Moment.
+          </p>
+        </section>
+      ) : (
+        <>
+          <p class="lr-section" style={{ marginTop: '4px' }}>Wähle einen Bereich — wir suchen dir einen frischen Artikel.</p>
+          {error && <p class="sl-muted">Das hat nicht geklappt. Bitte nochmal versuchen.</p>}
+          <div class="lr-tiles" style={{ marginTop: '10px' }}>
+            {AREAS.map((a) => (
+              <button class="lr-tile" onClick={() => pick(a.id)}>
+                <span class="lr-tile-emoji">{a.emoji}</span>
+                <span class="lr-tile-t">{a.label}</span>
+                <span class="lr-tile-s">{a.sub}</span>
+              </button>
+            ))}
+          </div>
+          <p class="sl-muted" style={{ marginTop: '18px' }}>
+            Frisch aus Wikipedia, auf dein Niveau gebracht. Beim ersten Mal dauert
+            es ein paar Sekunden.
+          </p>
+        </>
+      )}
+    </main>
+  );
+}
+
+/* ---------------------------------------------------------------- Cloze --- */
+
+function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
+  const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
+  const [title, setTitle] = useState('');
+  const [pos, setPos] = useState(0);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
+      const art = daily?.articles[0];
+      if (!art) { if (alive) setQuestions([]); return; }
+      const lesson = await fetchServerLesson(SERVER, art.id, settings.level);
+      if (!alive) return;
+      if (!lesson) { setQuestions([]); return; }
+      const text = lesson.paragraphs.map((p) => p.simplified).join(' ');
+      const vocab = lesson.vocab.map((v) => v.word);
+      const deckWords = getDeck().filter((d) => d.lang === settings.learn).map((d) => d.word);
+      const pool = [...new Set([...vocab, ...deckWords])];
+      const qs = buildClozeQuestions(text, vocab, pool, Math.random, 8);
+      setTitle(lesson.title);
+      setQuestions(qs);
+    })();
+    return () => { alive = false; };
+  }, [settings.learn, settings.level]);
+
+  function choose(opt: string) {
+    if (picked !== null) return;
+    setPicked(opt);
+    if (questions && opt === questions[pos]!.answer) { setScore((s) => s + 1); award(XP.merken); }
+  }
+  function next() {
+    setPicked(null);
+    setPos((p) => p + 1);
+  }
+
+  const q = questions?.[pos];
+  const done = questions !== null && pos >= questions.length;
+
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Lückentext</span>
+      </header>
+
+      {questions === null ? (
+        <Dots />
+      ) : questions.length === 0 ? (
+        <p class="sl-muted">Gerade kein Lückentext verfügbar — schau, dass es eine Tageslektion gibt, und versuch es nochmal.</p>
+      ) : done ? (
+        <section class="sl-done">
+          <h2>Geschafft 🎉</h2>
+          <p>{score} von {questions.length} richtig.</p>
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </section>
+      ) : q ? (
+        <>
+          <p class="sl-progress">Lücke {pos + 1} / {questions.length} · {title}</p>
+          <div class="sl-quiz">
+            <p class="sl-quiz-q">{q.prompt}</p>
+            <div class="sl-quiz-opts">
+              {q.options.map((opt) => {
+                let cls = '';
+                if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
+                return (
+                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={() => choose(opt)}>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+            {picked !== null && (
+              <button class="sl-read" onClick={next}>
+                {pos + 1 >= questions.length ? 'Fertig ✓' : 'Weiter →'}
+              </button>
+            )}
+          </div>
+        </>
+      ) : null}
     </main>
   );
 }

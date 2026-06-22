@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.66] — 2026-06-22
+
+### Added (Learny PWA)
+- **Zufallsartikel nach Bereich** — Home tile + area picker (Technik / Sport /
+  Geschichte). Picks a random topical Wikipedia article via relevance search,
+  prepares it on demand for your level on the server, and opens it as a lesson.
+  Results are cached server-side, so the pool grows into a reusable library.
+- **Lückentext (Cloze)** — Home tile. Builds fill-in-the-blank questions from the
+  day's prepared lesson text (real sentences, multiple-choice from the lesson's
+  vocab + your saved words). Awards XP. No LLM (instant, on-device build).
+
+### Added (server)
+- `GET /surprise?lang&level&area` — random topical article, prepared on demand,
+  returned as a lesson. Capped per day (`SL_SURPRISE_DAILY_CAP`, default 200) as
+  a cost guard; cached repeats are free.
+- `GET /areas` — lists the topic areas and the languages each supports.
+
 ## [0.6.65] — 2026-06-19
 
 ### Changed

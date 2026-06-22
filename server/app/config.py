@@ -49,6 +49,11 @@ def cost_usd(model: str, in_tokens: int, out_tokens: int) -> float:
 # don't count. Each call is tiny (~150 tokens), so this stays well under a euro.
 TRANSLATE_DAILY_CAP = int(os.getenv("SL_TRANSLATE_DAILY_CAP", "3000"))
 
+# Max on-demand "surprise" article prepares per day (cost guard). Each prepares a
+# single level (~$0.001), so the default stays well under a euro. Cached repeats
+# don't count — the surprise pool grows into a reusable library over time.
+SURPRISE_DAILY_CAP = int(os.getenv("SL_SURPRISE_DAILY_CAP", "200"))
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",

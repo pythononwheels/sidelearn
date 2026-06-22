@@ -111,6 +111,26 @@ export async function fetchWordTranslation(
   }
 }
 
+/** A random topical article, prepared on demand for `level`. Null on failure
+ * (no article found / daily budget reached / prepare error). Slow (LLM). */
+export async function fetchSurprise(
+  serverUrl: string,
+  lang: Language,
+  level: CefrLevel,
+  area: string,
+): Promise<ServerLesson | null> {
+  try {
+    const q = new URLSearchParams({ lang, level, area });
+    const res = await fetch(`${base(serverUrl)}/surprise?${q}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ServerLesson;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchServerLesson(
   serverUrl: string,
   id: string,
