@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.70] — 2026-06-22
+
+### Added (Learny PWA) — Phase B
+- Each paragraph now asks **one randomly chosen question type** — comprehension
+  quiz (from prep), **vocab-meaning MC**, or **cloze MC** — with no two same types
+  in a row, and a type label (Verständnis / Vokabel / Lückentext). All built
+  client-side from the dictionary + frequency data; no extra LLM calls.
+
 ## [0.6.69] — 2026-06-22
 
 ### Changed (Learny PWA) — Phase A

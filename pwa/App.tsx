@@ -991,6 +991,75 @@ function DeckView({ onBack }: { onBack: () => void }) {
   );
 }
 
+/* --------------------------------------------------- per-paragraph questions --- */
+
+type QKind = 'quiz' | 'vocab' | 'cloze';
+interface LessonQuestion { kind: QKind; q: string; options: string[]; correct: number }
+
+const Q_LABEL: Record<QKind, string> = { quiz: 'Verständnis', vocab: 'Vokabel', cloze: 'Lückentext' };
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function sampleN<T>(arr: T[], n: number): T[] {
+  return shuffleInPlace([...arr]).slice(0, n);
+}
+
+/**
+ * One question per paragraph, type chosen at random (comprehension quiz from the
+ * prep, a vocab-meaning MC, or a cloze MC) with no two same types in a row. All
+ * client-side — vocab translations come from the bundled dictionary.
+ */
+async function buildLessonQuestions(lesson: ServerLesson, settings: PwaSettings): Promise<(LessonQuestion | null)[]> {
+  const vocabWords = lesson.vocab.map((v) => v.word).filter(Boolean);
+  const pairs = await Promise.all(
+    vocabWords.map(async (w) => {
+      try {
+        const i = await resolveWord(w, settings.learn, settings.native, settings.level);
+        return [w, (i.senses[0]?.translations[0] ?? '').trim()] as const;
+      } catch {
+        return [w, ''] as const;
+      }
+    }),
+  );
+  const trans = new Map(pairs.filter(([, t]) => t));
+  const transValues = [...new Set(trans.values())];
+
+  const out: (LessonQuestion | null)[] = [];
+  let prev: QKind | '' = '';
+  for (const p of lesson.paragraphs) {
+    const text = p.simplified;
+    const quiz: LessonQuestion | null = p.question?.options?.length
+      ? { kind: 'quiz', q: p.question.q, options: p.question.options, correct: p.question.correct }
+      : null;
+
+    const cands: QKind[] = [];
+    if (quiz) cands.push('quiz');
+    const here = vocabWords.filter(
+      (w) => trans.has(w) && new RegExp(`(^|[^\\p{L}])${escapeRe(w)}([^\\p{L}]|$)`, 'iu').test(text),
+    );
+    if (here.length && transValues.length >= 4) cands.push('vocab');
+    const cz = buildClozeQuestions(text, vocabWords, vocabWords, Math.random, 1)[0];
+    if (cz && cz.options.length >= 2) cands.push('cloze');
+
+    if (!cands.length) { out.push(quiz); continue; }
+    let pickFrom = cands.filter((c) => c !== prev);
+    if (!pickFrom.length) pickFrom = cands;
+    const type = pickFrom[Math.floor(Math.random() * pickFrom.length)]!;
+    prev = type;
+
+    if (type === 'quiz') {
+      out.push(quiz);
+    } else if (type === 'vocab') {
+      const word = here[Math.floor(Math.random() * here.length)]!;
+      const correct = trans.get(word)!;
+      const options = shuffleInPlace([correct, ...sampleN(transValues.filter((t) => t !== correct), 3)]);
+      out.push({ kind: 'vocab', q: `Was bedeutet „${word}"?`, options, correct: options.indexOf(correct) });
+    } else {
+      out.push({ kind: 'cloze', q: cz!.prompt, options: cz!.options, correct: cz!.options.indexOf(cz!.answer) });
+    }
+  }
+  return out;
+}
+
 /* -------------------------------------------------------------- Lesson --- */
 
 function Lesson({
@@ -1017,6 +1086,7 @@ function Lesson({
   const [score, setScore] = useState({ answered: saved?.answered ?? 0, correct: saved?.correct ?? 0 });
   const [quizIdx, setQuizIdx] = useState<number | null>(null);
   const [answer, setAnswer] = useState<number | null>(null);
+  const [questions, setQuestions] = useState<(LessonQuestion | null)[] | null>(null);
   const [pop, setPop] = useState<{ word: string; sentence: string; x: number; y: number } | null>(null);
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
   const [names, setNames] = useState<Set<string>>(new Set());
@@ -1048,6 +1118,14 @@ function Lesson({
     };
   }, [article.id, settings.level]);
 
+  // Build one question per paragraph (random type, no LLM). See buildLessonQuestions.
+  useEffect(() => {
+    if (!lesson) return;
+    let alive = true;
+    void buildLessonQuestions(lesson, settings).then((q) => { if (alive) setQuestions(q); });
+    return () => { alive = false; };
+  }, [lesson, settings.learn, settings.level]);
+
   useEffect(() => {
     if (!lesson) return;
     saveProgress(article.url, { progress: visible, completed, answered: score.answered, correct: score.correct });
@@ -1074,7 +1152,7 @@ function Lesson({
     }
   }
   function onRead() {
-    const q = lesson!.paragraphs[lastIdx]?.question;
+    const q = questions?.[lastIdx];
     if (q && answer === null) setQuizIdx(lastIdx);
     else advance();
   }
@@ -1116,24 +1194,27 @@ function Lesson({
         </div>
       ))}
 
-      {quizIdx !== null && lesson.paragraphs[quizIdx]?.question && (
-        <Quiz
-          q={lesson.paragraphs[quizIdx]!.question!}
-          answer={answer}
-          isLast={quizIdx === total - 1}
-          onAnswer={(idx) => {
-            if (answer !== null) return;
-            setAnswer(idx);
-            const ok = idx === lesson.paragraphs[quizIdx]!.question!.correct;
-            if (ok && creditable.current) { award(XP.correct); creditMastery(settings.level, MASTERY.quizCorrect); }
-            setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
-          }}
-          onNext={() => {
-            setQuizIdx(null);
-            setAnswer(null);
-            advance();
-          }}
-        />
+      {quizIdx !== null && questions?.[quizIdx] && (
+        <>
+          <p class="sl-qlabel">{Q_LABEL[questions[quizIdx]!.kind]}</p>
+          <Quiz
+            q={{ q: questions[quizIdx]!.q, options: questions[quizIdx]!.options, correct: questions[quizIdx]!.correct }}
+            answer={answer}
+            isLast={quizIdx === total - 1}
+            onAnswer={(idx) => {
+              if (answer !== null) return;
+              setAnswer(idx);
+              const ok = idx === questions[quizIdx]!.correct;
+              if (ok && creditable.current) { award(XP.correct); creditMastery(settings.level, MASTERY.quizCorrect); }
+              setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
+            }}
+            onNext={() => {
+              setQuizIdx(null);
+              setAnswer(null);
+              advance();
+            }}
+          />
+        </>
       )}
 
       {completed && (() => {
