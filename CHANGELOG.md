@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.81] — 2026-06-23
+
+### Changed (Learny PWA)
+- Jelly theme: **Mint-Air background** (cool mint→lavender gradient) and a calmer,
+  less "bubbly" feel — flatter buttons, softer/recoloured hero blobs, thinner ring.
+
 ## [0.6.80] — 2026-06-23
 
 ### Changed (Learny PWA) — Jelly polish to match the mock

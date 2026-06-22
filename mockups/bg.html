@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Learny — Jelly, 3 Background-Varianten (weniger bubbly)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#eceaf2; color:#2b2540; font-family:'Quicksand',system-ui,sans-serif; }
+  .head { text-align:center; padding:32px 20px 4px; }
+  .head h1 { font-family:'Baloo 2',cursive; margin:0 0 6px; font-size:27px; }
+  .head p { margin:0 auto; max-width:640px; color:#5b5670; font-size:15px; }
+  .gallery { display:flex; flex-wrap:wrap; gap:30px; justify-content:center; align-items:flex-start; padding:24px 20px 60px; }
+  .variant { width:340px; }
+  .variant > h2 { font-family:'Baloo 2',cursive; margin:0 0 1px; font-size:20px; }
+  .variant > .tag { margin:0 0 12px; font-size:12px; color:#6a6580; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .phone { width:340px; border-radius:42px; padding:12px; background:#1c1922; box-shadow:0 22px 46px rgba(40,30,60,.26); }
+  .screen { border-radius:32px; overflow:hidden; position:relative; }
+  .body { padding:16px 15px 18px; position:relative; z-index:1; }
+  .nav { display:flex; justify-content:space-around; padding:9px 0 11px; font-size:10.5px; font-weight:700; background:rgba(255,255,255,.7); }
+  .nav span{ display:flex; flex-direction:column; align-items:center; gap:3px; opacity:.55; } .nav span.on{ opacity:1; color:#ff5b9c; }
+  .nav i{ width:18px;height:18px;border-radius:6px;display:block;background:#ff8fb3; } .nav .on i{ background:#ff5b9c; }
+
+  /* toned-down jelly (less bubbly: flatter buttons, softer blobs) */
+  .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .pick{ display:flex; gap:6px; } .pick .pill{ background:#fff; box-shadow:0 2px 0 rgba(124,92,252,.14); border-radius:11px; padding:5px 9px; font-weight:700; font-size:12px; }
+  .stats{ display:flex; gap:7px; } .stat{ background:#fff; box-shadow:0 2px 0 rgba(124,92,252,.14); border-radius:99px; padding:4px 10px; font-weight:800; font-size:13px; }
+  .stat.s1{ color:#e8743b; } .stat.s2{ color:#ff5b9c; }
+  .hero{ text-align:center; position:relative; padding:6px 0 2px; }
+  .ring{ width:118px;height:118px;border-radius:50%;margin:2px auto 6px;display:grid;place-items:center;
+         background:conic-gradient(#7c5cfc 62%, #e7defb 0); }
+  .ring-in{ width:98px;height:98px;border-radius:50%;background:#fff;display:grid;place-items:end center;overflow:hidden; }
+  .ring-in img{ width:82px;margin-bottom:-2px; }
+  .h-title{ font-family:'Baloo 2',cursive; font-weight:800; font-size:20px; }
+  .h-sub{ color:#9a6ad6; font-weight:700; font-size:12.5px; margin-top:1px; }
+  .bubble{ display:inline-block; margin:12px auto 4px; padding:10px 16px; font-weight:700; font-size:14px; position:relative;
+           background:linear-gradient(#ff8fb3,#ff6b9d); color:#fff; border-radius:16px; box-shadow:0 3px 0 #e84f86; }
+  .bubble::after{ content:''; position:absolute; left:24px; bottom:-7px; border:6px solid transparent; border-top-color:#ff6b9d; }
+  .card{ display:flex; align-items:center; gap:11px; margin-top:12px; padding:13px; background:#fff; border-radius:18px; box-shadow:0 4px 0 rgba(124,92,252,.10); }
+  .card-ico{ width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;background:linear-gradient(#ffb0c7,#ff8fb3);color:#fff; }
+  .card-ico svg{ width:21px;height:21px; }
+  .card-body{ flex:1; display:flex; flex-direction:column; } .card-t{ font-family:'Baloo 2'; font-weight:800; font-size:15px; } .card-s{ font-size:12px; color:#8a82a0; }
+  .go{ font:inherit; font-family:'Baloo 2'; font-weight:800; font-size:14px; padding:8px 16px; border:none; border-radius:12px; color:#fff; background:linear-gradient(#ff8fb3,#ff6b9d); box-shadow:0 3px 0 #e84f86; }
+  .tiles{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-top:11px; }
+  .tile{ padding:12px 6px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:5px; background:#fff; border-radius:16px; box-shadow:0 4px 0 rgba(124,92,252,.10); }
+  .tile-ico{ width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff; }
+  .tile-ico svg{ width:18px;height:18px; }
+  .t1{ background:linear-gradient(#b6f06a,#8fd84a); } .t2{ background:linear-gradient(#7fdcff,#5ac8fa); } .t3{ background:linear-gradient(#caa9ff,#9b6bff); }
+  .tile-t{ font-family:'Baloo 2'; font-weight:800; font-size:12.5px; }
+  .rt-head{ display:flex; justify-content:space-between; align-items:baseline; margin:16px 2px 6px; }
+  .rt-head b{ font-family:'Baloo 2'; font-size:15px; } .rt-head span{ font-size:11.5px; color:#8a82a0; font-weight:700; }
+  .route{ position:relative; }
+  .rn{ display:flex; align-items:center; gap:12px; position:relative; padding:5px 0; }
+  .rn-rail{ width:44px; flex:none; display:flex; justify-content:center; position:relative; }
+  .rn-rail::before{ content:''; position:absolute; left:50%; top:-5px; bottom:-5px; width:3px; transform:translateX(-50%); background:#ece6f6; }
+  .rn:first-child .rn-rail::before{ top:50%; } .rn:last-child .rn-rail::before{ bottom:50%; }
+  .rn-dot{ width:42px;height:42px;border-radius:50%;display:grid;place-items:center;position:relative;z-index:1;border:3px solid #fff;color:#fff; }
+  .rn-dot svg{ width:19px;height:19px; }
+  .rn.start .rn-dot{ background:#f0e7ff; color:#9b6bff; } .rn.cur .rn-dot{ width:50px;height:50px;background:linear-gradient(#ff8fb3,#ff6b9d); }
+  .rn.lock .rn-dot{ background:#e9e3f3; color:#b3a7d6; }
+  .rn-card{ flex:1; } .rn-title{ font-family:'Baloo 2'; font-weight:800; font-size:14.5px; display:block; }
+  .rn-sub{ font-size:12px; } .rn.start .rn-sub,.rn.lock .rn-sub{ color:#a99fc0; } .rn.cur .rn-sub{ color:#ff5b9c; font-weight:700; }
+  .rn.cur .rn-card{ background:#ffeef4; border-radius:13px; padding:8px 12px; } .rn-gurki{ position:absolute; right:6px; top:-6px; width:54px; }
+
+  /* ===== background variants (only thing that really changes) ===== */
+  .screen.vA{ background:#fcfbff; }
+  .screen.vA .blob{ display:none; }
+  .screen.vB{ background:linear-gradient(180deg,#eef9f3 0%,#f5f1ff 60%,#efeafb 100%); }
+  .screen.vC{ background:#fbfaff; background-image:radial-gradient(#e3d8fa 1.6px, transparent 1.7px); background-size:18px 18px; }
+  .blob{ position:absolute; border-radius:50%; filter:blur(8px); opacity:.32; z-index:0; }
+  .b1{ width:120px;height:120px;background:#ffc7dd;top:-26px;left:-20px; } .b2{ width:96px;height:96px;background:#bfe0ff;top:60px;right:-22px; }
+  .screen.vC .blob{ opacity:.2; }
+
+  .guide{ margin-top:14px; background:#fff; border-radius:16px; padding:12px 14px; box-shadow:0 6px 18px rgba(40,30,60,.08); }
+  .guide p{ margin:0; font-size:13px; line-height:1.5; color:#4b4660; } .guide b{ font-weight:800; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>Learny — Jelly, 3 Backgrounds (weniger bubbly) 🥒</h1>
+    <p>Gleiches Jelly-Layout, nur ruhiger (flachere Buttons, sanftere Blobs) — und 3 Hintergründe zur Auswahl.</p>
+  </div>
+  <div class="gallery" id="gal"></div>
+
+<script>
+const sv='width=24 height=24 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+const News=`<svg ${sv}><path d="M4 5h13a1 1 0 0 1 1 1v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"/><path d="M18 8h1.5a1.5 1.5 0 0 1 1.5 1.5V18a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 17h4"/></svg>`;
+const Dice=`<svg ${sv}><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>`;
+const Gap=`<svg ${sv}><path d="M3 12h4"/><rect x="9" y="9" width="6" height="6" rx="1.4"/><path d="M17 12h4"/></svg>`;
+const Cards=`<svg ${sv}><rect x="3" y="8" width="13" height="11" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3"/></svg>`;
+const Flag=`<svg ${sv}><path d="M5 21V4"/><path d="M5 4h12l-2.5 4 2.5 4H5"/></svg>`;
+const Lock=`<svg ${sv}><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>`;
+
+const phone = (cls) => `<div class="phone"><div class="screen ${cls}">
+  <span class="blob b1"></span><span class="blob b2"></span>
+  <div class="body">
+    <div class="topbar"><div class="pick"><span class="pill">Français</span><span class="pill">A2</span></div>
+      <div class="stats"><span class="stat s1">🔥 5</span><span class="stat s2">⚡ 120</span></div></div>
+    <div class="hero">
+      <div class="ring"><div class="ring-in"><img src="gurki/yay.png" alt=""></div></div>
+      <div class="h-title">Tag 5 — stark!</div><div class="h-sub">62% bis zum nächsten Ziel</div>
+      <div class="bubble">Gurki glaubt an dich.</div>
+    </div>
+    <div class="card"><span class="card-ico">${News}</span>
+      <span class="card-body"><span class="card-t">Tageslektion</span><span class="card-s">2 Mini-Artikel · 1/2 geschafft</span></span>
+      <button class="go">Start</button></div>
+    <div class="tiles">
+      <div class="tile"><span class="tile-ico t1">${Dice}</span><span class="tile-t">Zufall</span></div>
+      <div class="tile"><span class="tile-ico t2">${Gap}</span><span class="tile-t">Lückentext</span></div>
+      <div class="tile"><span class="tile-ico t3">${Cards}</span><span class="tile-t">Vokabeln</span></div>
+    </div>
+    <div class="rt-head"><b>Deine Lernroute</b><span>A2 · Etappe 1/10 · alle ansehen →</span></div>
+    <div class="route">
+      <div class="rn start"><div class="rn-rail"><span class="rn-dot">${Flag}</span></div><span class="rn-card"><span class="rn-title">Los geht’s</span><span class="rn-sub">Start</span></span></div>
+      <div class="rn cur"><div class="rn-rail"><span class="rn-dot">${News}</span></div><span class="rn-card"><span class="rn-title">Artikel lesen</span><span class="rn-sub">Jetzt dran · tippen</span></span><img class="rn-gurki" src="gurki/yay.png" alt=""></div>
+      <div class="rn lock"><div class="rn-rail"><span class="rn-dot">${Lock}</span></div><span class="rn-card"><span class="rn-title">Vokabeltest</span><span class="rn-sub">gesperrt</span></span></div>
+    </div>
+  </div>
+  <div class="nav"><span class="on"><i></i>Home</span><span><i></i>Challenges</span><span><i></i>Report</span><span><i></i>Mehr</span></div>
+</div></div>`;
+
+const vs=[
+ {cls:'vA', name:'A · Clean', tag:'fast weiß · keine Blobs · ruhig', note:'<b>Sehr clean:</b> fast weißer Hintergrund (#fcfbff), keine Blobs. Am wenigsten „bubbly", lässt Karten/Icons wirken.'},
+ {cls:'vB', name:'B · Mint-Air', tag:'kühler Verlauf mint→lavendel', note:'<b>Kühl & soft:</b> zarter Verlauf von Mint nach Lavendel — nimmt das viele Pink raus, wirkt frischer/erwachsener.'},
+ {cls:'vC', name:'C · Soft Dots', tag:'helles Punkteraster, dezent', note:'<b>Verspielt-dezent:</b> feines Punkteraster (sehr blass) — etwas Charakter ohne laut zu sein.'},
+];
+document.getElementById('gal').innerHTML = vs.map(v=>`<section class="variant"><h2>${v.name}</h2><p class="tag">${v.tag}</p>${phone(v.cls)}<div class="guide"><p>${v.note}</p></div></section>`).join('');
+</script>
+</body>
+</html>

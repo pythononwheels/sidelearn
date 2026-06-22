@@ -15,14 +15,14 @@
 
 /* Jelly Deluxe (default) — glossy pink/purple, Baloo 2, 3D jelly buttons */
 [data-theme='jelly'] {
-  --ll-bg: #fdf3f8; --ll-surface: #ffffff; --ll-border: #efe6fb;
+  --ll-bg: #f1f3fb; --ll-surface: #ffffff; --ll-border: #e9e6f5;
   --ll-text: #2b2540; --ll-text-soft: #7a7290; --ll-text-muted: #b0a6c6;
   --ll-accent: #ff6b9d; --ll-accent-strong: #e84f86; --ll-accent-ink: #fff;
   --ll-accent-soft: rgba(255,107,157,.14); --ll-accent-grad: linear-gradient(180deg,#ff8fb3,#ff6b9d);
   --lr-petrol: #5ac8fa; --lr-ok: #6bbf4a; --ll-mint-soft: #e9f7dc;
   --ll-shadow: 0 12px 30px rgba(124,92,252,.18);
-  --btn3d: 0 5px 0 #e84f86, inset 0 2px 3px rgba(255,255,255,.45);
-  --card3d: 0 6px 0 rgba(124,92,252,.12);
+  --btn3d: 0 3px 0 #e84f86;          /* flatter (less bubbly) */
+  --card3d: 0 3px 0 rgba(124,92,252,.10);
   --ll-ring: #7c5cfc; /* purple progress ring (pink stays for buttons/bubble) */
   --font: 'Quicksand', system-ui, sans-serif; --font-head: 'Baloo 2', system-ui, cursive;
 }
@@ -100,9 +100,15 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   max-width: 480px; margin: 0 auto; position: relative; min-height: 100vh; background: var(--ll-bg);
 }
 [data-theme='jelly'] .app-col {
-  background: radial-gradient(135% 78% at 78% 0%, #ffe6f0 0%, #fdf3f8 46%, #f1eefb 100%);
+  background: linear-gradient(180deg, #eef9f3 0%, #f5f1ff 58%, #efeafb 100%); /* Mint-Air */
 }
-[data-theme='jelly'] .h2-ring { box-shadow: 0 8px 20px rgba(124,92,252,.30); }
+[data-theme='jelly'] .h2-ring { box-shadow: 0 6px 16px rgba(124,92,252,.22); }
+/* calmer hero blobs that suit the mint→lavender bg */
+[data-theme='jelly'] .h2-blob { opacity: .22; filter: blur(4px); }
+[data-theme='jelly'] .h2-blob.b1 { background: #cfe9da; }
+[data-theme='jelly'] .h2-blob.b2 { background: #d8ccf5; }
+/* thinner progress ring */
+[data-theme='jelly'] .h2-ring-in { width: 118px; height: 118px; }
 [data-theme='jelly'] .h2-card-ico, [data-theme='jelly'] .lr-route-ico {
   background: var(--ll-accent-grad); color: var(--ll-accent-ink);
 }
