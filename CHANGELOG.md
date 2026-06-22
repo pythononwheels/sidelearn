@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.79] — 2026-06-23
+
+### Changed (Learny PWA) — new bold theme set
+- Replaced the old 5 palette themes with **3 bold, light designs**: **Jelly**
+  (glossy, default), **Knister** (ink outlines + hard shadows, Fredoka), **Comic**
+  (halftone dots + black outlines, Bangers). A retired saved theme auto-migrates
+  to Jelly. Added Archivo + Bangers fonts.
+
 ## [0.6.78] — 2026-06-23
 
 ### Changed (Learny PWA)

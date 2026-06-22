@@ -26,59 +26,56 @@
   --font: 'Quicksand', system-ui, sans-serif; --font-head: 'Baloo 2', system-ui, cursive;
 }
 
-/* Warm — cream + coral + petrol */
-[data-theme='warm'] {
-  --ll-bg: #faf3ea; --ll-surface: #fffdf9; --ll-border: #ece1d2;
-  --ll-text: #2c2521; --ll-text-soft: #7c7064; --ll-text-muted: #b6a999;
-  --ll-accent: #ff7a66; --ll-accent-strong: #ee5d46; --ll-accent-ink: #fff;
-  --ll-accent-soft: rgba(255,122,102,.13); --ll-accent-grad: linear-gradient(135deg,#ff8c74,#ff6d57);
-  --lr-petrol: #2a7e8c; --lr-ok: #2f9e6b; --ll-mint-soft: #e4f3ea;
-  --ll-shadow: 0 8px 26px rgba(120,80,55,.10);
-  --font: 'Inter', system-ui, sans-serif; --font-head: 'Inter', sans-serif;
+/* Knister Pop — cream + ink outlines + hard offset shadows, Fredoka */
+[data-theme='knister'] {
+  --ll-bg: #fff7ec; --ll-surface: #fffdf9; --ll-border: #ece1d2;
+  --ll-text: #241f2e; --ll-text-soft: #6b6477; --ll-text-muted: #9a93a5;
+  --ll-accent: #ff6b5e; --ll-accent-strong: #e0533f; --ll-accent-ink: #fff;
+  --ll-accent-soft: #ffe3d6; --ll-accent-grad: linear-gradient(#ff8175,#ff6b5e);
+  --lr-petrol: #38d9a9; --lr-ok: #2f9e6b; --ll-mint-soft: #d9f7ec;
+  --ll-shadow: 0 6px 0 #241f2e;
+  --btn3d: 3px 3px 0 #241f2e; --card3d: 4px 4px 0 #241f2e;
+  --font: 'Nunito', system-ui, sans-serif; --font-head: 'Fredoka', system-ui, sans-serif;
+  --ink: #241f2e;
 }
 
-/* Fresh Mint — white + mint */
-[data-theme='mint'] {
-  --ll-bg: #ffffff; --ll-surface: #f5faf7; --ll-border: #e4efe9;
-  --ll-text: #15241d; --ll-text-soft: #6c8179; --ll-text-muted: #a6b6af;
-  --ll-accent: #16b386; --ll-accent-strong: #0f9b73; --ll-accent-ink: #fff;
-  --ll-accent-soft: #e0f4ec; --ll-accent-grad: linear-gradient(135deg,#1cc795,#13a079);
-  --lr-petrol: #3fbfe2; --lr-ok: #16b386; --ll-mint-soft: #e0f4ec;
-  --ll-shadow: 0 8px 24px rgba(20,80,60,.08);
-  --font: 'Nunito', system-ui, sans-serif; --font-head: 'Nunito', sans-serif;
+/* Comic — white + halftone dots + black outlines, Bangers headlines */
+[data-theme='comic'] {
+  --ll-bg: #fffdf5; --ll-surface: #ffffff; --ll-border: #e7e2d0;
+  --ll-text: #15131a; --ll-text-soft: #5a5560; --ll-text-muted: #8a8690;
+  --ll-accent: #ff3b3b; --ll-accent-strong: #d92020; --ll-accent-ink: #fff;
+  --ll-accent-soft: #ffe0e0; --ll-accent-grad: linear-gradient(#ff5a5a,#ff3b3b);
+  --lr-petrol: #2d7dff; --lr-ok: #2d9e4a; --ll-mint-soft: #dfeeff;
+  --ll-shadow: 0 5px 0 #15131a;
+  --btn3d: 3px 3px 0 #15131a; --card3d: 4px 4px 0 #15131a;
+  --font: 'Archivo', system-ui, sans-serif; --font-head: 'Bangers', system-ui, cursive;
+  --ink: #15131a;
 }
 
-/* Neon Focus — dark + aqua */
-[data-theme='neon'] {
-  --ll-bg: #0f1422; --ll-surface: #192032; --ll-border: #2a3450;
-  --ll-text: #eef2fb; --ll-text-soft: #8b99b6; --ll-text-muted: #5f6e8c;
-  --ll-accent: #4be3c0; --ll-accent-strong: #5bead0; --ll-accent-ink: #08131a;
-  --ll-accent-soft: rgba(75,227,192,.13); --ll-accent-grad: linear-gradient(135deg,#4be3c0,#37cbb0);
-  --lr-petrol: #b388ff; --lr-ok: #4be3c0; --ll-mint-soft: rgba(75,227,192,.16);
-  --ll-shadow: 0 10px 30px rgba(0,0,0,.5); --btn3d: 0 0 22px rgba(75,227,192,.4);
-  --font: 'Space Grotesk', system-ui, sans-serif; --font-head: 'Space Grotesk', sans-serif;
+/* Outline treatment shared by the two "bold" skins (ink borders on key blocks) */
+[data-theme='knister'] .h2-go, [data-theme='knister'] .sl-read, [data-theme='knister'] .h2-bubble,
+[data-theme='knister'] .h2-card, [data-theme='knister'] .lr-tile, [data-theme='knister'] .rep-card,
+[data-theme='knister'] .rep-stage, [data-theme='knister'] .rn-dot, [data-theme='knister'] .h2-card-ico,
+[data-theme='knister'] .lr-tile-ico, [data-theme='knister'] .h2-stat, [data-theme='knister'] .sl-quiz-opt,
+[data-theme='knister'] .tst-word, [data-theme='knister'] .h2-pick select, [data-theme='knister'] .rp-cta,
+[data-theme='comic'] .h2-go, [data-theme='comic'] .sl-read, [data-theme='comic'] .h2-bubble,
+[data-theme='comic'] .h2-card, [data-theme='comic'] .lr-tile, [data-theme='comic'] .rep-card,
+[data-theme='comic'] .rep-stage, [data-theme='comic'] .rn-dot, [data-theme='comic'] .h2-card-ico,
+[data-theme='comic'] .lr-tile-ico, [data-theme='comic'] .h2-stat, [data-theme='comic'] .sl-quiz-opt,
+[data-theme='comic'] .tst-word, [data-theme='comic'] .h2-pick select {
+  border: 2.5px solid var(--ink);
 }
-
-/* Playful Pop — bright green + yellow, chunky 3D buttons */
-[data-theme='bright'] {
-  --ll-bg: #fffdf4; --ll-surface: #ffffff; --ll-border: #efe6cf;
-  --ll-text: #2b2a24; --ll-text-soft: #928b76; --ll-text-muted: #bcb39a;
-  --ll-accent: #58cc52; --ll-accent-strong: #3a9e38; --ll-accent-ink: #fff;
-  --ll-accent-soft: #e8f8e6; --ll-accent-grad: linear-gradient(135deg,#62d65b,#4fbf49);
-  --lr-petrol: #ffc83d; --lr-ok: #58cc52; --ll-mint-soft: #e8f8e6;
-  --ll-shadow: 0 8px 24px rgba(88,160,56,.12); --btn3d: 0 4px 0 #3a9e38; --card3d: 0 4px 0 rgba(88,204,82,.22);
-  --font: 'Fredoka', system-ui, sans-serif; --font-head: 'Fredoka', sans-serif;
+[data-theme='knister'] .h2-ring, [data-theme='comic'] .h2-ring { border: 3px solid var(--ink); }
+[data-theme='knister'] .h2-ring-in, [data-theme='comic'] .h2-ring-in { border: 2.5px solid var(--ink); }
+/* Comic halftone-dot background */
+[data-theme='comic'] .app-col {
+  background: #fffdf5; background-image: radial-gradient(#ffd400 1.4px, transparent 1.6px);
+  background-size: 15px 15px;
 }
-
-/* Editorial Paper — terracotta + forest, serif headlines */
-[data-theme='paper'] {
-  --ll-bg: #f7f1e8; --ll-surface: #fffdf8; --ll-border: #e6dcc9;
-  --ll-text: #2a2622; --ll-text-soft: #7d7164; --ll-text-muted: #b3a695;
-  --ll-accent: #c65d3b; --ll-accent-strong: #b14e2e; --ll-accent-ink: #fff;
-  --ll-accent-soft: #f1e3d8; --ll-accent-grad: linear-gradient(135deg,#cf6846,#bb5333);
-  --lr-petrol: #3f6b5e; --lr-ok: #3f6b5e; --ll-mint-soft: #e3ece6;
-  --ll-shadow: 0 8px 26px rgba(120,80,55,.10);
-  --font: 'Inter', system-ui, sans-serif; --font-head: 'Fraunces', Georgia, serif;
+/* Bold skins: flat (non-gloss) accent fills + ink tile icons */
+[data-theme='knister'] .lr-tile-ico, [data-theme='knister'] .h2-card-ico,
+[data-theme='comic'] .lr-tile-ico, [data-theme='comic'] .h2-card-ico {
+  background: var(--ll-accent); color: var(--ll-accent-ink);
 }
 
 * { box-sizing: border-box; }

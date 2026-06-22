@@ -1,6 +1,6 @@
 {
   "name": "sidelearn",
-  "version": "0.6.78",
+  "version": "0.6.79",
   "description": "Read foreign-language web pages with inline, CEFR-aware reading help powered by a local LLM (LM Studio).",
   "license": "MIT",
   "type": "module",

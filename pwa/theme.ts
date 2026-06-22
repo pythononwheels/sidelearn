@@ -3,7 +3,7 @@
  * The theme is authoritative (independent of the OS light/dark setting).
  */
 
-export type ThemeId = 'jelly' | 'warm' | 'mint' | 'neon' | 'bright' | 'paper';
+export type ThemeId = 'jelly' | 'knister' | 'comic';
 
 export interface Theme {
   id: ThemeId;
@@ -14,12 +14,14 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   { id: 'jelly', name: 'Jelly', dots: ['#ff6b9d', '#7c5cfc'], bg: '#fdf3f8' },
-  { id: 'warm', name: 'Warm', dots: ['#ff7a66', '#2a7e8c'], bg: '#faf3ea' },
-  { id: 'mint', name: 'Fresh', dots: ['#16b386', '#3fbfe2'], bg: '#ffffff' },
-  { id: 'neon', name: 'Neon', dots: ['#4be3c0', '#b388ff'], bg: '#0f1422' },
-  { id: 'bright', name: 'Pop', dots: ['#58cc52', '#ffc83d'], bg: '#fffdf4' },
-  { id: 'paper', name: 'Paper', dots: ['#c65d3b', '#3f6b5e'], bg: '#f7f1e8' },
+  { id: 'knister', name: 'Knister', dots: ['#ff6b5e', '#38d9a9'], bg: '#fff7ec' },
+  { id: 'comic', name: 'Comic', dots: ['#ff3b3b', '#2d7dff'], bg: '#fffdf5' },
 ];
+
+export const THEME_IDS = THEMES.map((t) => t.id);
+export function isThemeId(v: unknown): v is ThemeId {
+  return typeof v === 'string' && (THEME_IDS as string[]).includes(v);
+}
 
 export function applyTheme(id: ThemeId): void {
   document.documentElement.dataset.theme = id;

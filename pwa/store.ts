@@ -5,7 +5,7 @@
 
 import { type Language } from '@/core/config';
 import { type CefrLevel } from '@/core/difficulty/banding';
-import { type ThemeId } from './theme';
+import { type ThemeId, isThemeId } from './theme';
 
 export interface PwaSettings {
   learn: Language;
@@ -22,7 +22,10 @@ const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', theme: '
 
 export function getSettings(): PwaSettings {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+    const s = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+    // Migrate a retired theme (e.g. old 'warm'/'mint'/…) to the default.
+    if (!isThemeId(s.theme)) s.theme = DEFAULTS.theme;
+    return s;
   } catch {
     return DEFAULTS;
   }
