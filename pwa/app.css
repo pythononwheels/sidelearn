@@ -23,6 +23,7 @@
   --ll-shadow: 0 12px 30px rgba(124,92,252,.18);
   --btn3d: 0 5px 0 #e84f86, inset 0 2px 3px rgba(255,255,255,.45);
   --card3d: 0 6px 0 rgba(124,92,252,.12);
+  --ll-ring: #7c5cfc; /* purple progress ring (pink stays for buttons/bubble) */
   --font: 'Quicksand', system-ui, sans-serif; --font-head: 'Baloo 2', system-ui, cursive;
 }
 
@@ -101,10 +102,15 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 [data-theme='jelly'] .app-col {
   background: radial-gradient(135% 78% at 78% 0%, #ffe6f0 0%, #fdf3f8 46%, #f1eefb 100%);
 }
-[data-theme='jelly'] .h2-ring { box-shadow: 0 8px 18px rgba(255,107,157,.28); }
-[data-theme='jelly'] .lr-tile-ico, [data-theme='jelly'] .h2-card-ico, [data-theme='jelly'] .lr-route-ico {
+[data-theme='jelly'] .h2-ring { box-shadow: 0 8px 20px rgba(124,92,252,.30); }
+[data-theme='jelly'] .h2-card-ico, [data-theme='jelly'] .lr-route-ico {
   background: var(--ll-accent-grad); color: var(--ll-accent-ink);
 }
+/* Jelly: multi-colour tile icons (lime / sky / grape) like the mock */
+[data-theme='jelly'] .lr-tile-ico { color: #fff; }
+[data-theme='jelly'] .lr-tile-ico.t-zufall { background: linear-gradient(#b6f06a, #8fd84a); }
+[data-theme='jelly'] .lr-tile-ico.t-luecke { background: linear-gradient(#7fdcff, #5ac8fa); }
+[data-theme='jelly'] .lr-tile-ico.t-vokab { background: linear-gradient(#caa9ff, #9b6bff); }
 @media (min-width: 520px) {
   body { background: color-mix(in srgb, var(--ll-bg) 78%, #777 10%); }
   .app-col { box-shadow: 0 0 0 1px var(--ll-border), 0 30px 80px rgba(0,0,0,.18); }
@@ -547,9 +553,9 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .mini-head-s { font-size: 12px; color: var(--ll-text-soft); margin-left: auto; font-weight: 700; }
 .route.mini { margin-top: 2px; }
 .route.mini .rn-card { padding-bottom: 14px; }
-.rn.cap .rn-dot { background: transparent; box-shadow: inset 0 0 0 2px var(--ll-border); }
-.rn.cap .rn-dot { width: 30px; height: 30px; }
-.rn.cap .rn-title { color: var(--ll-text-muted); font-weight: 700; }
+.rn.cap .rn-dot { background: var(--ll-accent-soft); color: var(--ll-accent-strong); }
+.rn.cap .rn-title { color: var(--ll-text-soft); font-weight: 800; }
+.rn.cap .rn-sub { color: var(--ll-text-muted); }
 
 /* Lernroute timeline */
 .route { margin-top: 6px; }

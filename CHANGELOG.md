@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.80] — 2026-06-23
+
+### Changed (Learny PWA) — Jelly polish to match the mock
+- Jelly: **purple progress ring** (pink stays for buttons/bubble) and
+  **multi-colour tile icons** (lime / sky / grape) like the design mock.
+- Home route start now shows a real **flag "Los geht's" node** (no empty slot).
+
 ## [0.6.79] — 2026-06-23
 
 ### Changed (Learny PWA) — new bold theme set

@@ -419,7 +419,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
 
       <section class="h2-hero">
         <span class="h2-blob b1" /><span class="h2-blob b2" />
-        <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-accent) ${pct}%, var(--ll-border) 0)` }}>
+        <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-ring, var(--ll-accent)) ${pct}%, var(--ll-border) 0)` }}>
           <div class="h2-ring-in"><Gurki pose={pose} size={92} /></div>
         </div>
         <b class="h2-title">{stats.streak > 0 ? `Tag ${stats.streak} — stark!` : 'Willkommen zurück!'}</b>
@@ -448,9 +448,9 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
       )}
 
       <div class="lr-tiles three">
-        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico"><IconDice /></span><span class="lr-tile-t">Zufall</span></button>
-        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico"><IconGap /></span><span class="lr-tile-t">Lückentext</span></button>
-        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico"><IconCards /></span><span class="lr-tile-t">Vokabeln</span></button>
+        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">Zufall</span></button>
+        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico t-luecke"><IconGap /></span><span class="lr-tile-t">Lückentext</span></button>
+        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">Vokabeln</span></button>
       </div>
 
       <button class="mini-head" onClick={onRoute}>
@@ -461,10 +461,14 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
         {[-1, 0, 1].map((off) => {
           const i = cur + off;
           if (i < 0 || i >= NODES_PER_LEVEL) {
+            const start = i < 0;
             return (
               <div class="rn cap" key={off}>
-                <div class="rn-rail"><span class="rn-dot" /></div>
-                <span class="rn-card"><span class="rn-title">{i < 0 ? 'Los geht’s' : 'Level geschafft'}</span></span>
+                <div class="rn-rail"><span class="rn-dot">{start ? <IconFlag /> : <IconCheck />}</span></div>
+                <span class="rn-card">
+                  <span class="rn-title">{start ? 'Los geht’s' : 'Level geschafft'}</span>
+                  <span class="rn-sub">{start ? 'Start' : ''}</span>
+                </span>
               </div>
             );
           }
