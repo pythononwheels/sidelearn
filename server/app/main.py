@@ -11,7 +11,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import admin, config, db, llm, pipeline
+from . import admin, config, db, llm, pipeline, wiki
 
 app = FastAPI(title="Sidelearn Content Server", version="0.1")
 
