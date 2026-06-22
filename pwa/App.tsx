@@ -27,6 +27,15 @@ import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
 import { THEMES, applyTheme } from './theme';
+import {
+  advanceStage,
+  bandRankRange,
+  creditMastery,
+  getProgress as getStageProgress,
+  MASTERY,
+  type AdvanceResult,
+} from './progress';
+import { pseudoWordsFor } from './pseudowords';
 
 type Tab = 'home' | 'challenges' | 'report' | 'settings';
 type ArticleRef = { id: string; title: string; url: string; thumb?: string };
@@ -40,6 +49,7 @@ type Overlay =
   | { kind: 'trainer' }
   | { kind: 'surprise' }
   | { kind: 'cloze' }
+  | { kind: 'test' }
   | null;
 
 export function App() {
@@ -88,6 +98,14 @@ export function App() {
     content = <SurpriseView settings={settings} onOpen={openLesson} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'cloze') {
     content = <ClozeView settings={settings} onBack={() => setOverlay(null)} />;
+  } else if (overlay?.kind === 'test') {
+    content = (
+      <LevelTestView
+        settings={settings}
+        onAdvance={(r) => { if (r.levelUp) patch({ level: r.level }); }}
+        onBack={() => setOverlay(null)}
+      />
+    );
   } else if (tab === 'home') {
     content = (
       <HomeTab
@@ -103,7 +121,13 @@ export function App() {
   } else if (tab === 'challenges') {
     content = <ChallengesTab settings={settings} onOpen={openLesson} />;
   } else if (tab === 'report') {
-    content = <ReportTab onDeck={() => setOverlay({ kind: 'deck' })} />;
+    content = (
+      <ReportTab
+        settings={settings}
+        onDeck={() => setOverlay({ kind: 'deck' })}
+        onTest={() => setOverlay({ kind: 'test' })}
+      />
+    );
   } else {
     content = <SettingsTab settings={settings} onPatch={patch} />;
   }
@@ -377,6 +401,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
     if (known) {
       setScore((s) => s + 1);
       award(XP.merken);
+      creditMastery(settings.level, MASTERY.merken);
     }
     if (pos + 1 >= order.length) setDone(true);
     else { setPos((p) => p + 1); setRevealed(false); }
@@ -520,7 +545,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
   function choose(opt: string) {
     if (picked !== null) return;
     setPicked(opt);
-    if (questions && opt === questions[pos]!.answer) { setScore((s) => s + 1); award(XP.merken); }
+    if (questions && opt === questions[pos]!.answer) { setScore((s) => s + 1); award(XP.merken); creditMastery(settings.level, MASTERY.clozeCorrect); }
   }
   function next() {
     setPicked(null);
@@ -571,6 +596,190 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
           </div>
         </>
       ) : null}
+    </main>
+  );
+}
+
+/* ----------------------------------------------------------- Etappen-Test --- */
+
+function shuffleInPlace<T>(a: T[]): T[] {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
+function LevelTestView({ settings, onAdvance, onBack }: {
+  settings: PwaSettings;
+  onAdvance: (r: AdvanceResult) => void;
+  onBack: () => void;
+}) {
+  const [phase, setPhase] = useState<'vocab' | 'reading' | 'result'>('vocab');
+
+  // --- vocab (Yes/No) phase ---
+  const [items, setItems] = useState<{ word: string; real: boolean }[] | null>(null);
+  const [known, setKnown] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const [ranks, names] = await Promise.all([loadRanks(settings.learn), loadNames()]);
+      if (!alive) return;
+      const [lo, hi] = bandRankRange(settings.level);
+      const reals = Object.entries(ranks)
+        .filter(([w, r]) => r >= lo && r <= hi && w.length >= 4 && /^\p{L}+$/u.test(w) && !names.has(w.toLowerCase()))
+        .map(([w]) => w);
+      shuffleInPlace(reals);
+      const pseudos = shuffleInPlace([...pseudoWordsFor(settings.learn)]);
+      const list = [
+        ...reals.slice(0, 14).map((word) => ({ word, real: true })),
+        ...pseudos.slice(0, 6).map((word) => ({ word, real: false })),
+      ];
+      setItems(shuffleInPlace(list));
+    })();
+    return () => { alive = false; };
+  }, [settings.learn, settings.level]);
+
+  function toggle(w: string) {
+    setKnown((prev) => {
+      const n = new Set(prev);
+      if (n.has(w)) n.delete(w); else n.add(w);
+      return n;
+    });
+  }
+
+  // --- reading phase ---
+  const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
+  const [qpos, setQpos] = useState(0);
+  const [picked, setPicked] = useState<string | null>(null);
+  const correctRef = useRef(0);
+
+  async function startReading() {
+    setPhase('reading');
+    const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
+    const art = daily?.articles[0];
+    let qs: QuizQuestion[] = [];
+    if (art) {
+      const lesson = await fetchServerLesson(SERVER, art.id, settings.level);
+      if (lesson) {
+        lesson.paragraphs.forEach((p) => {
+          if (p.question) qs.push({ prompt: p.question.q, options: p.question.options, answer: p.question.options[p.question.correct]! });
+        });
+        const text = lesson.paragraphs.map((p) => p.simplified).join(' ');
+        const vocab = lesson.vocab.map((v) => v.word);
+        qs = [...qs, ...buildClozeQuestions(text, vocab, vocab, Math.random, 3)];
+      }
+    }
+    setQuestions(shuffleInPlace(qs).slice(0, 4));
+  }
+
+  // --- result ---
+  const [result, setResult] = useState<{ passed: boolean; adv: AdvanceResult | null } | null>(null);
+
+  function conclude() {
+    const reals = items?.filter((i) => i.real) ?? [];
+    const pseudos = items?.filter((i) => !i.real) ?? [];
+    const vocabRatio = reals.length ? reals.filter((i) => known.has(i.word)).length / reals.length : 1;
+    const falseAlarm = pseudos.length ? pseudos.filter((i) => known.has(i.word)).length / pseudos.length : 0;
+    const vocabPass = vocabRatio >= 0.7 && falseAlarm <= 0.25;
+    const rt = questions?.length ?? 0;
+    const readingPass = rt ? correctRef.current / rt >= 0.6 : true;
+    const passed = vocabPass && readingPass;
+    let adv: AdvanceResult | null = null;
+    if (passed) { adv = advanceStage(settings.level); onAdvance(adv); }
+    setResult({ passed, adv });
+    setPhase('result');
+  }
+
+  function answerReading(opt: string) {
+    if (picked !== null || !questions) return;
+    setPicked(opt);
+    if (opt === questions[qpos]!.answer) correctRef.current += 1;
+  }
+  function nextReading() {
+    if (!questions) return;
+    if (qpos + 1 >= questions.length) conclude();
+    else { setQpos(qpos + 1); setPicked(null); }
+  }
+
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Etappen-Test</span>
+      </header>
+
+      {phase === 'vocab' && (
+        items === null ? <Dots /> : (
+          <>
+            <p class="lr-section" style={{ marginTop: 0 }}>Teil 1 · Wortschatz</p>
+            <p class="sl-hint">Tippe alle Wörter an, die du <b>kennst</b>. Manche sind erfunden — die lässt du aus.</p>
+            <div class="tst-grid">
+              {items.map((it) => (
+                <button class={`tst-word ${known.has(it.word) ? 'on' : ''}`} onClick={() => toggle(it.word)}>
+                  {it.word}
+                </button>
+              ))}
+            </div>
+            <button class="sl-read" onClick={startReading}>Weiter → Teil 2</button>
+          </>
+        )
+      )}
+
+      {phase === 'reading' && (
+        questions === null ? <Dots /> : questions.length === 0 ? (
+          <>
+            <p class="sl-muted">Gerade kein Lesetext verfügbar — wir werten Teil 1 aus.</p>
+            <button class="sl-read" onClick={conclude}>Test abschließen</button>
+          </>
+        ) : (
+          <>
+            <p class="lr-section" style={{ marginTop: 0 }}>Teil 2 · Leseverständnis</p>
+            <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
+            <div class="sl-quiz">
+              <p class="sl-quiz-q">{questions[qpos]!.prompt}</p>
+              <div class="sl-quiz-opts">
+                {questions[qpos]!.options.map((opt) => {
+                  let cls = '';
+                  if (picked !== null) cls = opt === questions[qpos]!.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
+                  return (
+                    <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={() => answerReading(opt)}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+              {picked !== null && (
+                <button class="sl-read" onClick={nextReading}>
+                  {qpos + 1 >= questions.length ? 'Auswerten ✓' : 'Weiter →'}
+                </button>
+              )}
+            </div>
+          </>
+        )
+      )}
+
+      {phase === 'result' && result && (
+        <section class="sl-done">
+          {result.passed ? (
+            <>
+              <h2>Bestanden! 🎉</h2>
+              {result.adv?.levelUp ? (
+                <p>Glückwunsch — du steigst auf <b>{result.adv.level}</b> auf. Deine Texte werden ab jetzt auf diesem Niveau angepasst.</p>
+              ) : (
+                <p>Nächste Etappe freigeschaltet: <b>{getStageProgress(settings.level).label}</b>.</p>
+              )}
+            </>
+          ) : (
+            <>
+              <h2>Noch nicht ganz 💪</h2>
+              <p>Kein Problem — lies und übe noch etwas weiter und versuch's dann nochmal.</p>
+            </>
+          )}
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </section>
+      )}
     </main>
   );
 }
@@ -626,14 +835,33 @@ function ChallengesTab({ settings, onOpen }: {
 
 /* --------------------------------------------------------------- Report --- */
 
-function ReportTab({ onDeck }: { onDeck: () => void }) {
+function ReportTab({ settings, onDeck, onTest }: {
+  settings: PwaSettings;
+  onDeck: () => void;
+  onTest: () => void;
+}) {
   const s = getStats();
   const deck = getDeck().length;
   const maxDay = Math.max(1, ...s.last7.map((d) => d.xp));
   const acc = s.streak; // streak kept here (not as a home flame)
+  const prog = getStageProgress(settings.level);
   return (
     <main class="sl-main with-nav">
       <h1 class="tab-screen-title">Report</h1>
+
+      <div class={`rep-stage ${prog.ready ? 'ready' : ''}`}>
+        <div class="rep-stage-top">
+          <span class="rep-stage-label">{prog.label}</span>
+          <span class="rep-stage-pct">{Math.round(prog.ratio * 100)}%</span>
+        </div>
+        <div class="rep-stage-bar"><i style={{ width: `${Math.round(prog.ratio * 100)}%` }} /></div>
+        {prog.ready ? (
+          <button class="rep-stage-test" onClick={onTest}>Etappen-Test starten 🎯</button>
+        ) : (
+          <p class="rep-stage-hint">Lies & übe weiter — bei 100 % schaltet der Etappen-Test frei.</p>
+        )}
+      </div>
+
       <div class="rep-kpis">
         <div class="rep-kpi"><b>{s.level}</b><span>Level</span></div>
         <div class="rep-kpi"><b>{s.totalXp}</b><span>XP gesamt</span></div>
@@ -822,6 +1050,7 @@ function Lesson({
     } else {
       if (creditable.current) {
         award(XP.lesson);
+        creditMastery(settings.level, MASTERY.lesson);
         creditLesson(article.url);
         creditable.current = false;
       }
@@ -880,7 +1109,7 @@ function Lesson({
             if (answer !== null) return;
             setAnswer(idx);
             const ok = idx === lesson.paragraphs[quizIdx]!.question!.correct;
-            if (ok && creditable.current) award(XP.correct);
+            if (ok && creditable.current) { award(XP.correct); creditMastery(settings.level, MASTERY.quizCorrect); }
             setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
           }}
           onNext={() => {
@@ -1017,6 +1246,7 @@ function WordPopover({
     if (saved || !translation) return;
     if (addToDeck({ word: pop.word, translation, lang: settings.learn, context: pop.sentence, ts: Date.now() })) {
       award(XP.merken);
+      creditMastery(settings.level, MASTERY.merken);
     }
     setSaved(true);
   }

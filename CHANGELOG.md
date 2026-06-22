@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.68] — 2026-06-22
+
+### Added (Learny PWA) — staged learning progress + Etappen-Test
+- Each CEFR reading level is split into **3 Etappen** (e.g. A2·1 → A2·2 → A2·3 →
+  B1·1 …). An Etappe fills with mastery points earned by reading lessons,
+  correct quiz/cloze answers and saved words; at 100 % the **Etappen-Test**
+  unlocks (shown on the Report tab with a progress bar).
+- **Etappen-Test** has two parts: a **Yes/No vocabulary check** (real words at the
+  level + pseudo-words as a reliability control) and a short **reading
+  comprehension** (MC + cloze from a level-appropriate lesson). Passing both
+  advances one Etappe; crossing the third raises the reading level.
+- All on-device; vocabulary sampling uses the bundled frequency data. No new
+  server calls (reading reuses /daily + /lesson).
+
 ## [0.6.67] — 2026-06-22
 
 ### Changed (Learny PWA)
