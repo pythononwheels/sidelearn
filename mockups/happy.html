@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Learny — 4 fröhliche Richtungen (mit Gurki 🥒)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;600;700;800;900&family=Archivo:wght@500;600;700;800;900&family=Bangers&display=swap" rel="stylesheet" />
+<style>
+  :root { --ink:#241f2e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e9e7f0; color:var(--ink); font-family:'Nunito',system-ui,sans-serif; }
+  .head { text-align:center; padding:34px 20px 10px; }
+  .head h1 { font-family:'Baloo 2',cursive; margin:0 0 6px; font-size:30px; }
+  .head p { margin:0 auto; max-width:680px; color:#5b5670; font-size:15px; line-height:1.5; }
+  .gallery { display:flex; flex-wrap:wrap; gap:30px; justify-content:center; align-items:flex-start; padding:26px 20px 70px; }
+  .variant { width:340px; }
+  .variant > h2 { font-family:'Baloo 2',cursive; margin:0 0 2px; font-size:22px; }
+  .variant > .tag { margin:0 0 14px; font-size:13px; color:#6a6580; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+
+  /* phone frame */
+  .phone { width:340px; height:710px; border-radius:42px; padding:12px; background:#1c1922;
+           box-shadow:0 24px 50px rgba(40,30,60,.28); position:relative; }
+  .screen { width:100%; height:100%; border-radius:32px; overflow:hidden; position:relative; }
+  .nav { position:absolute; left:0; right:0; bottom:0; height:64px; display:flex; align-items:center;
+         justify-content:space-around; font-size:11px; font-weight:800; }
+  .nav span { display:flex; flex-direction:column; align-items:center; gap:3px; opacity:.55; }
+  .nav span.on { opacity:1; }
+  .nav i { width:22px; height:22px; border-radius:7px; display:block; }
+  .body { position:absolute; inset:0 0 64px 0; overflow:hidden; padding:18px 16px; }
+
+  /* mascot sprite (2x2 grid: sad | yay / party | think) */
+  .gurki { background-image:url(pickle.png); background-repeat:no-repeat; background-size:200% 200%;
+           mix-blend-mode:multiply; }
+  .gurki.sad   { background-position:0% 0%; }
+  .gurki.yay   { background-position:100% 0%; }
+  .gurki.party { background-position:0% 100%; }
+  .gurki.think { background-position:100% 100%; }
+  .g-sq { aspect-ratio:65/59; }
+
+  /* style guide */
+  .guide { margin-top:16px; background:#fff; border-radius:18px; padding:14px 16px; box-shadow:0 6px 18px rgba(40,30,60,.08); }
+  .guide h3 { margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:#8a85a0; }
+  .sw { display:flex; gap:7px; margin-bottom:10px; }
+  .sw i { width:26px; height:26px; border-radius:8px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); }
+  .guide p { margin:6px 0 0; font-size:13px; line-height:1.5; color:#4b4660; }
+  .guide .voice { font-style:italic; color:#7a7590; }
+  .fonts b { font-weight:800; }
+
+  /* ============ V1 — KNISTER (Sticker-Book) ============ */
+  .v1 .screen { background:#fff7ec; }
+  .v1 .body { font-family:'Fredoka',sans-serif; }
+  .v1 .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .v1 .brand { font-weight:700; font-size:22px; display:flex; align-items:center; gap:6px; }
+  .v1 .streak { background:#ffc23c; border:3px solid #241f2e; border-radius:14px; padding:3px 10px; font-weight:700;
+                box-shadow:3px 3px 0 #241f2e; transform:rotate(2deg); font-size:14px; }
+  .v1 .hello { display:flex; align-items:center; gap:10px; background:#38d9a9; border:3px solid #241f2e; border-radius:20px;
+               padding:12px 14px; box-shadow:4px 4px 0 #241f2e; margin-bottom:14px; }
+  .v1 .hello .gurki { width:64px; flex:none; }
+  .v1 .hello b { font-size:17px; display:block; }
+  .v1 .hello span { font-size:13px; }
+  .v1 .card { background:#fff; border:3px solid #241f2e; border-radius:20px; padding:14px; box-shadow:4px 4px 0 #241f2e;
+              margin-bottom:14px; transform:rotate(-1deg); }
+  .v1 .card .lbl { background:#ff6b5e; color:#fff; display:inline-block; border:2px solid #241f2e; border-radius:8px;
+                   padding:1px 8px; font-size:11px; font-weight:700; transform:rotate(-2deg); }
+  .v1 .card h4 { margin:8px 0 2px; font-size:18px; }
+  .v1 .card .go { float:right; background:#ffc23c; border:3px solid #241f2e; border-radius:12px; padding:6px 14px;
+                  font-weight:700; box-shadow:3px 3px 0 #241f2e; }
+  .v1 .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .v1 .chip { background:#fff; border:3px solid #241f2e; border-radius:16px; padding:10px; width:calc(50% - 5px);
+              box-shadow:3px 3px 0 #241f2e; font-weight:600; font-size:14px; }
+  .v1 .chip i { font-size:20px; display:block; margin-bottom:2px; }
+  .v1 .chip:nth-child(odd){ transform:rotate(-1.5deg); } .v1 .chip:nth-child(even){ transform:rotate(1.5deg); }
+  .v1 .nav { background:#fff; border-top:3px solid #241f2e; }
+  .v1 .nav i { background:#241f2e; }
+
+  /* ============ V2 — KNUDDEL (Jelly / Bubbly) ============ */
+  .v2 .screen { background:radial-gradient(120% 80% at 80% 0%, #ffe1ee 0%, #fdf2f8 55%); }
+  .v2 .body { font-family:'Baloo 2',cursive; }
+  .v2 .blob { position:absolute; border-radius:50%; filter:blur(2px); opacity:.5; }
+  .v2 .b1 { width:120px;height:120px; background:#a0e84a; top:-30px; left:-20px; }
+  .v2 .b2 { width:90px;height:90px; background:#5ac8fa; top:60px; right:-20px; }
+  .v2 .top { text-align:center; position:relative; z-index:1; }
+  .v2 .ring { width:128px;height:128px; margin:6px auto 4px; border-radius:50%;
+              background:conic-gradient(#7c5cfc 62%, #efe6ff 0); display:flex; align-items:center; justify-content:center; }
+  .v2 .ring .inner { width:108px;height:108px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:inset 0 -6px 12px rgba(124,92,252,.12); }
+  .v2 .ring .gurki { width:96px; }
+  .v2 .top b { font-size:20px; } .v2 .top span { display:block; color:#9a6ad6; font-weight:700; font-size:13px; margin-bottom:12px; }
+  .v2 .jelly { display:block; width:100%; border:none; border-radius:22px; padding:15px; color:#fff; font-family:inherit;
+               font-weight:800; font-size:18px; background:linear-gradient(#ff8fb3,#ff6b9d);
+               box-shadow:0 8px 0 #e84f86, inset 0 3px 6px rgba(255,255,255,.5); margin-bottom:14px; }
+  .v2 .duo { display:flex; gap:12px; }
+  .v2 .soft { flex:1; background:#fff; border-radius:22px; padding:14px; text-align:center; font-weight:700; font-size:14px;
+              box-shadow:0 6px 0 rgba(124,92,252,.15); }
+  .v2 .soft i { display:block; width:42px;height:42px; border-radius:50%; margin:0 auto 6px; }
+  .v2 .soft.a i{ background:linear-gradient(#b6f06a,#8fd84a);} .v2 .soft.b i{ background:linear-gradient(#7fdcff,#5ac8fa);}
+  .v2 .pill { margin-top:14px; background:#fff; border-radius:22px; padding:14px; display:flex; align-items:center; gap:10px;
+              box-shadow:0 6px 0 rgba(124,92,252,.15); font-weight:700; font-size:14px; }
+  .v2 .pill i { width:40px;height:40px; border-radius:14px; background:linear-gradient(#caa9ff,#9b6bff); flex:none; }
+  .v2 .nav { background:rgba(255,255,255,.85); }
+  .v2 .nav i { background:#ff6b9d; border-radius:50%; }
+
+  /* ============ V3 — WUSE (Paper-Craft Reise) ============ */
+  .v3 .screen { background:#fbf6ec; }
+  .v3 .body { font-family:'Fraunces',serif; padding-top:16px; }
+  .v3 .greet { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .v3 .greet .gurki { width:54px; flex:none; }
+  .v3 .greet b { font-size:20px; } .v3 .greet span{ font-family:'Nunito'; font-weight:700; color:#9a7b4f; font-size:12px; display:block;}
+  .v3 .road { position:relative; height:430px; margin-top:6px; }
+  .v3 svg { position:absolute; inset:0; width:100%; height:100%; }
+  .v3 .stop { position:absolute; width:78px; text-align:center; transform:translate(-50%,-50%); font-family:'Nunito'; }
+  .v3 .stop .dot { width:50px;height:50px; border-radius:18px 20px 16px 22px; margin:0 auto 4px; display:flex; align-items:center;
+                   justify-content:center; color:#fff; box-shadow:0 4px 0 rgba(0,0,0,.12); font-size:22px; }
+  .v3 .stop small { font-weight:800; font-size:11px; color:#5b513f; }
+  .v3 .s-done .dot{ background:#7fa37a;} .v3 .s-done2 .dot{ background:#7fa37a;}
+  .v3 .s-now .dot{ background:#d9785a; width:60px;height:60px; box-shadow:0 0 0 6px #f6d9cd, 0 5px 0 rgba(0,0,0,.12);}
+  .v3 .s-now small{ color:#d9785a; font-size:12px; }
+  .v3 .s-lock .dot{ background:#d8cdb6; color:#fff; } .v3 .s-lock small{ color:#a99d83; }
+  .v3 .now-mascot{ position:absolute; width:60px; }
+  .v3 .nav { background:#f3ead8; }
+  .v3 .nav i { background:#7fa37a; border-radius:10px 12px 9px 13px; }
+
+  /* ============ V4 — ZACK (Comic-Pop) ============ */
+  .v4 .screen { background:#fffdf5;
+    background-image:radial-gradient(#ffd400 1.6px, transparent 1.7px); background-size:14px 14px; background-position:0 0; }
+  .v4 .body { font-family:'Archivo',sans-serif; }
+  .v4 .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .v4 .logo{ font-family:'Bangers',cursive; font-size:30px; letter-spacing:1px; color:#ff3b3b; -webkit-text-stroke:2px #15131a; }
+  .v4 .xp{ background:#ffd400; border:3px solid #15131a; border-radius:10px; padding:2px 10px; font-weight:800; box-shadow:3px 3px 0 #15131a;}
+  .v4 .panel{ background:#fff; border:3px solid #15131a; border-radius:6px; padding:14px; box-shadow:5px 5px 0 #15131a; margin-bottom:14px; position:relative; }
+  .v4 .bubble{ background:#2d7dff; color:#fff; border:3px solid #15131a; border-radius:14px; padding:8px 12px; font-weight:800;
+               display:inline-block; box-shadow:3px 3px 0 #15131a; position:relative; }
+  .v4 .bubble:after{ content:""; position:absolute; left:24px; bottom:-12px; border:7px solid transparent; border-top-color:#15131a;}
+  .v4 .hero{ display:flex; align-items:flex-end; gap:8px; margin-bottom:14px; }
+  .v4 .hero .gurki{ width:96px; flex:none; }
+  .v4 .panel h4{ font-family:'Bangers',cursive; letter-spacing:1px; margin:0 0 2px; font-size:24px; }
+  .v4 .panel .go{ background:#ff3b3b; color:#fff; border:3px solid #15131a; border-radius:6px; padding:6px 14px; font-weight:800;
+                  box-shadow:3px 3px 0 #15131a; float:right; }
+  .v4 .grid{ display:flex; gap:10px; }
+  .v4 .gbox{ flex:1; background:#fff; border:3px solid #15131a; border-radius:6px; padding:10px; box-shadow:4px 4px 0 #15131a;
+             font-weight:800; font-size:13px; text-align:center;}
+  .v4 .gbox.y{ background:#ffd400;} .v4 .gbox.b{ background:#2d7dff; color:#fff;}
+  .v4 .gbox i{ display:block; font-size:22px; }
+  .v4 .nav{ background:#15131a; }
+  .v4 .nav span{ color:#fff; } .v4 .nav i{ background:#ffd400; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>Learny — 4 fröhliche Richtungen 🥒</h1>
+    <p>Eigenständig, nicht Duolingo. Jede Variante hat eine eigene Persönlichkeit, Form, Typo <i>und</i> Startseite — und Gurki ist überall dabei. Die alten, „strengeren" Mocks liegen weiter unter <code>themes.html</code>.</p>
+  </div>
+
+  <div class="gallery">
+
+    <!-- ============ V1 KNISTER ============ -->
+    <section class="variant v1">
+      <h2>① Knister</h2>
+      <p class="tag">Sticker-Book · knallig · tactil</p>
+      <div class="phone"><div class="screen">
+        <div class="body">
+          <div class="topbar"><span class="brand">🥒 Learny</span><span class="streak">🔥 5</span></div>
+          <div class="hello"><div class="gurki yay g-sq"></div><div><b>Hallo!</b><span>Bereit für heute? Los geht's!</span></div></div>
+          <div class="card">
+            <span class="lbl">TAGESLEKTION</span>
+            <h4>2 Mini-Artikel <a class="go">Start</a></h4>
+            <div style="clear:both"></div>
+          </div>
+          <div class="chips">
+            <div class="chip"><i>🎲</i>Zufallsartikel</div>
+            <div class="chip"><i>🧩</i>Lückentext</div>
+            <div class="chip"><i>🎯</i>Vokabeltest</div>
+            <div class="chip"><i>🗺️</i>Lernroute</div>
+          </div>
+        </div>
+        <div class="nav"><span class="on"><i></i>Home</span><span><i></i>Quests</span><span><i></i>Report</span><span><i></i>Mehr</span></div>
+      </div></div>
+      <div class="guide">
+        <h3>Style</h3>
+        <div class="sw"><i style="background:#ff6b5e"></i><i style="background:#ffc23c"></i><i style="background:#38d9a9"></i><i style="background:#9b6bff"></i><i style="background:#241f2e"></i></div>
+        <p class="fonts"><b>Fredoka</b> + Nunito · dicke Tinten-Outlines, harte Schatten, leicht gekippte Aufkleber.</p>
+        <p class="voice">„Hallo! Bereit für heute? Los geht's!"</p>
+      </div>
+    </section>
+
+    <!-- ============ V2 KNUDDEL ============ -->
+    <section class="variant v2">
+      <h2>② Knuddel</h2>
+      <p class="tag">Jelly · weich · squishy</p>
+      <div class="phone"><div class="screen">
+        <div class="body">
+          <div class="blob b1"></div><div class="blob b2"></div>
+          <div class="top">
+            <div class="ring"><div class="inner"><div class="gurki yay" style="width:96px;aspect-ratio:65/59"></div></div></div>
+            <b>Tag 5 — stark! 🥒</b><span>62 % bis zur nächsten Etappe</span>
+            <button class="jelly">Weiterlesen →</button>
+          </div>
+          <div class="duo">
+            <div class="soft a"><i></i>Lückentext</div>
+            <div class="soft b"><i></i>Vokabeln</div>
+          </div>
+          <div class="pill"><i></i>Deine Lernroute</div>
+        </div>
+        <div class="nav"><span class="on"><i></i>Home</span><span><i></i>Quests</span><span><i></i>Report</span><span><i></i>Mehr</span></div>
+      </div></div>
+      <div class="guide">
+        <h3>Style</h3>
+        <div class="sw"><i style="background:#ff6b9d"></i><i style="background:#5ac8fa"></i><i style="background:#a0e84a"></i><i style="background:#7c5cfc"></i><i style="background:#fdf2f8"></i></div>
+        <p class="fonts"><b>Baloo 2</b> + Quicksand · glänzende 3D-Jelly-Buttons, runde Blobs, Fortschritts-Ring um Gurki.</p>
+        <p class="voice">„Tag 5 — stark! Weiter so 🥒"</p>
+      </div>
+    </section>
+
+    <!-- ============ V3 WUSE ============ -->
+    <section class="variant v3">
+      <h2>③ Wuse</h2>
+      <p class="tag">Paper-Craft · Reise · cozy</p>
+      <div class="phone"><div class="screen">
+        <div class="body">
+          <div class="greet"><div class="gurki think g-sq"></div><div><b>Deine Reise</b><span>FRANZÖSISCH · ETAPPE A2·2</span></div></div>
+          <div class="road">
+            <svg viewBox="0 0 300 430" preserveAspectRatio="none"><path d="M70 20 C 240 70, 30 150, 150 210 S 250 320, 90 400" fill="none" stroke="#e7dcc4" stroke-width="14" stroke-linecap="round" stroke-dasharray="2 22"/></svg>
+            <div class="stop s-done" style="left:70px;top:20px"><div class="dot">📖</div><small>Messi</small></div>
+            <div class="stop s-done2" style="left:175px;top:120px"><div class="dot">⭐</div><small>Test ✓</small></div>
+            <div class="stop s-now" style="left:150px;top:215px"><div class="dot">📰</div><small>Heute lesen</small></div>
+            <div class="gurki yay now-mascot" style="left:205px;top:188px"></div>
+            <div class="stop s-lock" style="left:235px;top:315px"><div class="dot">🔒</div><small>bald</small></div>
+            <div class="stop s-lock" style="left:90px;top:400px"><div class="dot">🎁</div><small>Belohnung</small></div>
+          </div>
+        </div>
+        <div class="nav"><span class="on"><i></i>Reise</span><span><i></i>Üben</span><span><i></i>Report</span><span><i></i>Mehr</span></div>
+      </div></div>
+      <div class="guide">
+        <h3>Style</h3>
+        <div class="sw"><i style="background:#d9785a"></i><i style="background:#7fa37a"></i><i style="background:#e3b23c"></i><i style="background:#34415e"></i><i style="background:#fbf6ec"></i></div>
+        <p class="fonts"><b>Fraunces</b> + Nunito · Scherenschnitt-Formen, gepunktete Reise-Route — die Startseite <i>ist</i> der Weg.</p>
+        <p class="voice">„Deine Reise geht weiter — nächster Halt: heute."</p>
+      </div>
+    </section>
+
+    <!-- ============ V4 ZACK ============ -->
+    <section class="variant v4">
+      <h2>④ Zack</h2>
+      <p class="tag">Comic-Pop · frech · energetisch</p>
+      <div class="phone"><div class="screen">
+        <div class="body">
+          <div class="topbar"><span class="logo">LEARNY</span><span class="xp">⚡ 120 XP</span></div>
+          <div class="hero">
+            <div class="gurki yay g-sq"></div>
+            <div class="bubble">Bereit? Heute wird's gut! 🥒</div>
+          </div>
+          <div class="panel">
+            <h4>Tageslektion</h4>
+            <a class="go">LOS!</a>
+            <div>2 Mini-Artikel · 1/2 geschafft</div>
+          </div>
+          <div class="grid">
+            <div class="gbox y"><i>🎲</i>Zufall</div>
+            <div class="gbox b"><i>🧩</i>Lücke</div>
+            <div class="gbox"><i>🎯</i>Vokab</div>
+          </div>
+        </div>
+        <div class="nav"><span class="on"><i></i>Home</span><span><i></i>Quests</span><span><i></i>Report</span><span><i></i>Mehr</span></div>
+      </div></div>
+      <div class="guide">
+        <h3>Style</h3>
+        <div class="sw"><i style="background:#ff3b3b"></i><i style="background:#ffd400"></i><i style="background:#2d7dff"></i><i style="background:#15131a"></i><i style="background:#fffdf5"></i></div>
+        <p class="fonts"><b>Bangers</b> + Archivo · Comic-Outlines, Halftone-Punkte, Sprechblasen — Gurki redet mit dir.</p>
+        <p class="voice">„Bereit? Heute wird's gut! BÄM!"</p>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

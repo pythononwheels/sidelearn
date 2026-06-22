@@ -199,6 +199,25 @@ const IconStar = () => (<svg {...svg}><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8
 const IconRefresh = () => (<svg {...svg}><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></svg>);
 const IconArrowRight = () => (<svg {...svg}><path d="M5 12h14M13 6l6 6-6 6" /></svg>);
 const IconRoute = () => (<svg {...svg}><circle cx="6" cy="19" r="3" /><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" /><circle cx="18" cy="5" r="3" /></svg>);
+const IconBolt = () => (<svg {...svg}><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>);
+const IconNewspaper = () => (<svg {...svg}><path d="M4 5h13a1 1 0 0 1 1 1v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z" /><path d="M18 8h1.5a1.5 1.5 0 0 1 1.5 1.5V18a2 2 0 0 1-2 2" /><path d="M7 9h7M7 13h7M7 17h4" /></svg>);
+const IconGap = () => (<svg {...svg}><path d="M3 12h4" /><rect x="9" y="9" width="6" height="6" rx="1.4" /><path d="M17 12h4" /></svg>);
+const IconCards = () => (<svg {...svg}><rect x="3" y="8" width="13" height="11" rx="2" /><path d="M7 8V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3" /></svg>);
+const IconFlame = () => (<svg {...svg}><path d="M12 2c1 4 4 5 4 9a4 4 0 0 1-8 0c0-1 .3-1.8.8-2.5C8 10 7 11 7 13a5 5 0 0 0 10 0c0-5-5-7-5-11z" /></svg>);
+
+type Pose = 'yay' | 'sad' | 'party' | 'think';
+const Gurki = ({ pose = 'yay', size = 92 }: { pose?: Pose; size?: number }) => (
+  <img class="gurki" src={`/gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
+);
+
+const HYPE = [
+  "Bereit? Heute wird's gut!",
+  'Schön, dass du da bist!',
+  'Ein Artikel reicht für heute.',
+  'Komm, wir lesen was Cooles!',
+  'Gurki glaubt an dich.',
+  'Kleine Schritte, große Wirkung.',
+];
 
 /* ------------------------------------------------------------ Onboarding --- */
 
@@ -340,76 +359,70 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
   const allDone = articles.length > 0 && doneCount >= goal;
   const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
 
+  const stats = getStats();
+  const prog = getStageProgress(settings.level);
+  const pct = Math.round(prog.ratio * 100);
+  const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
+  const pose: Pose = allDone ? 'party' : 'yay';
+
   return (
-    <main class="sl-main with-nav" key={tick}>
-      <header class="lr-head">
-        <span class="lr-brand"><span class="lr-logo" /> Learny</span>
-        <div class="lr-pick">
+    <main class="sl-main with-nav h2" key={tick}>
+      <header class="h2-bar">
+        <div class="h2-pick">
           <select value={settings.learn} onChange={(e) => onPatch({ learn: e.currentTarget.value as Language })}>
-            {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
-              <option value={l}>{LANG_LABELS[l]}</option>
-            ))}
+            {LANGUAGES.filter((l) => l !== settings.native).map((l) => (<option value={l}>{LANG_LABELS[l]}</option>))}
           </select>
           <select value={settings.level} onChange={(e) => onPatch({ level: e.currentTarget.value as CefrLevel })}>
             {CEFR_LEVELS.map((l) => (<option value={l}>{l}</option>))}
           </select>
         </div>
+        <div class="h2-stats">
+          <span class="h2-stat streak"><IconFlame />{stats.streak}</span>
+          <span class="h2-stat xp"><IconBolt />{stats.totalXp}</span>
+        </div>
       </header>
 
-      <section class="lr-hero">
-        <div class="lr-hero-top">
-          <span class="lr-hero-eyebrow">Deine Tageslektion</span>
-          {articles.length > 0 && <span class="lr-hero-count">{Math.min(doneCount, goal)}/{goal}</span>}
+      <section class="h2-hero">
+        <span class="h2-blob b1" /><span class="h2-blob b2" />
+        <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-accent) ${pct}%, var(--ll-border) 0)` }}>
+          <div class="h2-ring-in"><Gurki pose={pose} size={92} /></div>
         </div>
-        {loading ? (
-          <Dots />
-        ) : articles.length === 0 ? (
-          <p class="lr-hero-text">Heute gibt es noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später nochmal vorbei.</p>
-        ) : allDone ? (
-          <p class="lr-hero-text">Heute geschafft! Du kannst gern noch weiterlesen.</p>
-        ) : (
-          <p class="lr-hero-text">
-            Lies <b>{goal}</b> von {articles.length} kurzen Artikeln — wir vereinfachen sie für dich auf {settings.level}.
-          </p>
-        )}
+        <b class="h2-title">{stats.streak > 0 ? `Tag ${stats.streak} — stark!` : 'Willkommen zurück!'}</b>
+        <span class="h2-sub">{pct}% bis zum nächsten Ziel</span>
+        <div class="h2-bubble">{hype}</div>
       </section>
 
-      {articles.length > 0 && (
+      {loading ? (
+        <Dots />
+      ) : articles.length === 0 ? (
+        <div class="h2-card empty">Heute noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später wieder vorbei.</div>
+      ) : (
         <>
-          <ArticleList articles={articles} next={next} allDone={allDone} onOpen={onOpen} />
+          <div class="h2-card">
+            <span class="h2-card-ico"><IconNewspaper /></span>
+            <span class="h2-card-body">
+              <span class="h2-card-lbl">Tageslektion</span>
+              <span class="h2-card-sub">{articles.length} Mini-Artikel · {Math.min(doneCount, goal)}/{goal} geschafft</span>
+            </span>
+            <button class="h2-go" onClick={() => next && onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail })}>
+              {allDone ? 'Mehr' : doneCount > 0 ? 'Weiter' : 'Start'}
+            </button>
+          </div>
           <p class="lr-credit-line">Aus den meistgelesenen Wikipedia-Artikeln des Tages · CC BY-SA</p>
         </>
       )}
 
-      <p class="lr-section" style={{ marginTop: '24px' }}>Üben & entdecken</p>
-      <div class="lr-tiles">
-        <button class="lr-tile" onClick={onSurprise}>
-          <span class="lr-tile-ico"><IconDice /></span>
-          <span class="lr-tile-t">Zufallsartikel</span>
-          <span class="lr-tile-s">Technik · Sport · …</span>
-        </button>
-        <button class="lr-tile" onClick={onCloze}>
-          <span class="lr-tile-ico"><IconPuzzle /></span>
-          <span class="lr-tile-t">Lückentext</span>
-          <span class="lr-tile-s">Wörter einsetzen</span>
-        </button>
-        <button class="lr-tile" onClick={onTrainer}>
-          <span class="lr-tile-ico"><IconTarget /></span>
-          <span class="lr-tile-t">Vokabeltest</span>
-          <span class="lr-tile-s">{getDeck().length} Wörter</span>
-        </button>
-        <button class="lr-tile" onClick={onDeck}>
-          <span class="lr-tile-ico"><IconBook /></span>
-          <span class="lr-tile-t">Wörterbuch</span>
-          <span class="lr-tile-s">Gemerkte ansehen</span>
-        </button>
+      <div class="lr-tiles three">
+        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico"><IconDice /></span><span class="lr-tile-t">Zufall</span></button>
+        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico"><IconGap /></span><span class="lr-tile-t">Lückentext</span></button>
+        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico"><IconCards /></span><span class="lr-tile-t">Vokabeln</span></button>
       </div>
 
       <button class="lr-route-cta" onClick={onRoute}>
         <span class="lr-route-ico"><IconRoute /></span>
         <span class="lr-route-body">
           <span class="lr-route-t">Deine Lernroute</span>
-          <span class="lr-route-s">Was du gelesen & geübt hast</span>
+          <span class="lr-route-s">Nächster Schritt: {prog.label}</span>
         </span>
         <span class="lr-route-arrow"><IconArrowRight /></span>
       </button>

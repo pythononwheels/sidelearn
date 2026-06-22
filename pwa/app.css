@@ -385,8 +385,60 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 }
 .pill-day.on { background: var(--ll-accent); color: var(--ll-accent-ink); border-color: transparent; }
 
+/* Redesigned Home (Knuddel) -------------------------------------------- */
+.gurki { display: block; }
+.h2-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.h2-pick { display: flex; gap: 6px; }
+.h2-pick select {
+  font: inherit; font-weight: 700; font-size: 13px; padding: 6px 8px; border-radius: 12px;
+  border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text);
+}
+.h2-stats { display: flex; gap: 8px; }
+.h2-stat {
+  display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: 14px;
+  padding: 5px 11px 5px 9px; border-radius: 99px; background: var(--ll-accent-soft); color: var(--ll-accent-strong);
+}
+.h2-stat svg { width: 15px; height: 15px; }
+.h2-stat.streak { color: #e8743b; background: rgba(232,116,59,.14); }
+
+.h2-hero { position: relative; text-align: center; padding: 8px 0 4px; overflow: hidden; }
+.h2-blob { position: absolute; border-radius: 50%; filter: blur(3px); opacity: .35; z-index: 0; }
+.h2-blob.b1 { width: 110px; height: 110px; background: var(--ll-accent); top: -24px; left: -16px; }
+.h2-blob.b2 { width: 84px; height: 84px; background: var(--lr-petrol, #5ac8fa); top: 40px; right: -14px; }
+.h2-ring { position: relative; z-index: 1; width: 132px; height: 132px; border-radius: 50%; margin: 2px auto 8px; display: grid; place-items: center; }
+.h2-ring-in { width: 112px; height: 112px; border-radius: 50%; background: var(--ll-surface); display: grid; place-items: end center; overflow: hidden; box-shadow: inset 0 -6px 12px rgba(0,0,0,.05); }
+.h2-ring-in .gurki { width: 92px; margin-bottom: -2px; }
+.h2-title { position: relative; z-index: 1; font-family: var(--font-head); font-weight: 800; font-size: 20px; display: block; }
+.h2-sub { position: relative; z-index: 1; display: block; color: var(--ll-accent-strong); font-weight: 700; font-size: 13px; margin-top: 2px; }
+.h2-bubble {
+  position: relative; z-index: 1; display: inline-block; margin: 14px auto 6px; padding: 11px 16px;
+  background: var(--ll-accent); color: var(--ll-accent-ink); border-radius: 16px;
+  font-family: var(--font-head); font-weight: 700; font-size: 15px; box-shadow: var(--btn3d, 0 4px 0 var(--ll-accent-strong));
+}
+.h2-bubble::after { content: ''; position: absolute; left: 26px; bottom: -8px; border: 6px solid transparent; border-top-color: var(--ll-accent); }
+
+.h2-card {
+  display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 14px;
+  border-radius: 20px; border: 1px solid var(--ll-border); background: var(--ll-surface); box-shadow: var(--card3d, none);
+}
+.h2-card.empty { color: var(--ll-text-soft); font-size: 14px; }
+.h2-card-ico { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex: none; border-radius: 14px; background: var(--ll-accent-soft); color: var(--ll-accent-strong); }
+.h2-card-ico svg { width: 23px; height: 23px; }
+.h2-card-body { display: flex; flex-direction: column; flex: 1; }
+.h2-card-lbl { font-family: var(--font-head); font-weight: 800; font-size: 16px; }
+.h2-card-sub { font-size: 12.5px; color: var(--ll-text-soft); }
+.h2-go {
+  font: inherit; font-family: var(--font-head); font-weight: 800; font-size: 14px; color: var(--ll-accent-ink);
+  background: var(--ll-accent); border: none; border-radius: 14px; padding: 9px 18px; cursor: pointer; flex: none;
+  box-shadow: var(--btn3d, 0 4px 0 var(--ll-accent-strong));
+}
+.h2-go:active { transform: translateY(1px); }
+
 /* Home quick-action tiles ---------------------------------------------- */
 .lr-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lr-tiles.three { grid-template-columns: 1fr 1fr 1fr; margin-top: 12px; }
+.lr-tiles.three .lr-tile { align-items: center; text-align: center; gap: 6px; padding: 14px 8px; }
+.lr-tiles.three .lr-tile-ico { margin-bottom: 0; }
 .lr-tile {
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
   padding: 16px; border-radius: 18px; border: 1px solid var(--ll-border);

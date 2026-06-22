@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.73] — 2026-06-22
+
+### Changed (Learny PWA) — Home redesign + mascot
+- Introduced **Gurki**, the pickle mascot (`src/public/gurki/*.png`, transparent),
+  shown in the home hero.
+- **Home redesign** (unified "Knuddel" look): XP + streak pills top-right,
+  progress **ring around Gurki** with "Tag N — stark!" + "X % bis zum nächsten
+  Ziel", a motivation **speech bubble**, a compact **Tageslektion card** (Start /
+  Weiter) and three action tiles (Zufall / Lückentext / Vokabeln) with custom
+  SVG icons (no emojis), plus the Lernroute CTA.
+
 ## [0.6.72] — 2026-06-22
 
 ### Added (Learny PWA)
