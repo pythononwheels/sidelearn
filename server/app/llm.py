@@ -22,7 +22,7 @@ SYSTEM = (
     "For EACH paragraph, in the SAME order and SAME count, produce:\n"
     "  - 'simplified': the paragraph GENUINELY rewritten in simpler {lang} for level "
     "{level} — clearly shorter sentences and more common words than the original. "
-    "For A2 keep sentences very short and basic. Do NOT just copy the original; it "
+    "For A1/A2 keep sentences very short and basic (A1 even simpler). Do NOT just copy the original; it "
     "must read easier. Keep the key facts, stay in {lang}, do NOT translate.\n"
     "  - 'question': ALWAYS exactly ONE comprehension question about that paragraph, "
     "with exactly 3 'options' in {lang} and 'correct' = 0-based index of the right "

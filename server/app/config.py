@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 LANGS = [s.strip() for s in os.getenv("SL_LANGS", "fr,de,en,nl,es").split(",") if s.strip()]
-LEVELS = [s.strip() for s in os.getenv("SL_LEVELS", "A2,B1,B2,C1").split(",") if s.strip()]
+LEVELS = [s.strip() for s in os.getenv("SL_LEVELS", "A1,A2,B1,B2,C1").split(",") if s.strip()]
 POOL = int(os.getenv("SL_POOL", "4"))
 MAX_PARAS = int(os.getenv("SL_MAX_PARAS", "8"))
 
@@ -53,6 +53,10 @@ TRANSLATE_DAILY_CAP = int(os.getenv("SL_TRANSLATE_DAILY_CAP", "3000"))
 # single level (~$0.001), so the default stays well under a euro. Cached repeats
 # don't count — the surprise pool grows into a reusable library over time.
 SURPRISE_DAILY_CAP = int(os.getenv("SL_SURPRISE_DAILY_CAP", "200"))
+
+# Max on-demand lesson prepares per day for an allowed-but-unbuilt level (e.g.
+# A1, which is prepared lazily when first requested). Cached repeats don't count.
+ONDEMAND_DAILY_CAP = int(os.getenv("SL_ONDEMAND_DAILY_CAP", "300"))
 
 LANG_NAMES = {
     "fr": "French",

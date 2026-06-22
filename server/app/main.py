@@ -103,13 +103,25 @@ def daily(
     return {"date": dkey, "lang": lang, "level": level, "goal": min(2, len(articles)), "articles": articles}
 
 
+async def _ensure_prepared(article_id: str, level: str) -> dict | None:
+    """Return the prepared lesson for (article, level), preparing it on demand
+    (cap-guarded) if the level is allowed but not built yet — e.g. A1."""
+    prepared = db.get_prepared(article_id, level)
+    if prepared:
+        return prepared
+    if db.telemetry_count_today("ondemand") >= config.ONDEMAND_DAILY_CAP:
+        return None
+    await asyncio.to_thread(pipeline.process_article, article_id, [level], False, "ondemand")
+    return db.get_prepared(article_id, level)
+
+
 @app.get("/lesson/{article_id}")
-def lesson(article_id: str, level: str = Query("A2")) -> dict:
+async def lesson(article_id: str, level: str = Query("A2")) -> dict:
     _check_level(level)
     art = db.get_article(article_id)
     if not art:
         raise HTTPException(404, "article not found")
-    prepared = db.get_prepared(article_id, level)
+    prepared = await _ensure_prepared(article_id, level)
     if not prepared:
         raise HTTPException(404, f"lesson not prepared for level {level}")
     prep_paras = prepared.get("paragraphs", [])
@@ -220,7 +232,7 @@ async def surprise(
 
             # Already in the library and prepared for this level → free, return.
             if db.has_prepared(art["id"], level):
-                return lesson(art["id"], level)
+                return await lesson(art["id"], level)
 
             if not db.has_article(art["id"]):
                 paras = await wiki.fetch_paragraphs(client, lang, art["title"], config.MAX_PARAS)
@@ -235,16 +247,16 @@ async def surprise(
             prepares += 1
             await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise")
             if db.has_prepared(art["id"], level):
-                return lesson(art["id"], level)
+                return await lesson(art["id"], level)
 
     raise HTTPException(404, "couldn't find a good article right now — try again")
 
 
 @app.get("/random")
-def random_lesson(lang: str = Query(...), level: str = Query("A2")) -> dict:
+async def random_lesson(lang: str = Query(...), level: str = Query("A2")) -> dict:
     _check_lang(lang)
     _check_level(level)
     art = db.random_article(lang)
     if not art:
         raise HTTPException(404, "no articles yet")
-    return lesson(art["id"], level)
+    return await lesson(art["id"], level)
