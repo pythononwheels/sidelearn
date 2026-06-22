@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Learny — Theme-Galerie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0c0c10; color: #e8e8ee; font-family: 'Inter', system-ui, sans-serif; }
+  .gallery-head { padding: 22px 20px 6px; text-align: center; }
+  .gallery-head h1 { margin: 0 0 4px; font-size: 22px; }
+  .gallery-head p { margin: 0; color: #9a9aae; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; padding: 16px; position: sticky; top: 0; background: #0c0c10cc; backdrop-filter: blur(8px); z-index: 5; }
+  .tab { font: inherit; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 999px; border: 1px solid #2a2a36; background: #16161e; color: #cfcfdd; cursor: pointer; }
+  .tab.on { background: #fff; color: #111; border-color: transparent; }
+  .panel { display: none; padding: 8px 16px 60px; }
+  .panel.on { display: block; }
+
+  /* layout: phone + styleguide */
+  .layout { display: grid; grid-template-columns: 390px 1fr; gap: 32px; max-width: 1100px; margin: 0 auto; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+  .phone { width: 390px; max-width: 100%; border-radius: 36px; padding: 12px; background: #1c1c24; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .screen { border-radius: 26px; overflow: hidden; }
+
+  /* ---- themed app mockup (uses theme vars) ---- */
+  .app { background: var(--bg); color: var(--text); font-family: var(--font); padding: 20px 16px 22px; min-height: 720px; }
+  .ah { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 800; font-size: 18px; font-family: var(--font-head); }
+  .logo { width: 28px; height: 28px; border-radius: 9px; background: var(--accent-grad, var(--accent)); }
+  .pick { display: flex; gap: 7px; }
+  .pill { font-weight: 700; font-size: 13px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  .hero { border-radius: var(--radius-lg); padding: 18px; margin-bottom: 20px; background: var(--accent-soft); }
+  .hero-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--accent-ink-soft, var(--accent)); }
+  .count { font-size: 13px; font-weight: 800; color: var(--accent-ink-soft, var(--accent)); background: var(--surface); border-radius: 999px; padding: 2px 11px; }
+  .hero p { margin: 0; font-size: 16px; line-height: 1.5; font-family: var(--font-head); }
+  .hero b { color: var(--accent-ink-soft, var(--accent)); }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .card { display: flex; align-items: center; gap: 13px; padding: 12px 14px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); }
+  .card.primary { border-color: var(--accent); background: var(--accent-soft); box-shadow: var(--card-3d, none); }
+  .av { width: 48px; height: 48px; border-radius: 14px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; color: #fff; background: var(--accent2); }
+  .ct { flex: 1; min-width: 0; }
+  .ct .t { font-weight: 700; font-size: 15px; }
+  .ct .s { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .go { font-weight: 800; font-size: 14px; color: var(--accent-ink-soft, var(--accent)); }
+  .foot { margin-top: 20px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 12px 15px; }
+  .foot-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 7px; }
+  .bar { height: 9px; border-radius: 999px; background: var(--bg); overflow: hidden; border: 1px solid var(--border); }
+  .bar > span { display: block; height: 100%; width: 62%; background: var(--accent2); }
+  .cta { margin-top: 14px; width: 100%; font: inherit; font-family: var(--font-head); font-weight: 800; font-size: 16px; padding: 14px; border-radius: var(--radius); border: none; background: var(--accent); color: var(--accent-ink); box-shadow: var(--btn-3d, none); }
+
+  /* ---- styleguide ---- */
+  .guide { color: var(--text); }
+  .guide-wrap { background: var(--bg); border-radius: 20px; padding: 22px; border: 1px solid var(--border); }
+  .guide h2 { font-family: var(--font-head); margin: 0 0 4px; font-size: 22px; }
+  .guide .tag { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .guide h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 22px 0 10px; }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 10px; }
+  .swatch { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+  .swatch .c { height: 52px; }
+  .swatch .l { padding: 6px 8px; font-size: 11px; background: var(--surface); }
+  .swatch .l b { display: block; font-size: 12px; }
+  .swatch .l span { color: var(--muted); }
+  .type .h1 { font-family: var(--font-head); font-weight: 800; font-size: 26px; }
+  .type .lead { font-size: 17px; }
+  .type .body { font-size: 15px; color: var(--text); }
+  .type .meta { font-size: 12px; color: var(--muted); }
+  .type div { margin: 6px 0; }
+  .comps { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .b-primary { font: inherit; font-family: var(--font-head); font-weight: 800; padding: 12px 20px; border-radius: var(--radius); border: none; background: var(--accent); color: var(--accent-ink); box-shadow: var(--btn-3d, none); }
+  .b-ghost { font: inherit; font-weight: 700; padding: 11px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  .chip { font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink-soft, var(--accent)); }
+  .badge { font-weight: 800; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--accent2); color: #fff; }
+  .fontname { font-size: 13px; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+  <div class="gallery-head">
+    <h1>Learny — Theme-Galerie</h1>
+    <p>4 Vorschläge · Startseite + Designsystem · alle freundlich, engaging, mit Gamification</p>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div id="panels"></div>
+
+<template id="demo">
+  <div class="layout">
+    <div class="phone"><div class="screen"><div class="app">
+      <div class="ah">
+        <span class="brand"><span class="logo"></span> Learny</span>
+        <div class="pick"><span class="pill">Français ▾</span><span class="pill">A2 ▾</span></div>
+      </div>
+      <div class="hero">
+        <div class="hero-top"><span class="eyebrow">Deine Tageslektion</span><span class="count">0/2</span></div>
+        <p>Lies <b>2</b> von 4 kurzen Artikeln — wir vereinfachen sie für dich auf A2.</p>
+      </div>
+      <div class="list">
+        <div class="card primary"><span class="av">⚽</span><div class="ct"><div class="t">Coupe du monde 2026</div><div class="s">La Coupe du monde aura lieu…</div></div><span class="go">Start ›</span></div>
+        <div class="card"><span class="av">É</span><div class="ct"><div class="t">Éric Roy</div><div class="s">Éric Roy était un joueur…</div></div><span class="go">lesen ›</span></div>
+        <div class="card"><span class="av">M</span><div class="ct"><div class="t">Lionel Messi</div><div class="s">Lionel Messi est un joueur…</div></div><span class="go">lesen ›</span></div>
+      </div>
+      <div class="foot">
+        <div class="foot-top"><span>Level 3</span><span style="color:var(--muted)">heute 40/100 XP</span></div>
+        <div class="bar"><span></span></div>
+      </div>
+      <button class="cta">Weiterlesen →</button>
+    </div></div></div>
+
+    <div class="guide"><div class="guide-wrap">
+      <h2 class="g-name"></h2>
+      <p class="tag g-tag"></p>
+      <h3>Palette</h3>
+      <div class="sw g-sw"></div>
+      <h3>Typografie</h3>
+      <div class="type">
+        <div class="h1">Willkommen bei Learny 👋</div>
+        <div class="lead">Lies jeden Tag echte Texte.</div>
+        <div class="body">Vereinfacht auf dein Sprachniveau, mit Übersetzung beim Antippen.</div>
+        <div class="meta">Absatz 1 / 8 · Auszug</div>
+        <div class="fontname g-font"></div>
+      </div>
+      <h3>Komponenten</h3>
+      <div class="comps">
+        <button class="b-primary">Los geht's →</button>
+        <button class="b-ghost">Original zeigen</button>
+        <span class="chip">A2</span>
+        <span class="badge">🔥 7</span>
+      </div>
+      <div style="margin-top:14px" class="bar"><span></span></div>
+    </div></div>
+  </div>
+</template>
+
+<script>
+const THEMES = {
+  mint: {
+    name: 'Fresh Mint', bg_label: 'weiß · ruhig & frisch',
+    desc: 'Klares Weiß, Mint-Grün, runde freundliche Formen. Beruhigend, „gesund", erwachsen.',
+    font: 'Nunito', fonthead: 'Nunito',
+    vars: { '--bg':'#ffffff','--surface':'#f5faf7','--border':'#e4efe9','--text':'#15241d','--muted':'#6c8179','--accent':'#16b386','--accent-ink':'#ffffff','--accent-ink-soft':'#0f9b73','--accent-soft':'#e0f4ec','--accent2':'#3fbfe2','--ok':'#16b386','--radius':'14px','--radius-lg':'22px' },
+  },
+  neon: {
+    name: 'Neon Focus', bg_label: 'dunkel · fokussiert',
+    desc: 'Tiefes Nachtblau mit leuchtendem Aqua-Akzent. Fokus-Modus, modern, „im Flow". Leichtes Glühen.',
+    font: 'Space Grotesk', fonthead: 'Space Grotesk',
+    vars: { '--bg':'#0f1422','--surface':'#192032','--border':'#2a3450','--text':'#eef2fb','--muted':'#8b99b6','--accent':'#4be3c0','--accent-ink':'#08131a','--accent-ink-soft':'#5bead0','--accent-soft':'rgba(75,227,192,.13)','--accent2':'#b388ff','--ok':'#4be3c0','--radius':'14px','--radius-lg':'20px','--btn-3d':'0 0 24px rgba(75,227,192,.45)' },
+  },
+  bright: {
+    name: 'Playful Pop', bg_label: 'hell · verspielt',
+    desc: 'Knalliges Grün + Sonnengelb, dicke runde Buttons mit 3D-Kante (Duolingo-Vibe). Maximal motivierend, spielerisch.',
+    font: 'Fredoka', fonthead: 'Fredoka',
+    vars: { '--bg':'#fffdf4','--surface':'#ffffff','--border':'#efe6cf','--text':'#2b2a24','--muted':'#928b76','--accent':'#58cc52','--accent-ink':'#ffffff','--accent-ink-soft':'#3a9e38','--accent-soft':'#e8f8e6','--accent2':'#ffc83d','--ok':'#58cc52','--radius':'18px','--radius-lg':'26px','--btn-3d':'0 4px 0 #3a9e38','--card-3d':'0 4px 0 rgba(88,204,82,.25)' },
+  },
+  paper: {
+    name: 'Editorial Paper', bg_label: 'warm · Lese-Magazin',
+    desc: 'Papierwarmes Off-White, Terrakotta + Tannengrün, Serifen-Headlines. Wertig, „Lesemagazin", ruhig & seriös.',
+    font: 'Inter', fonthead: 'Fraunces',
+    vars: { '--bg':'#f7f1e8','--surface':'#fffdf8','--border':'#e6dcc9','--text':'#2a2622','--muted':'#7d7164','--accent':'#c65d3b','--accent-ink':'#ffffff','--accent-ink-soft':'#b14e2e','--accent-soft':'#f1e3d8','--accent2':'#3f6b5e','--ok':'#3f6b5e','--radius':'10px','--radius-lg':'16px' },
+  },
+};
+
+const rgbToHex = (rgb) => {
+  const m = rgb.match(/\d+/g); if (!m) return rgb;
+  if (rgb.startsWith('rgba') && m[3] && +m[3] < 1) return rgb; // keep translucent
+  return '#' + m.slice(0,3).map(n => (+n).toString(16).padStart(2,'0')).join('');
+};
+
+const SWATCHES = ['--bg','--surface','--accent','--accent2','--text','--border','--ok'];
+const tabs = document.getElementById('tabs');
+const panels = document.getElementById('panels');
+
+Object.entries(THEMES).forEach(([key, t], i) => {
+  const tab = document.createElement('button');
+  tab.className = 'tab' + (i===0?' on':''); tab.textContent = t.name;
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+    tab.classList.add('on'); panels.children[i].classList.add('on');
+  };
+  tabs.appendChild(tab);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (i===0?' on':'');
+  const demo = document.getElementById('demo').content.cloneNode(true);
+  const root = demo.querySelector('.layout');
+  Object.entries(t.vars).forEach(([k,v]) => root.style.setProperty(k,v));
+  root.style.setProperty('--font', `'${t.font}', system-ui, sans-serif`);
+  root.style.setProperty('--font-head', `'${t.fonthead}', serif`);
+  demo.querySelector('.g-name').textContent = t.name;
+  demo.querySelector('.g-tag').textContent = t.bg_label + ' — ' + t.desc;
+  demo.querySelector('.g-font').textContent = 'Headlines: ' + t.fonthead + ' · Text: ' + t.font;
+  const sw = demo.querySelector('.g-sw');
+  SWATCHES.forEach(name => {
+    const val = t.vars[name];
+    const el = document.createElement('div'); el.className='swatch';
+    el.innerHTML = `<div class="c" style="background:${val}"></div><div class="l"><b>${name.replace('--','')}</b><span>${val}</span></div>`;
+    sw.appendChild(el);
+  });
+  panel.appendChild(demo);
+  panels.appendChild(panel);
+});
+</script>
+</body>
+</html>
