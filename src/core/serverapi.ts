@@ -63,6 +63,35 @@ export async function fetchServerDaily(
   }
 }
 
+export interface ServerWord {
+  word: string;
+  translation: string;
+  alternatives: string[];
+  example: string;
+  pos: string;
+}
+
+/** Context-aware word translation (word + the sentence it's in). Null on failure. */
+export async function fetchWordTranslation(
+  serverUrl: string,
+  lang: Language,
+  native: Language,
+  word: string,
+  sentence: string,
+): Promise<ServerWord | null> {
+  try {
+    const q = new URLSearchParams({ lang, native, word, sentence });
+    const res = await fetch(`${base(serverUrl)}/translate?${q}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const d = (await res.json()) as ServerWord;
+    return d.translation ? d : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchServerLesson(
   serverUrl: string,
   id: string,

@@ -12,10 +12,10 @@ import { CEFR_LEVELS, isAboveLevel, rankToBand, type CefrLevel } from '@/core/di
 import { loadRanks, rankOf } from '@/core/difficulty/frequency';
 import { loadNames } from '@/core/names';
 import { resolveWord } from '@/core/wordinfo';
-import type { WordInfo } from '@/core/types';
 import {
   fetchServerDaily,
   fetchServerLesson,
+  fetchWordTranslation,
   type ServerDaily,
   type ServerLesson,
 } from '@/core/serverapi';
@@ -308,7 +308,7 @@ function Lesson({
   const [score, setScore] = useState({ answered: saved?.answered ?? 0, correct: saved?.correct ?? 0 });
   const [quizIdx, setQuizIdx] = useState<number | null>(null);
   const [answer, setAnswer] = useState<number | null>(null);
-  const [pop, setPop] = useState<{ word: string; x: number; y: number } | null>(null);
+  const [pop, setPop] = useState<{ word: string; sentence: string; x: number; y: number } | null>(null);
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
   const [names, setNames] = useState<Set<string>>(new Set());
   // Award XP only for a lesson not yet credited (no farming by re-reading).
@@ -395,7 +395,7 @@ function Lesson({
             <TapText
               text={p.simplified}
               isHard={isHard}
-              onWord={(word, x, y) => setPop({ word, x, y })}
+              onWord={(word, x, y) => setPop({ word, sentence: p.simplified, x, y })}
             />
           </p>
           {i === lastIdx && !completed && quizIdx === null && (
@@ -505,26 +505,52 @@ function WordPopover({
   settings,
   onClose,
 }: {
-  pop: { word: string; x: number; y: number };
+  pop: { word: string; sentence: string; x: number; y: number };
   settings: PwaSettings;
   onClose: () => void;
 }) {
-  const [info, setInfo] = useState<WordInfo | null>(null);
+  const [band, setBand] = useState<string | null>(null);
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [alts, setAlts] = useState<string[]>([]);
+  const [example, setExample] = useState('');
+  const [pos, setPos] = useState('');
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(inDeck(settings.learn, pop.word));
+
   useEffect(() => {
     let alive = true;
-    void resolveWord(pop.word, settings.learn, settings.native, settings.level).then(
-      (i) => alive && setInfo(i),
-    );
+    setLoading(true);
+    // Band from the local frequency data (instant); translation from the server
+    // WITH sentence context (correct sense + alternatives), dict as fallback.
+    void resolveWord(pop.word, settings.learn, settings.native, settings.level).then((i) => {
+      if (alive) setBand(i.band);
+    });
+    void (async () => {
+      const sv = await fetchWordTranslation(SERVER, settings.learn, settings.native, pop.word, pop.sentence);
+      if (!alive) return;
+      if (sv) {
+        setTranslation(sv.translation);
+        setAlts(sv.alternatives);
+        setExample(sv.example);
+        setPos(sv.pos);
+      } else {
+        // offline / over budget → context-free dictionary fallback
+        const i = await resolveWord(pop.word, settings.learn, settings.native, settings.level);
+        if (!alive) return;
+        const senses = i.senses[0]?.translations.slice(0, 4) ?? [];
+        setTranslation(senses[0] ?? '');
+        setAlts(senses.slice(1));
+      }
+      if (alive) setLoading(false);
+    })();
     return () => {
       alive = false;
     };
-  }, [pop.word]);
+  }, [pop.word, pop.sentence]);
 
-  const translation = info?.senses[0]?.translations.slice(0, 4).join(', ') ?? '';
   function merken() {
-    if (saved) return;
-    if (addToDeck({ word: pop.word, translation, lang: settings.learn, ts: Date.now() })) {
+    if (saved || !translation) return;
+    if (addToDeck({ word: pop.word, translation, lang: settings.learn, context: pop.sentence, ts: Date.now() })) {
       award(XP.merken);
     }
     setSaved(true);
@@ -536,16 +562,23 @@ function WordPopover({
       <div class="sl-pop" style={{ top: `${pop.y + 8}px`, left: `${Math.min(pop.x, window.innerWidth - 240)}px` }}>
         <div class="sl-pop-head">
           <b>{pop.word}</b>
-          {info && <span class="sl-pop-band" data-band={info.band[0]}>{info.band}</span>}
+          {band && <span class="sl-pop-band" data-band={band[0]}>{band}</span>}
         </div>
-        {info === null ? (
+        {loading ? (
           <Dots />
         ) : translation ? (
-          <p class="sl-pop-trans">{translation}</p>
+          <>
+            <p class="sl-pop-trans">
+              {translation}
+              {pos && <span class="sl-pop-pos"> · {pos}</span>}
+            </p>
+            {alts.length > 0 && <p class="sl-pop-alts">auch: {alts.join(', ')}</p>}
+            {example && <p class="sl-pop-ex">„{example}"</p>}
+          </>
         ) : (
-          <p class="sl-muted">keine Wörterbuch-Übersetzung</p>
+          <p class="sl-muted">keine Übersetzung gefunden</p>
         )}
-        <button class={`sl-merken ${saved ? 'saved' : ''}`} disabled={saved} onClick={merken}>
+        <button class={`sl-merken ${saved ? 'saved' : ''}`} disabled={saved || !translation} onClick={merken}>
           {saved ? '✓ gemerkt' : '★ merken'}
         </button>
       </div>
