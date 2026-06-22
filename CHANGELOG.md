@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.78] — 2026-06-23
+
+### Changed (Learny PWA)
+- Home route preview back to a **vertical** short segment (previous · current ·
+  next, Duolingo-style) with a "Los geht's" cap at the very start.
+
 ## [0.6.77] — 2026-06-23
 
 ### Changed (Learny PWA) — Jelly Deluxe look + horizontal route preview

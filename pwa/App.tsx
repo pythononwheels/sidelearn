@@ -453,29 +453,35 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
         <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico"><IconCards /></span><span class="lr-tile-t">Vokabeln</span></button>
       </div>
 
-      <div class="rp">
-        <button class="rp-head" onClick={onRoute}>
-          <span class="rp-head-t">Deine Lernroute</span>
-          <span class="rp-head-s">{prog.label} · alle ansehen →</span>
-        </button>
-        <div class="rp-track">
-          <span class="rp-line" />
-          {[-2, -1, 0, 1, 2].map((off) => {
-            const i = cur + off;
-            if (i < 0 || i >= NODES_PER_LEVEL) return <span class="rp-node cap" key={off} />;
-            const t = nodeType(level, i);
-            const state: 'done' | 'current' | 'locked' = i < prog.node ? 'done' : i === cur && prog.node < NODES_PER_LEVEL ? 'current' : 'locked';
-            const M = NODE_META[t];
+      <button class="mini-head" onClick={onRoute}>
+        <span class="mini-head-t">Deine Lernroute</span>
+        <span class="mini-head-s">{prog.label} · alle ansehen →</span>
+      </button>
+      <div class="route mini">
+        {[-1, 0, 1].map((off) => {
+          const i = cur + off;
+          if (i < 0 || i >= NODES_PER_LEVEL) {
             return (
-              <button class={`rp-node ${state}`} key={off} disabled={state !== 'current'} onClick={() => state === 'current' && launchNode(t)}>
-                {state === 'current' ? <img src="/gurki/yay.png" alt="" /> : state === 'done' ? <IconCheck /> : state === 'locked' ? <IconLock /> : <M.Icon />}
-              </button>
+              <div class="rn cap" key={off}>
+                <div class="rn-rail"><span class="rn-dot" /></div>
+                <span class="rn-card"><span class="rn-title">{i < 0 ? 'Los geht’s' : 'Level geschafft'}</span></span>
+              </div>
             );
-          })}
-        </div>
-        <button class="rp-cur-label" disabled={prog.levelDone} onClick={() => !prog.levelDone && launchNode(prog.nodeType)}>
-          {prog.levelDone ? 'Level geschafft!' : `Jetzt: ${NODE_META[prog.nodeType].label} · tippen`}
-        </button>
+          }
+          const t = nodeType(level, i);
+          const state: 'done' | 'current' | 'locked' = i < prog.node ? 'done' : i === cur && prog.node < NODES_PER_LEVEL ? 'current' : 'locked';
+          const M = NODE_META[t];
+          return (
+            <div class={`rn ${state}`} key={off}>
+              <div class="rn-rail"><span class="rn-dot">{state === 'done' ? <IconCheck /> : state === 'locked' ? <IconLock /> : <M.Icon />}</span></div>
+              <button class="rn-card" disabled={state !== 'current'} onClick={() => state === 'current' && launchNode(t)}>
+                <span class="rn-title">{M.label}</span>
+                <span class="rn-sub">{state === 'current' ? 'Jetzt dran · tippen' : state === 'done' ? 'erledigt' : 'gesperrt'}</span>
+              </button>
+              {state === 'current' && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
+            </div>
+          );
+        })}
       </div>
     </main>
   );
