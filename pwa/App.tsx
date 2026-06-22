@@ -37,6 +37,7 @@ import {
 } from './progress';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
+import { pop, celebrate } from './confetti';
 
 type Tab = 'home' | 'challenges' | 'report' | 'settings';
 type ArticleRef = { id: string; title: string; url: string; thumb?: string };
@@ -428,11 +429,12 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
   const card = all[order[pos] ?? -1];
 
-  function answer(known: boolean) {
+  function answer(known: boolean, e?: MouseEvent) {
     if (known) {
       setScore((s) => s + 1);
       award(XP.merken);
       creditMastery(settings.level, MASTERY.merken);
+      if (e) { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); pop(r.left + r.width / 2, r.top + r.height / 2); }
     }
     if (pos + 1 >= order.length) setDone(true);
     else { setPos((p) => p + 1); setRevealed(false); }
@@ -470,7 +472,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
           {revealed && (
             <div class="tr-actions">
               <button class="tr-again" onClick={() => answer(false)}>Nochmal</button>
-              <button class="tr-known" onClick={() => answer(true)}>Gewusst ✓</button>
+              <button class="tr-known" onClick={(e) => answer(true, e)}>Gewusst ✓</button>
             </div>
           )}
         </>
@@ -574,10 +576,14 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
     return () => { alive = false; };
   }, [settings.learn, settings.level]);
 
-  function choose(opt: string) {
+  function choose(opt: string, e: MouseEvent) {
     if (picked !== null) return;
     setPicked(opt);
-    if (questions && opt === questions[pos]!.answer) { setScore((s) => s + 1); award(XP.merken); creditMastery(settings.level, MASTERY.clozeCorrect); }
+    if (questions && opt === questions[pos]!.answer) {
+      setScore((s) => s + 1); award(XP.merken); creditMastery(settings.level, MASTERY.clozeCorrect);
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      pop(r.left + r.width / 2, r.top + r.height / 2);
+    }
   }
   function next() {
     setPicked(null);
@@ -615,7 +621,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
                 let cls = '';
                 if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
                 return (
-                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={() => choose(opt)}>
+                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
                     {opt}
                   </button>
                 );
@@ -720,7 +726,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
     const readingPass = rt ? correctRef.current / rt >= 0.6 : true;
     const passed = vocabPass && readingPass;
     let adv: AdvanceResult | null = null;
-    if (passed) { adv = advanceStage(settings.level); onAdvance(adv); }
+    if (passed) { adv = advanceStage(settings.level); onAdvance(adv); celebrate(); }
     logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'bestanden' : 'nicht bestanden' });
     if (adv?.levelUp) logActivity({ type: 'levelup', level: adv.level, detail: adv.level });
     setResult({ passed, adv });
@@ -1204,6 +1210,9 @@ function Lesson({
   const [names, setNames] = useState<Set<string>>(new Set());
   // Award XP only for a lesson not yet credited (no farming by re-reading).
   const creditable = useRef(!isLessonCredited(article.url));
+  // Confetti the daily goal only when finished in-session (not on revisit).
+  const freshDone = useRef(false);
+  const [celebrated, setCelebrated] = useState(false);
 
   // Load frequency ranks + names so we can mark words above the user's level
   // (visible reading aid, like the live pages).
@@ -1243,6 +1252,15 @@ function Lesson({
     saveProgress(article.url, { progress: visible, completed, answered: score.answered, correct: score.correct });
   }, [visible, completed, score, lesson]);
 
+  // Confetti when the just-finished lesson completes the daily goal.
+  useEffect(() => {
+    if (!completed || !freshDone.current || celebrated || !daily) return;
+    const arts = daily.articles ?? [];
+    const goal = daily.goal ?? 2;
+    const done = arts.filter((a) => isCompleted(a.url)).length;
+    if (arts.some((a) => a.url === article.url) && done >= goal) { celebrate(); setCelebrated(true); }
+  }, [completed, daily]);
+
   if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">Lektion nicht verfügbar.</p></Frame>;
   if (!lesson) return <Frame title={article.title} onBack={onBack}><Dots /></Frame>;
 
@@ -1266,6 +1284,7 @@ function Lesson({
         });
         creditable.current = false;
       }
+      freshDone.current = true;
       setCompleted(true);
     }
   }
@@ -1535,10 +1554,17 @@ function Quiz({
   onAnswer: (i: number) => void;
   onNext: () => void;
 }) {
+  const optsRef = useRef<HTMLDivElement>(null);
+  // Small confetti pop on a correct answer, anchored at the correct option.
+  useEffect(() => {
+    if (answer === null || answer !== q.correct) return;
+    const el = optsRef.current?.querySelector('.sl-quiz-opt.correct');
+    if (el) { const r = el.getBoundingClientRect(); pop(r.left + r.width / 2, r.top + r.height / 2); }
+  }, [answer]);
   return (
     <div class="sl-quiz">
       <p class="sl-quiz-q">{q.q}</p>
-      <div class="sl-quiz-opts">
+      <div class="sl-quiz-opts" ref={optsRef}>
         {q.options.map((opt, i) => {
           let cls = '';
           if (answer !== null) cls = i === q.correct ? 'correct' : i === answer ? 'wrong' : 'dim';

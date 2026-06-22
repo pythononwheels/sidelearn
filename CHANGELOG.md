@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.72] — 2026-06-22
+
+### Added (Learny PWA)
+- Tasteful **confetti**: a small pop on every correct answer (reading quiz, cloze,
+  vocab trainer, level-test) and a bigger burst on milestones (daily goal reached,
+  Etappen-Test passed / level-up). Dependency-free, honours
+  `prefers-reduced-motion`, kept deliberately restrained.
+
 ## [0.6.71] — 2026-06-22
 
 ### Added (Learny PWA) — Phase C
