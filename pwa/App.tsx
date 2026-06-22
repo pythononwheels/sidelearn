@@ -46,6 +46,8 @@ import { pop, celebrate } from './confetti';
 type Tab = 'home' | 'challenges' | 'report' | 'settings';
 type ArticleRef = { id: string; title: string; url: string; thumb?: string };
 
+declare const __APP_VERSION__: string;
+
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
@@ -1203,8 +1205,38 @@ function SettingsTab({ settings, onPatch }: {
         </div>
       </div>
 
+      <div class="set-group">
+        <p class="set-label">App</p>
+        <div class="set-version">
+          <span>Version <b>{__APP_VERSION__}</b></span>
+          <UpdateCheck />
+        </div>
+      </div>
+
       <p class="sl-muted">Learny · Teil der Sidelearn-Familie · Texte: Wikipedia (CC BY-SA)</p>
     </main>
+  );
+}
+
+function UpdateCheck() {
+  const [state, setState] = useState<'idle' | 'checking' | 'current'>('idle');
+  // The Updater banner appears (sl-need-refresh) if a new version is found.
+  useEffect(() => {
+    const h = () => setState('idle');
+    window.addEventListener('sl-need-refresh', h);
+    return () => window.removeEventListener('sl-need-refresh', h);
+  }, []);
+  async function check() {
+    setState('checking');
+    const u = (window as unknown as { __slUpdate?: (r?: boolean) => Promise<void> }).__slUpdate;
+    try { await u?.(); } catch { /* ignore */ }
+    // If an update was waiting, the banner fires; otherwise we're up to date.
+    setTimeout(() => setState((s) => (s === 'checking' ? 'current' : s)), 1200);
+  }
+  return (
+    <button class="set-update" onClick={check} disabled={state === 'checking'}>
+      {state === 'checking' ? 'Suche …' : state === 'current' ? 'Aktuell ✓' : 'Auf Updates prüfen'}
+    </button>
   );
 }
 

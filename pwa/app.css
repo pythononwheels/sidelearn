@@ -351,6 +351,17 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   border: 2px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text); cursor: pointer;
 }
 .set-choice.sel { border-color: var(--ll-accent); background: var(--ll-accent-soft); color: var(--ll-accent-strong); }
+.set-version {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px; border-radius: 14px; border: 1px solid var(--ll-border);
+  background: var(--ll-surface); font-size: 14px; color: var(--ll-text-soft);
+}
+.set-version b { color: var(--ll-text); }
+.set-update {
+  font: inherit; font-weight: 700; font-size: 13px; padding: 7px 12px; border-radius: 11px;
+  border: 1px solid var(--ll-border); background: var(--ll-accent-soft); color: var(--ll-accent-strong); cursor: pointer;
+}
+.set-update:disabled { opacity: .6; cursor: default; }
 
 .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .theme-card {

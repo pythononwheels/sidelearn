@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.75] — 2026-06-22
+
+### Added (Learny PWA)
+- **Version display in Settings** (injected at build via `__APP_VERSION__`) plus a
+  **"Auf Updates prüfen"** button that asks the service worker to check; a real
+  update still surfaces via the existing update banner.
+
 ## [0.6.74] — 2026-06-22
 
 ### Added (Learny) — 10-Etappen progression, Lernroute, A1

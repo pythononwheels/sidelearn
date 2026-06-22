@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'));
 
 // Sidelearn Learn PWA — its own Vite app, reusing src/core/* and the bundled
 // dictionary/frequency JSONs (served from src/public). Offline-capable via a
@@ -12,6 +15,9 @@ export default defineConfig({
   publicDir: fileURLToPath(new URL('../src/public', import.meta.url)),
   resolve: {
     alias: { '@': fileURLToPath(new URL('../src', import.meta.url)) },
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   build: {
     outDir: fileURLToPath(new URL('../.output/pwa', import.meta.url)),
