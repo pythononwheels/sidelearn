@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.77] — 2026-06-23
+
+### Changed (Learny PWA) — Jelly Deluxe look + horizontal route preview
+- New **Jelly Deluxe** theme (default for new installs): glossy gradient buttons
+  & bubble, soft 3D cards/tiles, glow ring, pink/purple palette, Baloo 2 +
+  Quicksand fonts. Selectable in Settings → Theme (first card).
+- **Home route preview** is now a horizontal segment centred on the current node
+  (done · done · Gurki · locked · locked) with start/end caps so there's always
+  context; tap the current node / label to start it.
+
 ## [0.6.76] — 2026-06-22
 
 ### Changed (Learny PWA)

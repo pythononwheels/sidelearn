@@ -18,7 +18,7 @@ export interface PwaSettings {
 const SETTINGS_KEY = 'sl_pwa_settings';
 const PROGRESS_KEY = 'sl_pwa_progress';
 
-const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', theme: 'warm', onboarded: false };
+const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', theme: 'jelly', onboarded: false };
 
 export function getSettings(): PwaSettings {
   try {

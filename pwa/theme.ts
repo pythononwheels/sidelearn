@@ -3,7 +3,7 @@
  * The theme is authoritative (independent of the OS light/dark setting).
  */
 
-export type ThemeId = 'warm' | 'mint' | 'neon' | 'bright' | 'paper';
+export type ThemeId = 'jelly' | 'warm' | 'mint' | 'neon' | 'bright' | 'paper';
 
 export interface Theme {
   id: ThemeId;
@@ -13,6 +13,7 @@ export interface Theme {
 }
 
 export const THEMES: Theme[] = [
+  { id: 'jelly', name: 'Jelly', dots: ['#ff6b9d', '#7c5cfc'], bg: '#fdf3f8' },
   { id: 'warm', name: 'Warm', dots: ['#ff7a66', '#2a7e8c'], bg: '#faf3ea' },
   { id: 'mint', name: 'Fresh', dots: ['#16b386', '#3fbfe2'], bg: '#ffffff' },
   { id: 'neon', name: 'Neon', dots: ['#4be3c0', '#b388ff'], bg: '#0f1422' },
