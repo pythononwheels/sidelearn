@@ -49,6 +49,10 @@ def cost_usd(model: str, in_tokens: int, out_tokens: int) -> float:
 # don't count. Each call is tiny (~150 tokens), so this stays well under a euro.
 TRANSLATE_DAILY_CAP = int(os.getenv("SL_TRANSLATE_DAILY_CAP", "3000"))
 
+# Max uncached sentence/question translations per day (cost guard). Cached lookups
+# don't count; each call is small.
+SENTENCE_DAILY_CAP = int(os.getenv("SL_SENTENCE_DAILY_CAP", "2000"))
+
 # Max on-demand "surprise" article prepares per day (cost guard). Each prepares a
 # single level (~$0.001), so the default stays well under a euro. Cached repeats
 # don't count — the surprise pool grows into a reusable library over time.

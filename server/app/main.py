@@ -199,6 +199,46 @@ def translate(
     return {**data, "cached": False}
 
 
+@app.get("/sentence")
+def sentence(
+    lang: str = Query(...),
+    native: str = Query(...),
+    text: str = Query(...),
+) -> dict:
+    """Translate a whole sentence/question into the native language (for the
+    'Übersetzung' button on quizzes & cloze). Cached; capped per day."""
+    _check_lang(lang)
+    if native not in config.LANGS:
+        raise HTTPException(400, f"unknown native {native!r}")
+    text = text.strip()
+    if not text:
+        raise HTTPException(400, "empty text")
+    thash = hashlib.sha1(text.lower().encode("utf-8")).hexdigest()[:16]
+
+    cached = db.get_word_cache(lang, native, thash, "s")
+    if cached:
+        return {"translation": cached.get("translation", ""), "cached": True}
+
+    if db.telemetry_count_today("sentence") >= config.SENTENCE_DAILY_CAP:
+        raise HTTPException(429, "daily translation budget reached — try later")
+
+    now = datetime.now(timezone.utc).isoformat()
+    data, meta = llm.translate_text(text, lang, native)
+    db.add_telemetry(
+        {
+            "ts": now, "provider": config.PROVIDER, "model": meta["model"], "fn": "sentence",
+            "level": None, "lang": lang, "article_id": None, "article_url": None,
+            "input_tokens": meta["input_tokens"], "output_tokens": meta["output_tokens"],
+            "cost_usd": meta["cost_usd"], "ms": meta["ms"], "status": meta["status"],
+            "error": meta["error"], "excerpt": meta["excerpt"],
+        }
+    )
+    if not data:
+        raise HTTPException(502, "translation failed")
+    db.put_word_cache(lang, native, thash, "s", {"translation": data["translation"], "alternatives": [], "example": "", "pos": ""}, now)
+    return {"translation": data["translation"], "cached": False}
+
+
 @app.get("/areas")
 def areas() -> dict:
     """Topic areas available for /surprise (with the languages each supports)."""

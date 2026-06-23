@@ -15,6 +15,7 @@ import { resolveWord } from '@/core/wordinfo';
 import {
   fetchServerArchive,
   fetchServerDaily,
+  fetchSentenceTranslation,
   fetchServerLesson,
   fetchSurprise,
   fetchWordTranslation,
@@ -695,6 +696,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
           <p class="sl-progress">Lücke {pos + 1} / {questions.length} · {title}</p>
           <div class="sl-quiz">
             <p class="sl-quiz-q">{q.prompt}</p>
+            <TranslateReveal text={q.prompt} settings={settings} />
             <div class="sl-quiz-opts">
               {q.options.map((opt) => {
                 let cls = '';
@@ -859,6 +861,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
             <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
             <div class="sl-quiz">
               <p class="sl-quiz-q">{questions[qpos]!.prompt}</p>
+              <TranslateReveal text={questions[qpos]!.prompt} settings={settings} />
               <div class="sl-quiz-opts">
                 {questions[qpos]!.options.map((opt) => {
                   let cls = '';
@@ -983,6 +986,7 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
           <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
           <div class="sl-quiz">
             <p class="sl-quiz-q">{q.q}</p>
+            {q.kind !== 'vocab' && <TranslateReveal text={q.q} settings={settings} />}
             <div class="sl-quiz-opts" ref={optsRef}>
               {q.options.map((opt, i) => {
                 let cls = '';
@@ -1552,6 +1556,8 @@ function Lesson({
             q={{ q: questions[quizIdx]!.q, options: questions[quizIdx]!.options, correct: questions[quizIdx]!.correct }}
             answer={answer}
             isLast={quizIdx === total - 1}
+            settings={settings}
+            translate={questions[quizIdx]!.kind === 'vocab' ? undefined : questions[quizIdx]!.q}
             onAnswer={(idx) => {
               if (answer !== null) return;
               setAnswer(idx);
@@ -1752,6 +1758,32 @@ function WordPopover({
   );
 }
 
+/* ------------------------------------------------------ translate reveal --- */
+
+function TranslateReveal({ text, settings }: { text: string; settings: PwaSettings }) {
+  const [t, setT] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  if (!text || settings.learn === settings.native) return null;
+  async function go() {
+    if (t !== null || loading) return;
+    setLoading(true);
+    const r = await fetchSentenceTranslation(SERVER, settings.learn, settings.native, text);
+    setT(r ?? '—');
+    setLoading(false);
+  }
+  return (
+    <div class="sl-xlate">
+      {t !== null ? (
+        <p class="sl-xlate-txt">{t}</p>
+      ) : (
+        <button class="sl-xlate-btn" disabled={loading} onClick={go}>
+          {loading ? 'Übersetze …' : '🌐 Übersetzung'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- quiz --- */
 
 function Quiz({
@@ -1760,12 +1792,16 @@ function Quiz({
   isLast,
   onAnswer,
   onNext,
+  settings,
+  translate,
 }: {
   q: { q: string; options: string[]; correct: number };
   answer: number | null;
   isLast: boolean;
   onAnswer: (i: number) => void;
   onNext: () => void;
+  settings: PwaSettings;
+  translate?: string;
 }) {
   const optsRef = useRef<HTMLDivElement>(null);
   // Small confetti pop on a correct answer, anchored at the correct option.
@@ -1777,6 +1813,7 @@ function Quiz({
   return (
     <div class="sl-quiz">
       <p class="sl-quiz-q">{q.q}</p>
+      {translate && <TranslateReveal text={translate} settings={settings} />}
       <div class="sl-quiz-opts" ref={optsRef}>
         {q.options.map((opt, i) => {
           let cls = '';

@@ -120,6 +120,45 @@ def translate_word(
     return data, _meta(model, tin, tout, t0, "ok", None, raw[:1000])
 
 
+SENTENCE_SYSTEM = (
+    "Translate the given {lang} text into natural, simple {native}. Stay faithful "
+    "to the meaning. If the text contains a blank like '____', keep a blank '___' "
+    "in your translation at the matching spot. Reply with ONLY the translation — "
+    "no quotes, no notes, no extra text."
+)
+
+
+def translate_text(
+    text: str, lang_code: str, native_code: str
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Translate a whole sentence/question into the native language. Returns
+    (data, meta); data is {'translation': str} or None on failure."""
+    lang = config.LANG_NAMES.get(lang_code, lang_code)
+    native = config.LANG_NAMES.get(native_code, native_code)
+    system = SENTENCE_SYSTEM.format(lang=lang, native=native)
+    model = (
+        config.OPENAI_MODEL
+        if config.PROVIDER == "openai"
+        else config.GEMINI_MODEL
+        if config.PROVIDER == "gemini"
+        else "mock"
+    )
+    t0 = time.monotonic()
+    try:
+        if config.PROVIDER == "openai":
+            raw, tin, tout = _openai(system, text, temperature=0.2)
+        elif config.PROVIDER == "gemini":
+            raw, tin, tout = _gemini(system, text, temperature=0.2)
+        else:
+            raw, tin, tout = f"[{native}] {text}", 0, 0
+    except Exception as e:  # noqa: BLE001
+        return None, _meta(model, 0, 0, t0, "error", str(e), "")
+    tr = (raw or "").strip().strip('"').strip()
+    if not tr:
+        return None, _meta(model, tin, tout, t0, "error", "empty translation", raw[:500])
+    return {"translation": tr}, _meta(model, tin, tout, t0, "ok", None, raw[:500])
+
+
 def _meta(model, tin, tout, t0, status, error, excerpt) -> dict[str, Any]:
     return {
         "model": model,

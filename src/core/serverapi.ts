@@ -131,6 +131,26 @@ export async function fetchSurprise(
   }
 }
 
+/** Translate a whole sentence/question into the native language. Null on failure. */
+export async function fetchSentenceTranslation(
+  serverUrl: string,
+  lang: Language,
+  native: Language,
+  text: string,
+): Promise<string | null> {
+  try {
+    const q = new URLSearchParams({ lang, native, text });
+    const res = await fetch(`${base(serverUrl)}/sentence?${q}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const d = (await res.json()) as { translation?: string };
+    return d.translation || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchServerLesson(
   serverUrl: string,
   id: string,
