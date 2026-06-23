@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.84] — 2026-06-23
+
+### Changed (Learny)
+- **Daily-Challenge: 5 Pflichtabsätze** statt 8. Nach 5 Absätzen „Challenge
+  erfüllt!" (zählt als Tageslektion-Schritt) mit Weiterlesen (3 Bonus-Absätze,
+  Bonus-XP) / Nächster Artikel / Zur Übersicht.
+- **App-Icon = Gurki** (Gurke auf Jelly-Verlauf), alle Größen + Apple-Touch;
+  Theme-Color pink.
+- Admin /stats: beide „Pro Tag"-Charts links bündig (gleiche Y-Achsen-Breite).
+
 ## [0.6.83] — 2026-06-23
 
 ### Added — more rubrics + prebuilt /surprise area pool
