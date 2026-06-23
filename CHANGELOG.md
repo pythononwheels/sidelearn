@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.87] — 2026-06-23
+
+### Changed (Learny)
+- **Home: 4 Kacheln (2×2)** — Artikelrubriken · Lückentext · Vokabeltest · Wörterbuch
+  (vorher 3: Zufall/Lückentext/Vokabeln).
+- **Vokabeltest ist nie mehr leer**: Karten = deine Merkwörter, mit
+  level-passenden Stufenwörtern auf 12 aufgefüllt.
+
+### Added (Learny)
+- **Wörterbuch** (neu): durchsuchbare Wortliste mit Übersetzung + CEFR-Badge,
+  Umschalter „Alle" (Stufenwörter kumulativ bis Level, ~150) ⇄ „Meine"
+  (Merkwörter); Stern zum Merken/Entfernen. **Suche fällt aufs komplette
+  gebündelte Wörterbuch zurück**, wenn das Wort nicht in der Stufenliste ist —
+  jedes Wort bleibt findbar und merkbar.
+- **Seed-Wortschatz** (`pwa/seedvocab.ts`): zur Laufzeit aus den gebündelten
+  freq + dict/gloss Daten gebaut (kein Extra-Payload), CEFR-gebandet, 2-Buchstaben-
+  Glue-Wörter ausgefiltert. Sprachen ohne Offline-Daten (it) → leer + Hinweis.
+
 ## [0.6.86] — 2026-06-23
 
 ### Added — Italian (it)
