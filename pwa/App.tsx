@@ -12,6 +12,7 @@ import { CEFR_LEVELS, isAboveLevel, rankToBand, type CefrLevel } from '@/core/di
 import { loadRanks, rankOf } from '@/core/difficulty/frequency';
 import { loadNames } from '@/core/names';
 import { resolveWord } from '@/core/wordinfo';
+import { lookup } from '@/core/dict/freedict';
 import {
   fetchServerArchive,
   fetchServerDaily,
@@ -26,7 +27,8 @@ import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
-import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
+import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
+import { seedVocab, type SeedWord } from './seedvocab';
 import { THEMES, applyTheme } from './theme';
 import {
   bandRankRange,
@@ -55,7 +57,7 @@ const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 type Overlay =
   | { kind: 'lesson'; article: ArticleRef }
-  | { kind: 'deck' }
+  | { kind: 'dict'; mode: 'all' | 'mine' }
   | { kind: 'trainer' }
   | { kind: 'surprise' }
   | { kind: 'cloze' }
@@ -103,8 +105,8 @@ export function App() {
         onHome={() => goTab('home')}
       />
     );
-  } else if (overlay?.kind === 'deck') {
-    content = <DeckView onBack={() => setOverlay(null)} />;
+  } else if (overlay?.kind === 'dict') {
+    content = <DictView settings={settings} initialMode={overlay.mode} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'trainer') {
     content = <TrainerView settings={settings} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'surprise') {
@@ -139,7 +141,7 @@ export function App() {
         onPatch={patch}
         onOpen={openLesson}
         onTrainer={() => setOverlay({ kind: 'trainer' })}
-        onDeck={() => setOverlay({ kind: 'deck' })}
+        onDict={() => setOverlay({ kind: 'dict', mode: 'all' })}
         onSurprise={() => setOverlay({ kind: 'surprise' })}
         onCloze={() => setOverlay({ kind: 'cloze' })}
         onRoute={() => setOverlay({ kind: 'route' })}
@@ -152,7 +154,7 @@ export function App() {
     content = (
       <ReportTab
         settings={settings}
-        onDeck={() => setOverlay({ kind: 'deck' })}
+        onDeck={() => setOverlay({ kind: 'dict', mode: 'mine' })}
         onTest={() => setOverlay({ kind: 'test' })}
         onRoute={() => setOverlay({ kind: 'route' })}
       />
@@ -359,12 +361,12 @@ function ArticleList({ articles, next, allDone, onOpen }: {
 
 /* ------------------------------------------------------------- Home tab --- */
 
-function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onCloze, onRoute, onTest }: {
+function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onCloze, onRoute, onTest }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
   onOpen: (a: ArticleRef) => void;
   onTrainer: () => void;
-  onDeck: () => void;
+  onDict: () => void;
   onSurprise: () => void;
   onCloze: () => void;
   onRoute: () => void;
@@ -460,10 +462,11 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
         </>
       )}
 
-      <div class="lr-tiles three">
-        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">Zufall</span></button>
+      <div class="lr-tiles four">
+        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">Artikelrubriken</span></button>
         <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico t-luecke"><IconGap /></span><span class="lr-tile-t">Lückentext</span></button>
-        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">Vokabeln</span></button>
+        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">Vokabeltest</span></button>
+        <button class="lr-tile" onClick={onDict}><span class="lr-tile-ico t-dict"><IconBook /></span><span class="lr-tile-t">Wörterbuch</span></button>
       </div>
 
       <button class="mini-head" onClick={onRoute}>
@@ -506,23 +509,52 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
 
 /* --------------------------------------------------------------- Trainer --- */
 
+interface Flashcard { word: string; translation: string }
+
 function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
-  const all = getDeck().filter((d) => d.lang === settings.learn);
-  const [order] = useState(() => all.map((_, i) => i).sort(() => Math.random() - 0.5));
+  // Cards = your saved words first, topped up with level-seed words to a round
+  // count so the test is never empty (cf. seedVocab). null = still loading.
+  const [cards, setCards] = useState<Flashcard[] | null>(null);
   const [pos, setPos] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
 
-  const card = all[order[pos] ?? -1];
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const TARGET = 12;
+      const list: Flashcard[] = getDeck()
+        .filter((d) => d.lang === settings.learn)
+        .slice(0, TARGET)
+        .map((d) => ({ word: d.word, translation: d.translation || '—' }));
+      const have = new Set(list.map((c) => c.word.toLowerCase()));
+      if (list.length < TARGET) {
+        const seed = await seedVocab(settings.learn, settings.native, settings.level, TARGET * 4);
+        for (const s of seed) {
+          if (list.length >= TARGET) break;
+          const k = s.word.toLowerCase();
+          if (have.has(k)) continue;
+          have.add(k);
+          list.push({ word: s.word, translation: s.translation });
+        }
+      }
+      list.sort(() => Math.random() - 0.5);
+      if (alive) setCards(list);
+    })();
+    return () => { alive = false; };
+  }, [settings.learn, settings.native, settings.level]);
+
+  const card = cards ? cards[pos] : undefined;
 
   function answer(known: boolean, e?: MouseEvent) {
+    if (!cards) return;
     if (known) {
       setScore((s) => s + 1);
       award(XP.merken);
       if (e) { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); pop(r.left + r.width / 2, r.top + r.height / 2); }
     }
-    if (pos + 1 >= order.length) { setDone(true); completeActivity(settings.level, 'vocab'); }
+    if (pos + 1 >= cards.length) { setDone(true); completeActivity(settings.level, 'vocab'); }
     else { setPos((p) => p + 1); setRevealed(false); }
   }
 
@@ -533,20 +565,22 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
         <span class="sl-lessontitle">Vokabeltest</span>
       </header>
 
-      {all.length === 0 ? (
+      {cards === null ? (
+        <Dots />
+      ) : cards.length === 0 ? (
         <p class="sl-muted">
-          Noch keine Vokabeln zum Üben. Tippe beim Lesen ein Wort an und drücke „★ merken".
+          Noch keine Vokabeln für {LANG_LABELS[settings.learn]}. Tippe beim Lesen ein Wort an und drücke „★ merken".
         </p>
       ) : done ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
           <h2>Fertig</h2>
-          <p>{score} von {all.length} gewusst.</p>
+          <p>{score} von {cards.length} gewusst.</p>
           <button class="sl-read" onClick={onBack}>Zurück</button>
         </section>
       ) : (
         <>
-          <p class="sl-progress">Karte {pos + 1} / {all.length}</p>
+          <p class="sl-progress">Karte {pos + 1} / {cards.length}</p>
           <div class="tr-card" onClick={() => setRevealed(true)}>
             <span class="tr-word">{card?.word}</span>
             {revealed ? (
@@ -1338,38 +1372,107 @@ function UpdateCheck() {
   );
 }
 
-/* ------------------------------------------------------------- Deck view --- */
+/* ------------------------------------------------------ Wörterbuch (dict) --- */
 
-function DeckView({ onBack }: { onBack: () => void }) {
-  const [deck, setDeck] = useState<DeckEntry[]>(getDeck());
+function DictView({ settings, initialMode, onBack }: {
+  settings: PwaSettings;
+  initialMode: 'all' | 'mine';
+  onBack: () => void;
+}) {
+  const [mode, setMode] = useState<'all' | 'mine'>(initialMode);
+  const [q, setQ] = useState('');
+  const [seed, setSeed] = useState<SeedWord[] | null>(null);
+  const [, force] = useState(0); // bump to re-render after a deck change
+  // Full-dictionary fallback: when the query isn't in the level list, look the
+  // typed word up in the complete bundled dictionary. null = none/idle.
+  const [fallback, setFallback] = useState<{ word: string; translation: string } | null | 'loading'>(null);
+
+  useEffect(() => {
+    let alive = true;
+    seedVocab(settings.learn, settings.native, settings.level, 150).then((s) => { if (alive) setSeed(s); });
+    return () => { alive = false; };
+  }, [settings.learn, settings.native, settings.level]);
+
+  const toggle = (word: string, translation: string) => {
+    if (inDeck(settings.learn, word)) removeFromDeck(settings.learn, word);
+    else addToDeck({ word, translation, lang: settings.learn, ts: Date.now() });
+    force((n) => n + 1);
+  };
+
+  type Row = { word: string; translation: string; band?: CefrLevel };
+  const rows: Row[] = mode === 'mine'
+    ? getDeck().filter((d) => d.lang === settings.learn).map((d) => ({ word: d.word, translation: d.translation || '—' }))
+    : (seed ?? []).map((s) => ({ word: s.word, translation: s.translation, band: s.band }));
+
+  const ql = q.trim().toLowerCase();
+  const filtered = ql
+    ? rows.filter((r) => r.word.toLowerCase().includes(ql) || r.translation.toLowerCase().includes(ql))
+    : rows;
+
+  // When the query matches nothing in the level list, look it up in the full
+  // bundled dictionary so any word stays findable (and savable).
+  useEffect(() => {
+    let alive = true;
+    if (mode !== 'all' || ql.length < 2 || filtered.length > 0) { setFallback(null); return; }
+    setFallback('loading');
+    lookup(ql, settings.learn, settings.native).then((senses) => {
+      if (!alive) return;
+      const tr = senses[0]?.translations?.slice(0, 3).join(', ');
+      setFallback(tr ? { word: ql, translation: tr } : null);
+    });
+    return () => { alive = false; };
+  }, [ql, mode, filtered.length, settings.learn, settings.native]);
+
+  const displayed: Row[] = filtered.length
+    ? filtered
+    : fallback && fallback !== 'loading'
+      ? [{ word: fallback.word, translation: fallback.translation }]
+      : [];
+
   return (
     <main class="sl-main">
       <header class="sl-lessonhead">
         <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Meine Vokabeln</span>
+        <span class="sl-lessontitle">Wörterbuch</span>
       </header>
-      {deck.length === 0 ? (
+
+      <div class="dict-tools">
+        <div class="dict-seg">
+          <button class={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>Alle</button>
+          <button class={mode === 'mine' ? 'on' : ''} onClick={() => setMode('mine')}>Meine</button>
+        </div>
+        <input class="dict-search" placeholder="Suchen …" value={q} onInput={(e) => setQ(e.currentTarget.value)} />
+      </div>
+
+      {(mode === 'all' && seed === null) || (filtered.length === 0 && fallback === 'loading') ? (
+        <Dots />
+      ) : displayed.length === 0 ? (
         <p class="sl-muted">
-          Noch keine Vokabeln. Tippe beim Lesen ein Wort an und drücke „★ merken".
+          {mode === 'mine'
+            ? 'Noch keine Merkwörter. Tippe beim Lesen ein Wort an und drücke „★ merken".'
+            : ql
+              ? 'Nichts gefunden.'
+              : `Für ${LANG_LABELS[settings.learn]} gibt es noch kein Stufen-Wörterbuch.`}
         </p>
       ) : (
         <ul class="sl-deck">
-          {deck.map((e) => (
-            <li class="sl-deck-item" key={e.lang + e.word}>
-              <span class="sl-deck-word">{e.word}</span>
-              <span class="sl-deck-trans">{e.translation || '—'}</span>
-              <button
-                class="sl-deck-x"
-                aria-label="entfernen"
-                onClick={() => {
-                  removeFromDeck(e.lang, e.word);
-                  setDeck(getDeck());
-                }}
-              >
-                ×
-              </button>
-            </li>
-          ))}
+          {displayed.map((r) => {
+            const saved = inDeck(settings.learn, r.word);
+            return (
+              <li class="sl-deck-item" key={r.word}>
+                <span class="sl-deck-word">{r.word}</span>
+                <span class="sl-deck-trans">{r.translation}</span>
+                {r.band ? <span class="sl-deck-band">{r.band}</span> : null}
+                <button
+                  class={`dict-add${saved ? ' on' : ''}`}
+                  aria-label={saved ? 'entfernen' : 'merken'}
+                  onClick={() => toggle(r.word, r.translation)}
+                >
+                  {saved ? '★' : '☆'}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>
