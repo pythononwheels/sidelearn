@@ -88,6 +88,23 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .side .vchart{gap:12px;justify-content:space-between}
 .side .vbar{width:30px}
 .side .vlabel{font-size:11px}.side .vlabel b{font-size:12px}
+/* stats v2: panels, nicer tables, per-day chart, count pills */
+.panel{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px 18px;margin:16px 0}
+.panel>h3{margin:0 0 10px}
+.panel table{margin-top:0}
+thead th,table tr:first-child th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border-bottom:2px solid var(--border)}
+tbody tr:nth-child(even),table tr:nth-child(even){background:rgba(127,127,127,.06)}
+td.num,th.num{text-align:right}
+.split{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.split>.t{flex:1 1 300px;min-width:260px}
+.daychart{display:flex;gap:12px;align-items:flex-end;height:172px;padding-top:6px}
+.daycol{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:34px}
+.daybar{width:28px;min-height:3px;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden;background:var(--border)}
+.daybar .okp{background:var(--ok)}.daybar .errp{background:var(--err)}
+.daycol .d{font-size:11px;color:var(--muted)}.daycol .cst{font-size:11px;font-weight:700}
+.pillrow{display:flex;gap:6px;align-items:center;margin:0 0 10px}
+.npill{padding:3px 11px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:700;color:var(--text)}
+.npill.on{background:var(--accent);color:#fff;border-color:transparent}
 """
 
 
@@ -179,10 +196,11 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
 
 
 @router.get("/admin/stats", response_class=HTMLResponse)
-def admin_stats() -> HTMLResponse:
+def admin_stats(n: int = 25) -> HTMLResponse:
+    n = n if n in (10, 25, 50) else 25
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
-    recent = db.telemetry_recent(30)
+    recent = db.telemetry_recent(n)
     maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
 
     bars = []
@@ -204,8 +222,8 @@ def admin_stats() -> HTMLResponse:
         rows.append(
             f"<tr><td>{escape((r['ts'] or '')[:19])}</td><td>{escape(r['model'] or '')}</td>"
             f"<td>{escape((r['fn'] or '') + ':' + (r['level'] or ''))}</td><td>{escape(r['lang'] or '')}</td>"
-            f"<td>{r['input_tokens']:,}</td><td>{r['output_tokens']:,}</td>"
-            f"<td>${r['cost_usd'] or 0:.4f}</td><td>{r['ms']} ms</td><td>{st}</td>"
+            f"<td class=num>{r['input_tokens']:,}</td><td class=num>{r['output_tokens']:,}</td>"
+            f"<td class=num>${r['cost_usd'] or 0:.4f}</td><td class=num>{r['ms']} ms</td><td>{st}</td>"
             f"<td>{escape((r['article_url'] or '').replace('https://', ''))[:40]}</td></tr>"
         )
 
@@ -219,18 +237,37 @@ def admin_stats() -> HTMLResponse:
         "</div>"
     )
 
-    # Per-day success / error / cost
+    # Per-day success / error / cost — table + vertical bar chart
     days = db.telemetry_by_day(14)
     day_rows = "".join(
-        f"<tr><td>{escape(d['day'] or '')}</td><td>{d['calls']}</td>"
-        f"<td style='color:var(--ok)'>{d['ok']}</td>"
-        f"<td style='color:var(--err)'>{d['err']}</td><td>${d['cost']:.4f}</td></tr>"
+        f"<tr><td>{escape(d['day'] or '')}</td><td class=num>{d['calls']}</td>"
+        f"<td class=num style='color:var(--ok)'>{d['ok']}</td>"
+        f"<td class=num style='color:var(--err)'>{d['err']}</td><td class=num>${d['cost']:.4f}</td></tr>"
         for d in days
     )
     day_table = (
-        "<h3>Pro Tag (Erfolg / Fehler / Kosten)</h3>"
-        "<table><tr><th>Tag</th><th>Calls</th><th>OK</th><th>Fehler</th><th>Kosten</th></tr>"
+        "<table><tr><th>Tag</th><th class=num>Calls</th><th class=num>OK</th>"
+        "<th class=num>Fehler</th><th class=num>Kosten</th></tr>"
         + (day_rows or "<tr><td colspan=5>—</td></tr>") + "</table>"
+    )
+    maxc = max([d["calls"] for d in days] + [1])
+    cols = ""
+    for d in reversed(days):  # oldest left → newest right
+        bh = max(3, round(d["calls"] / maxc * 150))
+        okpct = round(d["ok"] / d["calls"] * 100) if d["calls"] else 0
+        cols += (
+            f"<div class=daycol><div class=daybar style='height:{bh}px' title='{d['calls']} calls'>"
+            f"<span class=okp style='height:{okpct}%'></span><span class=errp style='flex:1'></span></div>"
+            f"<div class=d>{escape((d['day'] or '')[5:])}</div><div class=cst>${d['cost']:.2f}</div></div>"
+        )
+    day_chart = (
+        "<div class=daychart>" + (cols or "<p class=muted>—</p>") + "</div>"
+        "<div class=legend><i style='background:var(--ok)'></i>OK "
+        "<i style='background:var(--err)'></i>Fehler · Höhe = Calls</div>"
+    )
+    day_panel = (
+        "<section class=panel><h3>Pro Tag (Erfolg / Fehler / Kosten)</h3>"
+        f"<div class=split><div class=t>{day_table}</div><div>{day_chart}</div></div></section>"
     )
 
     # Area pool: articles per rubric × language
@@ -238,30 +275,40 @@ def admin_stats() -> HTMLResponse:
     m: dict[str, dict[str, int]] = {}
     for r in ap:
         m.setdefault(r["area"], {})[r["lang"]] = r["n"]
-    head = "<tr><th>Rubrik</th>" + "".join(f"<th>{escape(l)}</th>" for l in config.LANGS) + "<th>Σ</th></tr>"
+    head = ("<tr><th>Rubrik</th>" + "".join(f"<th class=num>{escape(l)}</th>" for l in config.LANGS)
+            + "<th class=num>Σ</th></tr>")
     ap_rows = ""
     for area in sorted(m):
-        cells = "".join(f"<td>{m[area].get(l, 0)}</td>" for l in config.LANGS)
-        ap_rows += f"<tr><td>{escape(area)}</td>{cells}<td>{sum(m[area].values())}</td></tr>"
-    pool_table = (
-        "<h3>Area-Pool (vorgebaute Zufallsartikel pro Rubrik × Sprache)</h3>"
-        "<table>" + head + (ap_rows or "<tr><td colspan=99>noch leer</td></tr>") + "</table>"
+        cells = "".join(f"<td class=num>{m[area].get(l, 0)}</td>" for l in config.LANGS)
+        ap_rows += f"<tr><td>{escape(area)}</td>{cells}<td class=num>{sum(m[area].values())}</td></tr>"
+    pool_panel = (
+        "<section class=panel><h3>Area-Pool (vorgebaute Zufallsartikel pro Rubrik × Sprache)</h3>"
+        "<table>" + head + (ap_rows or "<tr><td colspan=99>noch leer</td></tr>") + "</table></section>"
     )
-    body = (
-        "<p><a href='/admin'>← Admin</a></p><h1>Telemetrie</h1>"
-        f"{kpis}"
-        f"{day_table}"
-        f"{pool_table}"
-        "<h3>Pro Typ (Input/Output-Tokens, Kosten)</h3>"
+
+    fn_panel = (
+        "<section class=panel><h3>Pro Typ (Input/Output-Tokens, Kosten)</h3>"
         "<div class=legend><i style='background:var(--accent)'></i>Input "
         "<i style='background:var(--accent2)'></i>Output</div>"
-        + ("".join(bars) or "<p class=muted>Noch keine Calls.</p>")
-        + "<h3>Letzte Calls</h3>"
-        "<table><tr><th>Zeit</th><th>Modell</th><th>Typ</th><th>Lang</th><th>In</th><th>Out</th>"
-        "<th>Kosten</th><th>Dauer</th><th>Status</th><th>Artikel</th></tr>"
-        + ("".join(rows) or "<tr><td colspan=10>—</td></tr>")
-        + "</table>"
-        "<p class=muted>Kosten sind Schätzungen (Preise in config.PRICES).</p>"
+        + ("".join(bars) or "<p class=muted>Noch keine Calls.</p>") + "</section>"
+    )
+
+    npills = "".join(
+        f"<a class='npill {'on' if k == n else ''}' href='/admin/stats?n={k}'>{k}</a>" for k in (10, 25, 50)
+    )
+    recent_panel = (
+        "<section class=panel><h3>Letzte Calls</h3>"
+        f"<div class=pillrow><span class=muted>Zeilen:</span>{npills}</div>"
+        "<table><tr><th>Zeit</th><th>Modell</th><th>Typ</th><th>Lang</th><th class=num>In</th>"
+        "<th class=num>Out</th><th class=num>Kosten</th><th class=num>Dauer</th><th>Status</th><th>Artikel</th></tr>"
+        + ("".join(rows) or "<tr><td colspan=10>—</td></tr>") + "</table>"
+        "<p class=muted>Kosten sind Schätzungen (Preise in config.PRICES).</p></section>"
+    )
+
+    body = (
+        "<p><a href='/admin'>← Admin</a></p><h1>Telemetrie</h1>"
+        f"<section class=panel>{kpis}</section>"
+        f"{day_panel}{pool_panel}{fn_panel}{recent_panel}"
     )
     return page("Telemetrie", body)
 
