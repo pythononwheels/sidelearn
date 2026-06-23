@@ -215,7 +215,7 @@ def sentence(
         raise HTTPException(400, "empty text")
     thash = hashlib.sha1(text.lower().encode("utf-8")).hexdigest()[:16]
 
-    cached = db.get_word_cache(lang, native, thash, "s")
+    cached = db.get_word_cache(lang, native, thash, "s2")
     if cached:
         return {"translation": cached.get("translation", ""), "cached": True}
 
@@ -235,7 +235,7 @@ def sentence(
     )
     if not data:
         raise HTTPException(502, "translation failed")
-    db.put_word_cache(lang, native, thash, "s", {"translation": data["translation"], "alternatives": [], "example": "", "pos": ""}, now)
+    db.put_word_cache(lang, native, thash, "s2", {"translation": data["translation"], "alternatives": [], "example": "", "pos": ""}, now)
     return {"translation": data["translation"], "cached": False}
 
 

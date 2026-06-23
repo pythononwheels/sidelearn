@@ -153,7 +153,12 @@ def translate_text(
             raw, tin, tout = f"[{native}] {text}", 0, 0
     except Exception as e:  # noqa: BLE001
         return None, _meta(model, 0, 0, t0, "error", str(e), "")
-    tr = (raw or "").strip().strip('"').strip()
+    # Some providers return JSON even when asked for plain text — unwrap it.
+    parsed = _parse(raw)
+    if isinstance(parsed, dict) and isinstance(parsed.get("translation"), str) and parsed["translation"].strip():
+        tr = parsed["translation"].strip()
+    else:
+        tr = (raw or "").strip().strip('"').strip()
     if not tr:
         return None, _meta(model, tin, tout, t0, "error", "empty translation", raw[:500])
     return {"translation": tr}, _meta(model, tin, tout, t0, "ok", None, raw[:500])
