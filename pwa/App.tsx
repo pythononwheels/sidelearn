@@ -1435,6 +1435,9 @@ function Lesson({
   const [names, setNames] = useState<Set<string>>(new Set());
   // Award XP only for a lesson not yet credited (no farming by re-reading).
   const creditable = useRef(!isLessonCredited(article.url));
+  const lessonCredited = useRef(isLessonCredited(article.url));
+  const challengeDone = useRef(false);
+  const [showChallenge, setShowChallenge] = useState(false);
   // Confetti the daily goal only when finished in-session (not on revisit).
   const freshDone = useRef(false);
   const [celebrated, setCelebrated] = useState(false);
@@ -1491,25 +1494,39 @@ function Lesson({
 
   const total = lesson.paragraphs.length;
   const lastIdx = visible - 1;
+  const CHALLENGE = 5; // mandatory paragraphs; the rest are optional bonus
+
+  // Credit the lesson once (daily-challenge counts as done): lesson XP + streak
+  // route node + activity log. Persistent, so re-reads don't re-credit.
+  function creditLessonOnce() {
+    if (lessonCredited.current) return;
+    if (creditable.current) award(XP.lesson);
+    creditLesson(article.url);
+    logActivity({
+      type: 'lesson',
+      level: settings.level,
+      title: article.title,
+      detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
+    });
+    completeActivity(settings.level, 'lesson');
+    lessonCredited.current = true;
+    freshDone.current = true;
+  }
 
   function advance() {
+    // Challenge fulfilled after CHALLENGE paragraphs (in longer articles): credit
+    // now, then offer bonus / next article / overview.
+    if (!challengeDone.current && visible >= CHALLENGE && visible < total) {
+      challengeDone.current = true;
+      creditLessonOnce();
+      setShowChallenge(true);
+      return;
+    }
     if (visible < total) {
       if (creditable.current) award(XP.paragraph);
       setVisible((v) => v + 1);
     } else {
-      if (creditable.current) {
-        award(XP.lesson);
-        creditLesson(article.url);
-        logActivity({
-          type: 'lesson',
-          level: settings.level,
-          title: article.title,
-          detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
-        });
-        completeActivity(settings.level, 'lesson');
-        creditable.current = false;
-      }
-      freshDone.current = true;
+      creditLessonOnce();
       setCompleted(true);
     }
   }
@@ -1548,13 +1565,36 @@ function Lesson({
               onWord={(word, x, y) => setPop({ word, sentence: p.simplified, x, y })}
             />
           </p>
-          {i === lastIdx && !completed && quizIdx === null && (
+          {i === lastIdx && !completed && !showChallenge && quizIdx === null && (
             <button class="sl-read" onClick={onRead}>
               {i === total - 1 ? 'Fertig ✓' : 'Gelesen ✓'}
             </button>
           )}
         </div>
       ))}
+
+      {showChallenge && !completed && (() => {
+        const arts = daily?.articles ?? [];
+        const next = arts.find((a) => !isCompleted(a.url) && a.url !== article.url);
+        return (
+          <section class="sl-done">
+            <span class="sl-done-ico"><IconSparkles /></span>
+            <h2>Challenge erfüllt!</h2>
+            <p class="sl-done-daily">{CHALLENGE} Absätze geschafft — stark! Lies {total - CHALLENGE} weitere für Bonus-XP, oder mach beim nächsten Artikel weiter.</p>
+            <div class="sl-done-actions">
+              <button class="sl-read primary" onClick={() => { setShowChallenge(false); setVisible((v) => v + 1); }}>
+                Weiterlesen · Bonus +
+              </button>
+              {next && (
+                <button class="sl-read ghost" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail })}>
+                  Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
+                </button>
+              )}
+              <button class="sl-read ghost" onClick={onHome}>Zur Übersicht</button>
+            </div>
+          </section>
+        );
+      })()}
 
       {quizIdx !== null && questions?.[quizIdx] && (
         <>
