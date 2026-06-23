@@ -277,6 +277,27 @@ def telemetry_by_lang() -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def telemetry_by_day(limit: int = 14) -> list[dict[str, Any]]:
+    with conn() as c:
+        rows = c.execute(
+            """SELECT substr(ts,1,10) day, count(*) calls,
+                      coalesce(sum(CASE WHEN status='ok' THEN 1 ELSE 0 END),0) ok,
+                      coalesce(sum(CASE WHEN status!='ok' THEN 1 ELSE 0 END),0) err,
+                      coalesce(sum(cost_usd),0) cost
+               FROM telemetry GROUP BY day ORDER BY day DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def area_pool_overview() -> list[dict[str, Any]]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT area, lang, count(*) n FROM area_pool GROUP BY area, lang ORDER BY area, lang"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def telemetry_count_today(fn: str) -> int:
     from datetime import datetime, timezone
 

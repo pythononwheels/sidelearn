@@ -218,9 +218,40 @@ def admin_stats() -> HTMLResponse:
         f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
         "</div>"
     )
+
+    # Per-day success / error / cost
+    days = db.telemetry_by_day(14)
+    day_rows = "".join(
+        f"<tr><td>{escape(d['day'] or '')}</td><td>{d['calls']}</td>"
+        f"<td style='color:var(--ok)'>{d['ok']}</td>"
+        f"<td style='color:var(--err)'>{d['err']}</td><td>${d['cost']:.4f}</td></tr>"
+        for d in days
+    )
+    day_table = (
+        "<h3>Pro Tag (Erfolg / Fehler / Kosten)</h3>"
+        "<table><tr><th>Tag</th><th>Calls</th><th>OK</th><th>Fehler</th><th>Kosten</th></tr>"
+        + (day_rows or "<tr><td colspan=5>—</td></tr>") + "</table>"
+    )
+
+    # Area pool: articles per rubric × language
+    ap = db.area_pool_overview()
+    m: dict[str, dict[str, int]] = {}
+    for r in ap:
+        m.setdefault(r["area"], {})[r["lang"]] = r["n"]
+    head = "<tr><th>Rubrik</th>" + "".join(f"<th>{escape(l)}</th>" for l in config.LANGS) + "<th>Σ</th></tr>"
+    ap_rows = ""
+    for area in sorted(m):
+        cells = "".join(f"<td>{m[area].get(l, 0)}</td>" for l in config.LANGS)
+        ap_rows += f"<tr><td>{escape(area)}</td>{cells}<td>{sum(m[area].values())}</td></tr>"
+    pool_table = (
+        "<h3>Area-Pool (vorgebaute Zufallsartikel pro Rubrik × Sprache)</h3>"
+        "<table>" + head + (ap_rows or "<tr><td colspan=99>noch leer</td></tr>") + "</table>"
+    )
     body = (
         "<p><a href='/admin'>← Admin</a></p><h1>Telemetrie</h1>"
         f"{kpis}"
+        f"{day_table}"
+        f"{pool_table}"
         "<h3>Pro Typ (Input/Output-Tokens, Kosten)</h3>"
         "<div class=legend><i style='background:var(--accent)'></i>Input "
         "<i style='background:var(--accent2)'></i>Output</div>"

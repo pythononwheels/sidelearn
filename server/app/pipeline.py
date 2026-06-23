@@ -56,6 +56,18 @@ def process_article(
         return {"ok": False, "error": "article not found"}
     levels = levels or config.LEVELS
     made, skipped, errors = 0, 0, []
+
+    def _log(meta, level):
+        db.add_telemetry(
+            {
+                "ts": _now(), "provider": config.PROVIDER, "model": meta["model"], "fn": fn,
+                "level": level, "lang": art["lang"], "article_id": article_id, "article_url": art["url"],
+                "input_tokens": meta["input_tokens"], "output_tokens": meta["output_tokens"],
+                "cost_usd": meta["cost_usd"], "ms": meta["ms"], "status": meta["status"],
+                "error": meta["error"], "excerpt": meta["excerpt"],
+            }
+        )
+
     PROCESSING.add(article_id)
     try:
         for level in levels:
@@ -63,25 +75,11 @@ def process_article(
                 skipped += 1
                 continue
             data, meta = llm.prepare(art["paragraphs"], art["lang"], level)
-            db.add_telemetry(
-                {
-                    "ts": _now(),
-                    "provider": config.PROVIDER,
-                    "model": meta["model"],
-                    "fn": fn,
-                    "level": level,
-                    "lang": art["lang"],
-                    "article_id": article_id,
-                    "article_url": art["url"],
-                    "input_tokens": meta["input_tokens"],
-                    "output_tokens": meta["output_tokens"],
-                    "cost_usd": meta["cost_usd"],
-                    "ms": meta["ms"],
-                    "status": meta["status"],
-                    "error": meta["error"],
-                    "excerpt": meta["excerpt"],
-                }
-            )
+            _log(meta, level)
+            if data is None:
+                # One retry — most failures are transient (empty/garbled JSON).
+                data, meta = llm.prepare(art["paragraphs"], art["lang"], level)
+                _log(meta, level)
             if data is None:
                 errors.append(f"{level}: {meta['error']}")
                 continue
