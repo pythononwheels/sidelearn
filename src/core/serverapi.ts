@@ -41,6 +41,9 @@ export interface ServerLesson {
   paragraphs: ServerLessonParagraph[];
   vocab: Array<{ word: string; hint: string }>;
   summary: string;
+  /** Optional "digest" short-read mode (area articles, A2+). */
+  digest?: string;
+  digestQuestions?: Array<{ q: string; options: string[]; correct: number }>;
 }
 
 function base(url: string): string {
@@ -146,6 +149,29 @@ export async function fetchSentenceTranslation(
     if (!res.ok) return null;
     const d = (await res.json()) as { translation?: string };
     return d.translation || null;
+  } catch {
+    return null;
+  }
+}
+
+export interface ServerDigest {
+  digest: string;
+  digestQuestions: Array<{ q: string; options: string[]; correct: number }>;
+}
+
+/** Digest for an area article, generated lazily server-side on first request. */
+export async function fetchDigest(
+  serverUrl: string,
+  id: string,
+  level: CefrLevel,
+): Promise<ServerDigest | null> {
+  try {
+    const res = await fetch(`${base(serverUrl)}/digest/${encodeURIComponent(id)}?level=${level}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const d = (await res.json()) as Partial<ServerDigest>;
+    return { digest: d.digest || '', digestQuestions: d.digestQuestions || [] };
   } catch {
     return null;
   }

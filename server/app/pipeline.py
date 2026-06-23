@@ -45,7 +45,8 @@ async def discover(lang: str, day: date) -> int:
 
 
 def process_article(
-    article_id: str, levels: list[str] | None = None, force: bool = False, fn: str = "prepare"
+    article_id: str, levels: list[str] | None = None, force: bool = False,
+    fn: str = "prepare", with_digest: bool = False,
 ) -> dict:
     """Prepare an article for each level via the LLM. Per-level try/except so one
     failure doesn't abort the others. `fn` tags telemetry (e.g. "surprise" for
@@ -74,11 +75,11 @@ def process_article(
             if not force and db.has_prepared(article_id, level):
                 skipped += 1
                 continue
-            data, meta = llm.prepare(art["paragraphs"], art["lang"], level)
+            data, meta = llm.prepare(art["paragraphs"], art["lang"], level, with_digest)
             _log(meta, level)
             if data is None:
                 # One retry — most failures are transient (empty/garbled JSON).
-                data, meta = llm.prepare(art["paragraphs"], art["lang"], level)
+                data, meta = llm.prepare(art["paragraphs"], art["lang"], level, with_digest)
                 _log(meta, level)
             if data is None:
                 errors.append(f"{level}: {meta['error']}")
@@ -125,7 +126,7 @@ async def build_areas() -> dict:
                         db.upsert_article({**art, "paragraphs": paras}, _now())
                     have.add(art["id"])
                     db.add_area_pool(area, lang, art["id"], _now())
-                    await asyncio.to_thread(process_article, art["id"], None, False, "area")
+                    await asyncio.to_thread(process_article, art["id"], None, False, "area", True)
                     got += 1
                     added += 1
     return {"ok": True, "added": added}

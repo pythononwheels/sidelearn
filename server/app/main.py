@@ -146,9 +146,48 @@ async def lesson(article_id: str, level: str = Query("A2")) -> dict:
         "paragraphs": paragraphs,
         "vocab": prepared.get("vocab", []),
         "summary": prepared.get("summary", ""),
+        "digest": prepared.get("digest", ""),
+        "digestQuestions": prepared.get("digest_questions", []),
         "source": "wikipedia",
         "license": "CC BY-SA",
     }
+
+
+@app.get("/digest/{article_id}")
+async def digest(article_id: str, level: str = Query("A2")) -> dict:
+    """Digest (short-read) for an area article, generated lazily on first request
+    and cached into the prepared row. A1 has no digest."""
+    _check_level(level)
+    if level == "A1":
+        return {"digest": "", "digestQuestions": []}
+    art = db.get_article(article_id)
+    if not art:
+        raise HTTPException(404, "article not found")
+    prepared = db.get_prepared(article_id, level)
+    if prepared and prepared.get("digest"):
+        return {"digest": prepared["digest"], "digestQuestions": prepared.get("digest_questions", [])}
+    if db.telemetry_count_today("digest") >= config.ONDEMAND_DAILY_CAP:
+        raise HTTPException(429, "daily digest budget reached — try later")
+
+    now = datetime.now(timezone.utc).isoformat()
+    data, meta = await asyncio.to_thread(llm.digest_only, art["paragraphs"], art["lang"], level)
+    db.add_telemetry(
+        {
+            "ts": now, "provider": config.PROVIDER, "model": meta["model"], "fn": "digest",
+            "level": level, "lang": art["lang"], "article_id": article_id, "article_url": art["url"],
+            "input_tokens": meta["input_tokens"], "output_tokens": meta["output_tokens"],
+            "cost_usd": meta["cost_usd"], "ms": meta["ms"], "status": meta["status"],
+            "error": meta["error"], "excerpt": meta["excerpt"],
+        }
+    )
+    if not data:
+        raise HTTPException(502, "digest failed")
+    # Cache into the prepared row so the next reader gets it instantly.
+    if prepared is not None:
+        prepared["digest"] = data["digest"]
+        prepared["digest_questions"] = data["digest_questions"]
+        db.upsert_prepared(article_id, level, prepared, now)
+    return {"digest": data["digest"], "digestQuestions": data["digest_questions"]}
 
 
 @app.get("/archive")
@@ -291,7 +330,7 @@ async def surprise(
             if prepares >= MAX_PREPARES:
                 break
             prepares += 1
-            await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise")
+            await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise", True)
             if db.has_prepared(art["id"], level):
                 return await lesson(art["id"], level)
 

@@ -68,6 +68,10 @@ ONDEMAND_DAILY_CAP = int(os.getenv("SL_ONDEMAND_DAILY_CAP", "300"))
 AREA_TOPUP_PER_DAY = int(os.getenv("SL_AREA_TOPUP", "2"))
 AREA_DAILY_CAP = int(os.getenv("SL_AREA_DAILY_CAP", "500"))
 
+# "Digest" short-read mode (area articles, A2+): target length per level. The
+# prompt scales the standalone summary so it reads naturally at each level.
+DIGEST_WORDS = {"A2": 80, "B1": 110, "B2": 140, "C1": 170}
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",

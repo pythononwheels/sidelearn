@@ -20,6 +20,7 @@ import {
   fetchServerLesson,
   fetchSurprise,
   fetchWordTranslation,
+  fetchDigest,
   type ServerDaily,
   type ServerLesson,
 } from '@/core/serverapi';
@@ -57,6 +58,7 @@ const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 type Overlay =
   | { kind: 'lesson'; article: ArticleRef }
+  | { kind: 'digest'; article: ArticleRef }
   | { kind: 'dict'; mode: 'all' | 'mine' }
   | { kind: 'trainer' }
   | { kind: 'surprise' }
@@ -109,8 +111,19 @@ export function App() {
     content = <DictView settings={settings} initialMode={overlay.mode} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'trainer') {
     content = <TrainerView settings={settings} onBack={() => setOverlay(null)} />;
+  } else if (overlay?.kind === 'digest') {
+    content = (
+      <DigestView
+        key={overlay.article.id + settings.level}
+        article={overlay.article}
+        settings={settings}
+        onOpen={openLesson}
+        onBack={() => setOverlay(null)}
+        onHome={() => goTab('home')}
+      />
+    );
   } else if (overlay?.kind === 'surprise') {
-    content = <SurpriseView settings={settings} onOpen={openLesson} onBack={() => setOverlay(null)} />;
+    content = <SurpriseView settings={settings} onOpen={openLesson} onDigest={(a) => setOverlay({ kind: 'digest', article: a })} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'cloze') {
     content = <ClozeView settings={settings} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'test') {
@@ -613,20 +626,25 @@ const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string }
   { id: 'wissenschaft', label: 'Wissenschaft', icon: <IconFlask />, sub: 'Weltraum, Physik …' },
 ];
 
-function SurpriseView({ settings, onOpen, onBack }: {
+function SurpriseView({ settings, onOpen, onDigest, onBack }: {
   settings: PwaSettings;
   onOpen: (a: ArticleRef) => void;
+  onDigest: (a: ArticleRef) => void;
   onBack: () => void;
 }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  // From A2 the user can choose how to read a fetched article (full vs digest).
+  const [choice, setChoice] = useState<ArticleRef | null>(null);
 
   async function pick(area: string) {
     setError(false);
     setLoading(area);
     const l = await fetchSurprise(SERVER, settings.learn, settings.level, area);
     if (l) {
-      onOpen({ id: l.id, title: l.title, url: l.url, thumb: l.thumbnail });
+      const a: ArticleRef = { id: l.id, title: l.title, url: l.url, thumb: l.thumbnail };
+      if (settings.level === 'A1') onOpen(a); // digest mode is A2+
+      else { setLoading(null); setChoice(a); }
     } else {
       setLoading(null);
       setError(true);
@@ -640,7 +658,21 @@ function SurpriseView({ settings, onOpen, onBack }: {
         <span class="sl-lessontitle">Zufallsartikel</span>
       </header>
 
-      {loading ? (
+      {choice ? (
+        <section class="dg-choose">
+          <p class="lr-section" style={{ marginTop: '4px' }}>{choice.title}</p>
+          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>Wie möchtest du lesen?</p>
+          <button class="dg-opt" onClick={() => onOpen(choice)}>
+            <span class="dg-opt-ico full"><IconNewspaper /></span>
+            <span class="dg-opt-body"><b>Ganzer Artikel</b><small>8 Absätze · mit Quiz pro Absatz</small></span>
+          </button>
+          <button class="dg-opt" onClick={() => onDigest(choice)}>
+            <span class="dg-opt-ico digest"><IconBolt /></span>
+            <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
+          </button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Anderen Bereich wählen</button>
+        </section>
+      ) : loading ? (
         <section class="sl-done">
           <Dots />
           <p class="sl-muted" style={{ marginTop: '12px' }}>
@@ -668,6 +700,162 @@ function SurpriseView({ settings, onOpen, onBack }: {
         </>
       )}
     </main>
+  );
+}
+
+/* --------------------------------------------------------------- Digest --- */
+
+// Short-read mode for area articles (A2+): read a compact summary, then answer
+// 2-3 comprehension questions. Falls back to the full article if no digest.
+function DigestView({ article, settings, onOpen, onBack, onHome }: {
+  article: ArticleRef;
+  settings: PwaSettings;
+  onOpen: (a: ArticleRef) => void;
+  onBack: () => void;
+  onHome: () => void;
+}) {
+  const [lesson, setLesson] = useState<ServerLesson | null>(null);
+  const [error, setError] = useState(false);
+  const [phase, setPhase] = useState<'read' | 'quiz' | 'done'>('read');
+  const [qIdx, setQIdx] = useState(0);
+  const [answer, setAnswer] = useState<number | null>(null);
+  const [score, setScore] = useState({ answered: 0, correct: 0 });
+  const [ranks, setRanks] = useState<Record<string, number> | null>(null);
+  const [names, setNames] = useState<Set<string>>(new Set());
+  const [pop, setPop] = useState<{ word: string; sentence: string; x: number; y: number } | null>(null);
+  // Lazily generated digest when the article doesn't have one cached yet.
+  const [gen, setGen] = useState<{ digest: string; questions: { q: string; options: string[]; correct: number }[] } | null>(null);
+  const [genState, setGenState] = useState<'idle' | 'loading' | 'done'>('idle');
+  const credited = useRef(false);
+
+  useEffect(() => {
+    void loadRanks(settings.learn).then(setRanks);
+    void loadNames().then(setNames);
+  }, [settings.learn]);
+
+  useEffect(() => {
+    let alive = true;
+    void fetchServerLesson(SERVER, article.id, settings.level).then((l) => {
+      if (!alive) return;
+      if (l) setLesson(l); else setError(true);
+    });
+    return () => { alive = false; };
+  }, [article.id, settings.level]);
+
+  // No cached digest → ask the server to generate one (A2+).
+  useEffect(() => {
+    if (!lesson || (lesson.digest && lesson.digest.trim()) || settings.level === 'A1') return;
+    let alive = true;
+    setGenState('loading');
+    void fetchDigest(SERVER, article.id, settings.level).then((d) => {
+      if (!alive) return;
+      if (d && d.digest.trim()) setGen({ digest: d.digest, questions: d.digestQuestions });
+      setGenState('done');
+    });
+    return () => { alive = false; };
+  }, [lesson, article.id, settings.level]);
+
+  const isHard = (w: string): boolean => {
+    if (!ranks || w.length < 3 || names.has(w.toLowerCase())) return false;
+    const r = rankOf(ranks, w);
+    return r !== undefined && isAboveLevel(rankToBand(r), settings.level);
+  };
+
+  function creditOnce() {
+    if (credited.current) return;
+    credited.current = true;
+    award(XP.lesson);
+    logActivity({
+      type: 'lesson', level: settings.level, title: article.title,
+      detail: score.answered > 0 ? `Kurzfassung ${score.correct}/${score.answered}` : 'Kurzfassung',
+    });
+  }
+
+  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">Lektion nicht verfügbar.</p></Frame>;
+  if (!lesson) return <Frame title={article.title} onBack={onBack}><Dots /></Frame>;
+
+  const hasOwn = !!lesson.digest?.trim();
+  const digest = hasOwn ? lesson.digest!.trim() : (gen?.digest?.trim() || '');
+  const questions = hasOwn ? (lesson.digestQuestions ?? []) : (gen?.questions ?? []);
+
+  if (!digest) {
+    if (genState !== 'done') {
+      return (
+        <Frame title={article.title} onBack={onBack}>
+          <p class="sl-qlabel">Kurzfassung</p>
+          <section class="sl-done"><Dots /><p class="sl-muted" style={{ marginTop: '12px' }}>Wir erstellen die Kurzfassung … einen Moment.</p></section>
+        </Frame>
+      );
+    }
+    return (
+      <Frame title={article.title} onBack={onBack}>
+        <p class="sl-muted">Für diesen Artikel gibt es gerade keine Kurzfassung — lies ihn als ganzen Artikel.</p>
+        <button class="sl-read" onClick={() => onOpen(article)}>Ganzen Artikel lesen</button>
+      </Frame>
+    );
+  }
+
+  return (
+    <Frame title={article.title} onBack={onBack}>
+      {phase === 'read' && (
+        <>
+          <p class="sl-qlabel">Kurzfassung</p>
+          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
+          <div class="sl-para current">
+            <p class="sl-text">
+              <TapText text={digest} isHard={isHard} onWord={(word, x, y) => setPop({ word, sentence: digest, x, y })} />
+            </p>
+          </div>
+          <button class="sl-read" onClick={() => { if (questions.length) setPhase('quiz'); else { creditOnce(); setPhase('done'); } }}>
+            {questions.length ? 'Fragen starten' : 'Fertig ✓'}
+          </button>
+        </>
+      )}
+
+      {phase === 'quiz' && questions[qIdx] && (() => {
+        const cur = questions[qIdx]!;
+        return (
+          <>
+            <p class="sl-progress">Frage {qIdx + 1} / {questions.length}</p>
+            <Quiz
+              q={cur}
+              answer={answer}
+              isLast={qIdx === questions.length - 1}
+              settings={settings}
+              translate={cur.q}
+              onAnswer={(idx) => {
+                if (answer !== null) return;
+                setAnswer(idx);
+                const ok = idx === cur.correct;
+                if (ok) award(XP.correct);
+                setScore((s) => ({ answered: s.answered + 1, correct: s.correct + (ok ? 1 : 0) }));
+              }}
+              onNext={() => {
+                if (qIdx + 1 >= questions.length) { creditOnce(); setPhase('done'); }
+                else { setQIdx((i) => i + 1); setAnswer(null); }
+              }}
+            />
+          </>
+        );
+      })()}
+
+      {phase === 'done' && (
+        <section class="sl-done">
+          <span class="sl-done-ico"><IconSparkles /></span>
+          <h2>Geschafft</h2>
+          {score.answered > 0 && <p class="sl-done-score">{score.correct} / {score.answered} richtig</p>}
+          <div class="sl-done-actions">
+            <button class="sl-read" onClick={onHome}>Zur Übersicht</button>
+          </div>
+        </section>
+      )}
+
+      <footer class="sl-credit">
+        Quelle: <a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
+      </footer>
+
+      {pop && <WordPopover pop={pop} settings={settings} onClose={() => setPop(null)} />}
+    </Frame>
   );
 }
 
