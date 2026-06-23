@@ -74,4 +74,5 @@ LANG_NAMES = {
     "en": "English",
     "nl": "Dutch",
     "es": "Spanish",
+    "it": "Italian",
 }

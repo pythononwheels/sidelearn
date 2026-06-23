@@ -20,6 +20,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["Technology", "Invention", "Engineering", "Machine", "Computer"],
         "nl": ["Technologie", "Uitvinding", "Techniek", "Machine", "Computer"],
         "es": ["Tecnología", "Invención", "Ingeniería", "Máquina", "Informática"],
+        "it": ["Tecnologia", "Invenzione", "Ingegneria", "Macchina", "Informatica"],
     },
     "sport": {
         "de": ["Sport", "Fußball", "Olympische Spiele", "Sportler", "Tennis"],
@@ -27,6 +28,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["Sport", "Football", "Olympic Games", "Athlete", "Tennis"],
         "nl": ["Sport", "Voetbal", "Olympische Spelen", "Atleet", "Tennis"],
         "es": ["Deporte", "Fútbol", "Juegos Olímpicos", "Atleta", "Tenis"],
+        "it": ["Sport", "Calcio", "Giochi olimpici", "Atleta", "Tennis"],
     },
     "geschichte": {
         "de": ["Geschichte", "Antike", "Mittelalter", "Krieg", "Revolution"],
@@ -34,6 +36,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["History", "Ancient history", "Middle Ages", "War", "Revolution"],
         "nl": ["Geschiedenis", "Oudheid", "Middeleeuwen", "Oorlog", "Revolutie"],
         "es": ["Historia", "Antigüedad", "Edad Media", "Guerra", "Revolución"],
+        "it": ["Storia", "Antichità", "Medioevo", "Guerra", "Rivoluzione"],
     },
     "gesellschaft": {
         "de": ["Schauspieler", "Sänger", "Musiker", "Berühmtheit", "Fernsehen"],
@@ -41,6 +44,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["Actor", "Singer", "Musician", "Celebrity", "Television"],
         "nl": ["Acteur", "Zanger", "Muzikant", "Beroemdheid", "Televisie"],
         "es": ["Actor", "Cantante", "Músico", "Celebridad", "Televisión"],
+        "it": ["Attore", "Cantante", "Musicista", "Celebrità", "Televisione"],
     },
     "natur": {
         "de": ["Tier", "Säugetier", "Vogel", "Pflanze", "Natur"],
@@ -48,6 +52,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["Animal", "Mammal", "Bird", "Plant", "Nature"],
         "nl": ["Dier", "Zoogdier", "Vogel", "Plant", "Natuur"],
         "es": ["Animal", "Mamífero", "Ave", "Planta", "Naturaleza"],
+        "it": ["Animale", "Mammifero", "Uccello", "Pianta", "Natura"],
     },
     "kultur": {
         "de": ["Musik", "Film", "Kunst", "Roman", "Maler"],
@@ -55,6 +60,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["Music", "Film", "Art", "Novel", "Painter"],
         "nl": ["Muziek", "Film", "Kunst", "Roman", "Schilder"],
         "es": ["Música", "Película", "Arte", "Novela", "Pintor"],
+        "it": ["Musica", "Film", "Arte", "Romanzo", "Pittore"],
     },
     "wissenschaft": {
         "de": ["Wissenschaft", "Physik", "Biologie", "Weltraum", "Planet"],
@@ -62,6 +68,7 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "en": ["Science", "Physics", "Biology", "Space", "Planet"],
         "nl": ["Wetenschap", "Natuurkunde", "Biologie", "Ruimte", "Planeet"],
         "es": ["Ciencia", "Física", "Biología", "Espacio", "Planeta"],
+        "it": ["Scienza", "Fisica", "Biologia", "Spazio", "Pianeta"],
     },
 }
 

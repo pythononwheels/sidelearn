@@ -13,6 +13,7 @@ export const PSEUDO_WORDS: Record<Language, string[]> = {
   en: ['blorient', 'fendle', 'trabish', 'morved', 'glunter', 'snarvle', 'frelth', 'wandic', 'plorse', 'gantel', 'rivolt', 'sclemp'],
   nl: ['blorken', 'fretsel', 'groemte', 'knorvel', 'spreuze', 'wandoek', 'treugel', 'florsem', 'krabsem', 'vlonter', 'gespruik', 'darnel'],
   es: ['blorgar', 'fentil', 'tracimo', 'morvado', 'gluntar', 'narvol', 'feldro', 'treuco', 'bardine', 'colpez', 'rensal', 'pludria'],
+  it: ['blorgare', 'fentilo', 'tracimo', 'morvato', 'gluntare', 'narvolo', 'feldro', 'treuco', 'bardino', 'colpezzo', 'rensale', 'pludria'],
 };
 
 export function pseudoWordsFor(lang: Language): string[] {

@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.86] — 2026-06-23
+
+### Added — Italian (it)
+- **Italienisch als Lernsprache** (`it` → LANGUAGES, „Italiano"/„Italian").
+  Server: `LANG_NAMES["it"]`, italienische Seed-Begriffe für alle 7
+  /surprise-Rubriken in `wiki.py`; Daily-most-read läuft über `it.wikipedia.org`.
+  Pseudowörter (Vokabel-Test) für `it` ergänzt.
+- Offline-Daten (freq-it / dict-it-de / forms-it / gloss-it-de) folgen separat;
+  bis dahin nutzt das Wort-Antippen den Server-`/translate`-Fallback.
+
 ## [0.6.85] — 2026-06-23
 
 ### Changed (Learny)
