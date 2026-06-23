@@ -259,6 +259,12 @@ async def surprise(
     if area not in wiki.AREAS:
         raise HTTPException(400, f"unknown area {area!r}; allowed: {sorted(wiki.AREAS)}")
 
+    # Pool-first: serve an already-prepared article from the prebuilt area pool
+    # (instant, no LLM). The daily build keeps this topped up.
+    pooled = db.random_area_prepared(area, lang, level)
+    if pooled:
+        return await lesson(pooled, level)
+
     # Try a few candidates so a random too-short article (or a one-off prepare
     # hiccup) doesn't surface as a user-facing error. Cheap checks (length) skip
     # for free; the expensive LLM prepare is attempted at most MAX_PREPARES times.

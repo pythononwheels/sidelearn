@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS daily (
 );
 CREATE INDEX IF NOT EXISTS idx_daily_lookup ON daily (date, lang, rank);
 CREATE INDEX IF NOT EXISTS idx_article_lang ON article (lang);
+CREATE TABLE IF NOT EXISTS area_pool (
+  area TEXT NOT NULL,
+  lang TEXT NOT NULL,
+  article_id TEXT NOT NULL,
+  added_at TEXT NOT NULL,
+  PRIMARY KEY (area, lang, article_id)
+);
+CREATE INDEX IF NOT EXISTS idx_area_pool ON area_pool (area, lang);
 CREATE TABLE IF NOT EXISTS telemetry (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT NOT NULL,
@@ -135,6 +143,44 @@ def daily_dates(lang: str, limit: int) -> list[str]:
             "SELECT DISTINCT date FROM daily WHERE lang=? ORDER BY date DESC LIMIT ?", (lang, limit)
         ).fetchall()
     return [r["date"] for r in rows]
+
+
+def add_area_pool(area: str, lang: str, article_id: str, now: str) -> None:
+    with conn() as c:
+        c.execute(
+            """INSERT INTO area_pool (area, lang, article_id, added_at) VALUES (?,?,?,?)
+               ON CONFLICT(area, lang, article_id) DO NOTHING""",
+            (area, lang, article_id, now),
+        )
+
+
+def area_pool_count(area: str, lang: str) -> int:
+    with conn() as c:
+        row = c.execute(
+            "SELECT count(*) n FROM area_pool WHERE area=? AND lang=?", (area, lang)
+        ).fetchone()
+    return row["n"]
+
+
+def area_pool_article_ids(area: str, lang: str) -> list[str]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT article_id FROM area_pool WHERE area=? AND lang=?", (area, lang)
+        ).fetchall()
+    return [r["article_id"] for r in rows]
+
+
+def random_area_prepared(area: str, lang: str, level: str) -> Optional[str]:
+    """A random pooled article for (area, lang) that already has `level` prepared."""
+    with conn() as c:
+        row = c.execute(
+            """SELECT p.article_id FROM area_pool ap
+                 JOIN prepared p ON p.article_id = ap.article_id
+                WHERE ap.area=? AND ap.lang=? AND p.level=? AND p.schema_version=?
+                ORDER BY RANDOM() LIMIT 1""",
+            (area, lang, level, config.SCHEMA_VERSION),
+        ).fetchone()
+    return row["article_id"] if row else None
 
 
 def random_article(lang: str) -> Optional[dict[str, Any]]:

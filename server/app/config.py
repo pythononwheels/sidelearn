@@ -62,6 +62,12 @@ SURPRISE_DAILY_CAP = int(os.getenv("SL_SURPRISE_DAILY_CAP", "200"))
 # A1, which is prepared lazily when first requested). Cached repeats don't count.
 ONDEMAND_DAILY_CAP = int(os.getenv("SL_ONDEMAND_DAILY_CAP", "300"))
 
+# Area pool: how many NEW random articles to add per (rubrik, lang) each daily
+# build (a steady trickle that grows the /surprise library), and a hard daily
+# safety cap on area prepares (fn="area").
+AREA_TOPUP_PER_DAY = int(os.getenv("SL_AREA_TOPUP", "2"))
+AREA_DAILY_CAP = int(os.getenv("SL_AREA_DAILY_CAP", "500"))
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",

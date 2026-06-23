@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.83] — 2026-06-23
+
+### Added — more rubrics + prebuilt /surprise area pool
+- **4 new Zufallsartikel-Rubriken**: Stars & Gesellschaft, Natur & Tiere, Kultur,
+  Wissenschaft (7 total). New SurpriseView tiles + icons.
+- Server **area pool**: the daily build now tops up ~2 new articles per rubric &
+  language (`SL_AREA_TOPUP`), prepared for all levels and stored in a new
+  `area_pool` table; **`/surprise` serves instantly from the pool** (LLM
+  on-demand only as fallback). Capped via `SL_AREA_DAILY_CAP`.
+
 ## [0.6.82] — 2026-06-23
 
 ### Added (Learny) — translation on quizzes & cloze

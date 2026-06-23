@@ -102,6 +102,37 @@ def process_day(date_key: str, lang: str) -> dict:
     return {"made": made, "errors": errors}
 
 
+async def build_areas() -> dict:
+    """Top up the /surprise area pool: for each (area, lang), add up to
+    AREA_TOPUP_PER_DAY NEW random topical articles (skipping ones already pooled
+    or too short), then prepare them for all levels. Idempotent; capped per day."""
+    added = 0
+    async with httpx.AsyncClient(timeout=30) as client:
+        for area in wiki.AREAS:
+            for lang in config.LANGS:
+                if db.telemetry_count_today("area") >= config.AREA_DAILY_CAP:
+                    return {"ok": True, "added": added, "capped": True}
+                have = set(db.area_pool_article_ids(area, lang))
+                want = config.AREA_TOPUP_PER_DAY
+                got, attempts = 0, 0
+                while got < want and attempts < want * 4:
+                    attempts += 1
+                    art = await wiki.fetch_random_in_area(client, lang, area)
+                    if not art or art["id"] in have:
+                        continue
+                    if not db.has_article(art["id"]):
+                        paras = await wiki.fetch_paragraphs(client, lang, art["title"], config.MAX_PARAS)
+                        if len(paras) < 3:
+                            continue
+                        db.upsert_article({**art, "paragraphs": paras}, _now())
+                    have.add(art["id"])
+                    db.add_area_pool(area, lang, art["id"], _now())
+                    await asyncio.to_thread(process_article, art["id"], None, False, "area")
+                    got += 1
+                    added += 1
+    return {"ok": True, "added": added}
+
+
 async def build_day(day: date | None = None) -> dict:
     """Discover + process all languages for a day (auto-build mode only)."""
     day = day or date.today()
@@ -109,4 +140,5 @@ async def build_day(day: date | None = None) -> dict:
     for lang in config.LANGS:
         await discover(lang, day)
         await asyncio.to_thread(process_day, dkey, lang)
+    await build_areas()
     return {"ok": True}

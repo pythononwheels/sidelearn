@@ -205,6 +205,9 @@ const IconBook = () => (<svg {...svg}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H2
 const IconWrench = () => (<svg {...svg}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>);
 const IconBall = () => (<svg {...svg}><circle cx="12" cy="12" r="9" /><path d="M12 7.5l3.3 2.4-1.25 3.85h-4.1L8.7 9.9z" /><path d="M12 7.5V4M15.3 9.9l2.95-1.45M14.05 13.75l2.45 2.5M9.95 13.75l-2.45 2.5M8.7 9.9 5.75 8.45" /></svg>);
 const IconLandmark = () => (<svg {...svg}><path d="M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M3 10l9-6 9 6M3.5 10h17" /></svg>);
+const IconLeaf = () => (<svg {...svg}><path d="M4 20s1.5-7.5 8.5-9C18 9.7 20 5 20 5s1.6 8.4-4.5 12.5C11.7 20 6 20.5 4 20z" /><path d="M9 16c1.6-2.4 4-4 7-5" /></svg>);
+const IconMusic = () => (<svg {...svg}><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></svg>);
+const IconFlask = () => (<svg {...svg}><path d="M9 3h6M10 3v6l-5.2 9.2A2 2 0 0 0 6.6 21h10.8a2 2 0 0 0 1.7-2.8L14 9V3" /><path d="M7.5 15h9" /></svg>);
 const IconSparkles = () => (<svg {...svg}><path d="M12 3l1.6 5.1a2 2 0 0 0 1.3 1.3L20 11l-5.1 1.6a2 2 0 0 0-1.3 1.3L12 19l-1.6-5.1a2 2 0 0 0-1.3-1.3L4 11l5.1-1.6a2 2 0 0 0 1.3-1.3z" /><path d="M19 4v3M20.5 5.5h-3" /></svg>);
 const IconBulb = () => (<svg {...svg}><path d="M9 18h6M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z" /></svg>);
 const IconStar = () => (<svg {...svg}><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z" /></svg>);
@@ -561,6 +564,10 @@ const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string }
   { id: 'technik', label: 'Technik', icon: <IconWrench />, sub: 'Erfindungen, Computer …' },
   { id: 'sport', label: 'Sport', icon: <IconBall />, sub: 'Fußball, Olympia …' },
   { id: 'geschichte', label: 'Geschichte', icon: <IconLandmark />, sub: 'Antike, Mittelalter …' },
+  { id: 'gesellschaft', label: 'Stars & Gesellschaft', icon: <IconStar />, sub: 'Promis, Musik, TV …' },
+  { id: 'natur', label: 'Natur & Tiere', icon: <IconLeaf />, sub: 'Tiere, Pflanzen …' },
+  { id: 'kultur', label: 'Kultur', icon: <IconMusic />, sub: 'Musik, Film, Kunst …' },
+  { id: 'wissenschaft', label: 'Wissenschaft', icon: <IconFlask />, sub: 'Weltraum, Physik …' },
 ];
 
 function SurpriseView({ settings, onOpen, onBack }: {

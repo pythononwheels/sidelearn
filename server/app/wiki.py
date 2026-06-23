@@ -35,6 +35,34 @@ AREAS: dict[str, dict[str, list[str]]] = {
         "nl": ["Geschiedenis", "Oudheid", "Middeleeuwen", "Oorlog", "Revolutie"],
         "es": ["Historia", "Antigüedad", "Edad Media", "Guerra", "Revolución"],
     },
+    "gesellschaft": {
+        "de": ["Schauspieler", "Sänger", "Musiker", "Berühmtheit", "Fernsehen"],
+        "fr": ["Acteur", "Chanteur", "Musicien", "Célébrité", "Télévision"],
+        "en": ["Actor", "Singer", "Musician", "Celebrity", "Television"],
+        "nl": ["Acteur", "Zanger", "Muzikant", "Beroemdheid", "Televisie"],
+        "es": ["Actor", "Cantante", "Músico", "Celebridad", "Televisión"],
+    },
+    "natur": {
+        "de": ["Tier", "Säugetier", "Vogel", "Pflanze", "Natur"],
+        "fr": ["Animal", "Mammifère", "Oiseau", "Plante", "Nature"],
+        "en": ["Animal", "Mammal", "Bird", "Plant", "Nature"],
+        "nl": ["Dier", "Zoogdier", "Vogel", "Plant", "Natuur"],
+        "es": ["Animal", "Mamífero", "Ave", "Planta", "Naturaleza"],
+    },
+    "kultur": {
+        "de": ["Musik", "Film", "Kunst", "Roman", "Maler"],
+        "fr": ["Musique", "Film", "Art", "Roman", "Peintre"],
+        "en": ["Music", "Film", "Art", "Novel", "Painter"],
+        "nl": ["Muziek", "Film", "Kunst", "Roman", "Schilder"],
+        "es": ["Música", "Película", "Arte", "Novela", "Pintor"],
+    },
+    "wissenschaft": {
+        "de": ["Wissenschaft", "Physik", "Biologie", "Weltraum", "Planet"],
+        "fr": ["Science", "Physique", "Biologie", "Espace", "Planète"],
+        "en": ["Science", "Physics", "Biology", "Space", "Planet"],
+        "nl": ["Wetenschap", "Natuurkunde", "Biologie", "Ruimte", "Planeet"],
+        "es": ["Ciencia", "Física", "Biología", "Espacio", "Planeta"],
+    },
 }
 
 _LIST_PREFIXES = ("liste ", "list of ", "lista de ", "lijst van ", "liste de", "liste des ")
