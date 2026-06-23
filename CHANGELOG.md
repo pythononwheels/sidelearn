@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.82] — 2026-06-23
+
+### Added (Learny) — translation on quizzes & cloze
+- An **"Übersetzung"** button under each quiz/cloze prompt translates the
+  sentence/question into your native language on demand (cloze keeps the blank).
+  Server `/sentence` endpoint (cached, capped); hidden when learn == native and
+  for vocab-meaning questions (already native).
+
 ## [0.6.81] — 2026-06-23
 
 ### Changed (Learny PWA)
