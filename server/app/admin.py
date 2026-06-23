@@ -95,9 +95,11 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 thead th,table tr:first-child th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border-bottom:2px solid var(--border)}
 tbody tr:nth-child(even),table tr:nth-child(even){background:rgba(127,127,127,.06)}
 td.num,th.num{text-align:right}
-.split{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
-.split>.t{flex:1 1 300px;min-width:260px}
-.daychart{display:flex;gap:12px;align-items:flex-end;height:172px;padding-top:6px}
+.split{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.split>*{flex:1 1 0;min-width:260px}
+.cap{color:var(--muted);font-size:12.5px;margin:-4px 0 14px}
+.tscroll{overflow-x:auto}
+.daychart{display:flex;gap:10px;align-items:flex-end;justify-content:space-around;width:100%;height:180px;padding-top:6px}
 .daycol{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:34px}
 .daybar{width:28px;min-height:3px;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden;background:var(--border)}
 .daybar .okp{background:var(--ok)}.daybar .errp{background:var(--err)}
@@ -267,7 +269,8 @@ def admin_stats(n: int = 25) -> HTMLResponse:
     )
     day_panel = (
         "<section class=panel><h3>Pro Tag (Erfolg / Fehler / Kosten)</h3>"
-        f"<div class=split><div class=t>{day_table}</div><div>{day_chart}</div></div></section>"
+        "<p class=cap>LLM-Calls je Kalendertag (UTC). Hohe Tage = Daily-Build + Area-Pool-Nachschub.</p>"
+        f"<div class=split><div>{day_chart}</div><div class=t>{day_table}</div></div></section>"
     )
 
     # Area pool: articles per rubric × language
@@ -281,8 +284,12 @@ def admin_stats(n: int = 25) -> HTMLResponse:
     for area in sorted(m):
         cells = "".join(f"<td class=num>{m[area].get(l, 0)}</td>" for l in config.LANGS)
         ap_rows += f"<tr><td>{escape(area)}</td>{cells}<td class=num>{sum(m[area].values())}</td></tr>"
+    pool_total = sum(sum(v.values()) for v in m.values())
     pool_panel = (
-        "<section class=panel><h3>Area-Pool (vorgebaute Zufallsartikel pro Rubrik × Sprache)</h3>"
+        "<section class=panel><h3>Area-Pool · vorgebaute Zufallsartikel</h3>"
+        f"<p class=cap>Bibliothek für „🎲 Zufallsartikel“ — <b>kumuliert</b> ({pool_total} Artikel gesamt). "
+        f"Der Tages-Build legt automatisch ~{config.AREA_TOPUP_PER_DAY} neue pro Rubrik & Sprache an, "
+        "die Zahlen wachsen also mit der Zeit. Σ = Summe je Rubrik über alle Sprachen.</p>"
         "<table>" + head + (ap_rows or "<tr><td colspan=99>noch leer</td></tr>") + "</table></section>"
     )
 
@@ -299,15 +306,17 @@ def admin_stats(n: int = 25) -> HTMLResponse:
     recent_panel = (
         "<section class=panel><h3>Letzte Calls</h3>"
         f"<div class=pillrow><span class=muted>Zeilen:</span>{npills}</div>"
-        "<table><tr><th>Zeit</th><th>Modell</th><th>Typ</th><th>Lang</th><th class=num>In</th>"
+        "<div class=tscroll><table><tr><th>Zeit</th><th>Modell</th><th>Typ</th><th>Lang</th><th class=num>In</th>"
         "<th class=num>Out</th><th class=num>Kosten</th><th class=num>Dauer</th><th>Status</th><th>Artikel</th></tr>"
-        + ("".join(rows) or "<tr><td colspan=10>—</td></tr>") + "</table>"
+        + ("".join(rows) or "<tr><td colspan=10>—</td></tr>") + "</table></div>"
         "<p class=muted>Kosten sind Schätzungen (Preise in config.PRICES).</p></section>"
     )
 
     body = (
         "<p><a href='/admin'>← Admin</a></p><h1>Telemetrie</h1>"
-        f"<section class=panel>{kpis}</section>"
+        f"<section class=panel><h3>Gesamt (seit Start)</h3>"
+        "<p class=cap>Kumulierte LLM-Nutzung über die gesamte Laufzeit — nicht nur heute.</p>"
+        f"{kpis}</section>"
         f"{day_panel}{pool_panel}{fn_panel}{recent_panel}"
     )
     return page("Telemetrie", body)
