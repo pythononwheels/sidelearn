@@ -366,6 +366,24 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 }
 .dict-search:focus { outline: none; border-color: var(--ll-accent); }
 
+/* Rich Wörterbuch rows (expandable senses) */
+.sl-deck > .dict-row { list-style: none; }
+.dict-row { border: 1px solid var(--ll-border); border-radius: 12px; background: var(--ll-surface); overflow: hidden; }
+.dict-row-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.dict-row-main { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; border: none; background: none; font: inherit; text-align: left; cursor: pointer; color: var(--ll-text); }
+.dict-row-main .sl-deck-trans { flex: 1; }
+.dict-pos { color: var(--ll-text-muted); font-weight: 600; }
+.dict-detail { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--ll-border); margin-top: 2px; padding-top: 10px; }
+.dict-sense { display: flex; flex-direction: column; gap: 2px; }
+.dict-sense-t { font-weight: 700; font-size: 14px; }
+.dict-sense-ex { color: var(--ll-text-soft); font-size: 13px; font-style: italic; }
+.dict-sense-exd, .sl-pop-exd { font-style: normal; color: var(--ll-text-muted); }
+
+/* Multiple-choice vocab test */
+.mc-prompt { font-size: 17px; margin: 6px 0 12px; }
+.mc-prompt b { font-family: var(--font-head); }
+.mc-ex { color: var(--ll-text-soft); font-size: 14px; font-style: italic; margin: 14px 0; }
+
 /* Update banner --------------------------------------------------------- */
 .sl-update {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;

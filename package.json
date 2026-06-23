@@ -1,6 +1,6 @@
 {
   "name": "sidelearn",
-  "version": "0.6.88",
+  "version": "0.6.89",
   "description": "Read foreign-language web pages with inline, CEFR-aware reading help powered by a local LLM (LM Studio).",
   "license": "MIT",
   "type": "module",
@@ -22,6 +22,7 @@
     "data:gaps": "node scripts/build-gaps.mjs",
     "data:gloss": "node scripts/merge-gloss.mjs",
     "data:forms": "node scripts/build-forms.mjs",
+    "data:richdict": "node scripts/build-richdict.mjs",
     "data:names": "node scripts/build-names.mjs",
     "data:names-merge": "node scripts/merge-names.mjs"
   },

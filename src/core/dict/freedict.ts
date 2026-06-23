@@ -70,6 +70,55 @@ async function loadDict(learn: Language, native: Language): Promise<DictMap> {
   return map;
 }
 
+/* ---- Rich dictionary (richdict-<learn>-<native>.json) --------------------
+ * Pre-built, grounded learner dictionary: per word a CEFR band + 1-3 senses,
+ * each with German meaning, part of speech, and an example (learning lang + DE).
+ * Built once by scripts/build-richdict.mjs; loaded lazily, fails soft. */
+
+export interface RichSense {
+  t: string; // German meaning
+  p?: string; // part of speech (German)
+  ex?: string; // example in the learning language
+  exd?: string; // German translation of the example
+}
+export interface RichEntry {
+  b?: string; // CEFR band
+  s: RichSense[];
+  alt?: string[];
+}
+type RichMap = Record<string, RichEntry>;
+
+const richCache = new Map<string, RichMap>();
+
+export async function loadRichDict(learn: Language, native: Language): Promise<RichMap> {
+  const key = `${learn}-${native}`;
+  const cached = richCache.get(key);
+  if (cached) return cached;
+  let map: RichMap = {};
+  try {
+    const res = await fetch(dataUrl(`/data/richdict-${learn}-${native}.json`));
+    if (res.ok) map = (await res.json()) as RichMap;
+  } catch {
+    // Not built for this pair yet — callers fall back to FreeDict/LLM.
+  }
+  richCache.set(key, map);
+  return map;
+}
+
+/** Rich entry for a (possibly inflected) word, or null. */
+export async function richLookup(
+  word: string,
+  learn: Language,
+  native: Language,
+): Promise<RichEntry | null> {
+  const base = normalize(word);
+  const rich = await loadRichDict(learn, native);
+  for (const c of lemmaCandidates(base, learn)) if (rich[c]) return rich[c];
+  const lemma = (await loadForms(learn))[base];
+  if (lemma && rich[lemma]) return rich[lemma];
+  return null;
+}
+
 export async function lookup(
   word: string,
   learn: Language,
