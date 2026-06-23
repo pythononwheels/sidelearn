@@ -24,7 +24,7 @@ import {
 } from '@/core/serverapi';
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
-import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, type PwaSettings } from './store';
+import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck, type DeckEntry } from './deck';
 import { THEMES, applyTheme } from './theme';
@@ -33,6 +33,7 @@ import {
   completeActivity,
   getRouteProgress as getStageProgress,
   nodeType,
+  nextLevel,
   ETAPPEN_PER_LEVEL,
   NODES_PER_ETAPPE,
   NODES_PER_LEVEL,
@@ -386,7 +387,10 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
   const stats = getStats();
   const prog = getStageProgress(settings.level);
   const level = prog.level;
-  const pct = Math.round(prog.ratio * 100);
+  const levelPct = Math.round(Math.min(prog.node, NODES_PER_LEVEL) / NODES_PER_LEVEL * 100);
+  const etappePct = Math.round(prog.ratio * 100);
+  const lvlL = `${prog.level}.${prog.etappe}`;
+  const lvlR = prog.etappe < ETAPPEN_PER_LEVEL ? `${prog.level}.${prog.etappe + 1}` : nextLevel(prog.level);
   const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
   const pose: Pose = allDone ? 'party' : 'yay';
   const bubble = allDone
@@ -423,11 +427,16 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDeck, onSurprise, onC
 
       <section class="h2-hero">
         <span class="h2-blob b1" /><span class="h2-blob b2" />
-        <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-ring, var(--ll-accent)) ${pct}%, var(--ll-border) 0)` }}>
+        <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-ring, var(--ll-accent)) ${levelPct}%, var(--ll-border) 0)` }}>
           <div class="h2-ring-in"><Gurki pose={pose} size={92} /></div>
         </div>
         <b class="h2-title">{stats.streak > 0 ? `Tag ${stats.streak} — stark!` : 'Willkommen zurück!'}</b>
-        <span class="h2-sub">{pct}% bis zum nächsten Ziel</span>
+        <div class="h2-lvlbar">
+          <span class="h2-lvl-end">{lvlL}</span>
+          <div class="h2-lvl-track"><i style={{ width: `${etappePct}%` }} /></div>
+          <span class="h2-lvl-end next">{lvlR}</span>
+        </div>
+        <span class="h2-sub">Etappe {prog.etappe}/{ETAPPEN_PER_LEVEL} im Level {prog.level}{articles.length > 0 ? ` · Tagesziel ${Math.min(doneCount, goal)}/${goal}` : ''}</span>
         <div class="h2-bubble">{bubble}</div>
       </section>
 
@@ -1222,6 +1231,24 @@ function SettingsTab({ settings, onPatch }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
 }) {
+  function doExport() {
+    const blob = new Blob([exportData()], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `learny-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  async function doImport(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const ok = importData(await file.text());
+    if (ok) { alert('Importiert ✓ — die App wird neu geladen.'); location.reload(); }
+    else alert('Import fehlgeschlagen — ist das eine Learny-Sicherung (.json)?');
+  }
   return (
     <main class="sl-main with-nav">
       <h1 class="tab-screen-title">Einstellungen</h1>
@@ -1258,6 +1285,21 @@ function SettingsTab({ settings, onPatch }: {
               <span class="theme-name">{t.name}</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      <div class="set-group">
+        <p class="set-label">Daten · Sicherung</p>
+        <p class="sl-muted" style={{ margin: '0 0 10px' }}>
+          Dein Fortschritt (Streak, Route, Vokabeln) liegt nur auf diesem Gerät. Exportiere ihn vor
+          App-Löschen oder Handywechsel — und importiere ihn am neuen Gerät.
+        </p>
+        <div class="set-grid">
+          <button class="set-choice" onClick={doExport}>⤓ Exportieren</button>
+          <label class="set-choice" style={{ textAlign: 'center', cursor: 'pointer' }}>
+            ⤒ Importieren
+            <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={doImport} />
+          </label>
         </div>
       </div>
 
