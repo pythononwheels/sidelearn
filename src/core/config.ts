@@ -8,7 +8,7 @@
 import type { CefrLevel } from './difficulty/banding';
 
 /** Supported languages (ISO 639-1). Any can be native or learning language. */
-export const LANGUAGES = ['fr', 'de', 'en', 'nl', 'es'] as const;
+export const LANGUAGES = ['fr', 'de', 'en', 'nl', 'es', 'it'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
 /** Endonym labels for the UI (each language in its own name). */
@@ -18,6 +18,7 @@ export const LANG_LABELS: Record<Language, string> = {
   en: 'English',
   nl: 'Nederlands',
   es: 'Español',
+  it: 'Italiano',
 };
 
 /** English names, used inside LLM prompts. */
@@ -27,6 +28,7 @@ export const LANG_NAMES_EN: Record<Language, string> = {
   en: 'English',
   nl: 'Dutch',
   es: 'Spanish',
+  it: 'Italian',
 };
 
 /** Directed dictionary data file name: learning → native. */
