@@ -68,8 +68,12 @@ CREATE TABLE IF NOT EXISTS word_cache (
 
 @contextmanager
 def conn() -> Iterator[sqlite3.Connection]:
-    c = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+    # WAL + busy_timeout so reads (e.g. /daily) don't fail with "database is
+    # locked" while the daily auto-build is writing prepared lessons.
+    c = sqlite3.connect(config.DB_PATH, check_same_thread=False, timeout=10)
     c.row_factory = sqlite3.Row
+    c.execute("PRAGMA journal_mode=WAL")
+    c.execute("PRAGMA busy_timeout=10000")
     try:
         yield c
         c.commit()
