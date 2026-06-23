@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.85] — 2026-06-23
+
+### Changed (Learny)
+- **Home-Fortschritt klarer**: statt „% bis zum nächsten Ziel" jetzt ein
+  Level-Aufstiegs-Balken (z. B. `A2.1 ▰▰▱▱ A2.2`) plus klarer Untertitel
+  „Etappe X/10 im Level A2 · Tagesziel Y/Z". Der Ring um Gurki zeigt den
+  Level-Fortschritt (Etappe innerhalb des Levels).
+
+### Added (Learny)
+- **Daten · Sicherung in Einstellungen**: Export aller lokalen Daten (Streak,
+  Route, Vokabeln, Settings) als `learny-backup-YYYY-MM-DD.json` und Re-Import
+  — für App-Löschen oder Handywechsel. Alles bleibt lokal (privacy-first).
+
 ## [0.6.84] — 2026-06-23
 
 ### Changed (Learny)

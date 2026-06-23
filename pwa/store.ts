@@ -39,6 +39,32 @@ export function saveSettings(s: PwaSettings): void {
   }
 }
 
+/* ---- Backup: export/import all on-device data (privacy-first, stays local) --- */
+
+/** Serialise all Learny localStorage (settings, route, streak, deck, …) to JSON. */
+export function exportData(): string {
+  const data: Record<string, string> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('sl_')) data[k] = localStorage.getItem(k) ?? '';
+  }
+  return JSON.stringify({ app: 'learny', v: 1, ts: new Date().toISOString(), data }, null, 2);
+}
+
+/** Restore from an exported backup. Returns true on success (caller reloads). */
+export function importData(json: string): boolean {
+  try {
+    const o = JSON.parse(json);
+    if (!o || typeof o.data !== 'object' || o.data === null) return false;
+    for (const [k, v] of Object.entries(o.data)) {
+      if (k.startsWith('sl_') && typeof v === 'string') localStorage.setItem(k, v);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface LessonProgress {
   progress: number; // furthest paragraph revealed (1-based)
   completed: boolean;
