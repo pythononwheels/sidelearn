@@ -261,7 +261,9 @@ def telemetry_by_fn() -> list[dict[str, Any]]:
         rows = c.execute(
             """SELECT fn||coalesce(':'||level,'') label, count(*) calls,
                       coalesce(sum(input_tokens),0) tin, coalesce(sum(output_tokens),0) tout,
-                      coalesce(sum(cost_usd),0) cost
+                      coalesce(sum(cost_usd),0) cost,
+                      coalesce(avg(input_tokens),0) ain, coalesce(avg(output_tokens),0) aout,
+                      coalesce(avg(cost_usd),0) acost
                FROM telemetry GROUP BY label ORDER BY cost DESC"""
         ).fetchall()
     return [dict(r) for r in rows]

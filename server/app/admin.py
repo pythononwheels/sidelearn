@@ -203,20 +203,22 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
 def admin_stats() -> HTMLResponse:
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
-    maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
 
-    bars = []
-    for r in by:
-        total = r["tin"] + r["tout"]
-        w = total / maxtok * 100
-        inpct = (r["tin"] / total * 100) if total else 0
-        bars.append(
-            f"<div class=statrow><div class=statlabel>{escape(r['label'])}</div>"
-            f"<div><div class=bar2 style='width:{w:.1f}%'>"
-            f"<span class=in style='width:{inpct:.1f}%'></span><span class=out style='flex:1'></span>"
-            f"</div></div>"
-            f"<div class=statnum>{r['tin']:,} / {r['tout']:,} · ${r['cost']:.4f} · {r['calls']}×</div></div>"
-        )
+    # Per-type detail table (right of the cost-per-type chart)
+    fn_rows = "".join(
+        f"<tr><td>{escape(r['label'])}</td><td class=num>{r['calls']}</td>"
+        f"<td class=num>{r['tin']:,}</td><td class=num>{r['tout']:,}</td>"
+        f"<td class=num>{round(r['ain']):,}</td><td class=num>{round(r['aout']):,}</td>"
+        f"<td class=num>${r['cost']:.4f}</td><td class=num>${r['acost']:.4f}</td></tr>"
+        for r in by
+    )
+    fn_table = (
+        "<table><tr><th>Typ</th><th class=num>Calls</th><th class=num>In</th><th class=num>Out</th>"
+        "<th class=num>Ø In</th><th class=num>Ø Out</th><th class=num>Kosten</th><th class=num>Ø Kosten</th></tr>"
+        + (fn_rows or "<tr><td colspan=8>—</td></tr>") + "</table>"
+    )
+    fn_json = json.dumps([{"label": r["label"], "cost": round(r["cost"], 4)} for r in by])
+    fn_h = max(220, len(by) * 26 + 24)
 
     # Data for the JS chart (zero-filled year) + Grid.js recent table
     daily_json = json.dumps(db.telemetry_daily_series(365))
@@ -247,12 +249,12 @@ def admin_stats() -> HTMLResponse:
         "<div class=pillrow><span class=muted>Zeitraum:</span>"
         "<a class='npill rng on' data-d=7>1 Woche</a><a class='npill rng' data-d=28>4 Wochen</a>"
         "<a class='npill rng' data-d=90>3 Monate</a><a class='npill rng' data-d=365>1 Jahr</a></div>"
-        "<div class=split><div style='position:relative;height:260px;flex:1 1 0;min-width:260px'>"
-        "<canvas id=dayChart></canvas></div>"
-        "<div class=t><div id=dayTable></div></div></div></section>"
+        "<div style='position:relative;height:240px'><canvas id=dayChart></canvas></div>"
+        "<div class=cap style='margin:16px 0 4px'>Kosten pro Tag ($)</div>"
+        "<div style='position:relative;height:130px'><canvas id=costChart></canvas></div></section>"
     )
 
-    # Area pool: articles per rubric × language
+    # Area pool: matrix (left) + Σ-per-rubric bar chart (right)
     ap = db.area_pool_overview()
     m: dict[str, dict[str, int]] = {}
     for r in ap:
@@ -264,19 +266,26 @@ def admin_stats() -> HTMLResponse:
         cells = "".join(f"<td class=num>{m[area].get(l, 0)}</td>" for l in config.LANGS)
         ap_rows += f"<tr><td>{escape(area)}</td>{cells}<td class=num>{sum(m[area].values())}</td></tr>"
     pool_total = sum(sum(v.values()) for v in m.values())
+    area_json = json.dumps(sorted(
+        [{"a": a, "n": sum(v.values())} for a, v in m.items()], key=lambda x: -x["n"]
+    ))
+    area_h = max(200, len(m) * 26 + 24)
     pool_panel = (
         "<section class=panel><h3>Area-Pool · vorgebaute Zufallsartikel</h3>"
         f"<p class=cap>Bibliothek für „🎲 Zufallsartikel“ — <b>kumuliert</b> ({pool_total} Artikel gesamt). "
         f"Der Tages-Build legt automatisch ~{config.AREA_TOPUP_PER_DAY} neue pro Rubrik & Sprache an, "
         "die Zahlen wachsen also mit der Zeit. Σ = Summe je Rubrik über alle Sprachen.</p>"
-        "<table>" + head + (ap_rows or "<tr><td colspan=99>noch leer</td></tr>") + "</table></section>"
+        "<div class=split><div class=t><table>" + head + (ap_rows or "<tr><td colspan=99>noch leer</td></tr>")
+        + "</table></div>"
+        f"<div style='position:relative;height:{area_h}px;min-width:240px'><canvas id=areaChart></canvas></div>"
+        "</div></section>"
     )
 
     fn_panel = (
-        "<section class=panel><h3>Pro Typ (Input/Output-Tokens, Kosten)</h3>"
-        "<div class=legend><i style='background:var(--accent)'></i>Input "
-        "<i style='background:var(--accent2)'></i>Output</div>"
-        + ("".join(bars) or "<p class=muted>Noch keine Calls.</p>") + "</section>"
+        "<section class=panel><h3>Pro Typ · Kosten & Tokens</h3>"
+        "<p class=cap>Kosten je Aufruftyp (links) + Detailzahlen (rechts). Ø = Durchschnitt pro Call.</p>"
+        f"<div class=split><div style='position:relative;height:{fn_h}px;min-width:240px'><canvas id=fnChart></canvas></div>"
+        f"<div class=t><div class=tscroll>{fn_table}</div></div></div></section>"
     )
 
     recent_panel = (
@@ -290,32 +299,34 @@ def admin_stats() -> HTMLResponse:
         "<script src='https://cdn.jsdelivr.net/npm/chart.js@4'></script>"
         "<script src='https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js'></script>"
         "<script>\n"
-        f"const DAILY={daily_json};const RECENT={recent_json};\n"
+        f"const DAILY={daily_json};const RECENT={recent_json};const FN={fn_json};const AREA={area_json};\n"
         "Chart.defaults.color='#8a8590';Chart.defaults.font.family='system-ui';\n"
-        "const fc=v=>'$'+(v<1?v.toFixed(4):v.toFixed(2));let chart;\n"
+        "const $=id=>document.getElementById(id);const noL={plugins:{legend:{display:false}}};\n"
+        "let chart,costc;\n"
         "function render(days){const d=DAILY.slice(-days);const labels=d.map(x=>x.day.slice(5));\n"
-        " if(chart)chart.destroy();\n"
-        " chart=new Chart(document.getElementById('dayChart'),{data:{labels,datasets:[\n"
-        "  {type:'bar',label:'OK',data:d.map(x=>x.ok),backgroundColor:'#2f9e6b',stack:'s',borderRadius:3},\n"
-        "  {type:'bar',label:'Fehler',data:d.map(x=>x.err),backgroundColor:'#d2603f',stack:'s',borderRadius:3},\n"
-        "  {type:'line',label:'Kosten $',data:d.map(x=>x.cost),yAxisID:'y2',borderColor:'#6b57d6',backgroundColor:'#6b57d6',tension:.3,pointRadius:2}\n"
+        " if(chart)chart.destroy(); if(costc)costc.destroy();\n"
+        " chart=new Chart($('dayChart'),{type:'bar',data:{labels,datasets:[\n"
+        "  {label:'OK',data:d.map(x=>x.ok),backgroundColor:'#2f9e6b',stack:'s',borderRadius:3},\n"
+        "  {label:'Fehler',data:d.map(x=>x.err),backgroundColor:'#d2603f',stack:'s',borderRadius:3}\n"
         " ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},\n"
-        "  scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Calls'}},\n"
-        "  y2:{position:'right',beginAtZero:true,grid:{display:false},title:{display:true,text:'Kosten $'}}},\n"
+        "  scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Calls'}}},\n"
         "  plugins:{legend:{labels:{boxWidth:12}}}}});\n"
-        " const nz=d.filter(x=>x.calls>0).reverse();\n"
-        " document.getElementById('dayTable').innerHTML='<table><tr><th>Tag</th><th class=num>Calls</th>'+\n"
-        "  '<th class=num>OK</th><th class=num>Fehler</th><th class=num>Kosten</th></tr>'+(nz.map(x=>\n"
-        "  `<tr><td>${x.day}</td><td class=num>${x.calls}</td><td class=num style=\"color:var(--ok)\">${x.ok}</td>`+\n"
-        "  `<td class=num style=\"color:var(--err)\">${x.err}</td><td class=num>${fc(x.cost)}</td></tr>`).join('')\n"
-        "  ||'<tr><td colspan=5>—</td></tr>')+'</table>';}\n"
+        " costc=new Chart($('costChart'),{type:'bar',data:{labels,datasets:[\n"
+        "  {data:d.map(x=>x.cost),backgroundColor:'#6b57d6',borderRadius:3}]},\n"
+        "  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},\n"
+        "   tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toFixed(4)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}}});\n"
+        "}\n"
         "document.querySelectorAll('.rng').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rng').forEach(x=>x.classList.remove('on'));b.classList.add('on');render(+b.dataset.d);});\n"
         "render(7);\n"
+        "new Chart($('fnChart'),{type:'bar',data:{labels:FN.map(x=>x.label),datasets:[{data:FN.map(x=>x.cost),backgroundColor:'#6b57d6',borderRadius:3}]},\n"
+        " options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,...noL,scales:{x:{beginAtZero:true},y:{grid:{display:false}}}}});\n"
+        "new Chart($('areaChart'),{type:'bar',data:{labels:AREA.map(x=>x.a),datasets:[{data:AREA.map(x=>x.n),backgroundColor:'#2a7e8c',borderRadius:3}]},\n"
+        " options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,...noL,scales:{x:{beginAtZero:true},y:{grid:{display:false}}}}});\n"
         "new gridjs.Grid({columns:['Zeit','Modell','Typ','Lang',\n"
         " {name:'In',formatter:c=>c.toLocaleString()},{name:'Out',formatter:c=>c.toLocaleString()},\n"
         " {name:'Kosten',formatter:c=>'$'+Number(c).toFixed(4)},'Dauer','Status','Artikel'],\n"
         " data:RECENT.map(r=>[r.ts,r.model,r.typ,r.lang,r['in'],r.out,r.cost,r.ms+' ms',r.status,r.art]),\n"
-        " search:true,sort:true,pagination:{limit:25}}).render(document.getElementById('recentGrid'));\n"
+        " search:true,sort:true,pagination:{limit:25}}).render($('recentGrid'));\n"
         "</script>"
     )
 
