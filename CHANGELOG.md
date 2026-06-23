@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.88] — 2026-06-23
+
+### Added — Kurzfassung (digest) read mode for area articles
+- **Artikelrubriken (ab A2): Auswahl „Ganzer Artikel" vs „Kurzfassung"**. Die
+  Kurzfassung ist eine kompakte, eigenständige Summary (Länge level-skaliert via
+  `SL`/`config.DIGEST_WORDS`: A2≈80 … C1≈170 Wörter) mit **3 Verständnisfragen
+  am Ende**. Wort-Antippen wie beim Lesen. A1 bleibt ganzer Artikel.
+- Server-Prep erzeugt für Area-Artikel (A2+) zusätzlich `digest` +
+  `digest_questions` (gilt für neu gebaute / on-demand geholte Artikel). Daily-
+  Lektionen unverändert; bleibt lernsprachen-intern (kein Native-Bake).
+- Fehlt der Digest (alter Pool-Artikel), erzeugt der Server ihn **lazy beim ersten
+  Aufruf** (`/digest/{id}`, `llm.digest_only`, gecacht in der prepared-Zeile) — so
+  ist jeder Area-Artikel sofort als Kurzfassung lesbar. Fallback auf „Ganzen
+  Artikel lesen", falls die Generierung scheitert.
+
 ## [0.6.87] — 2026-06-23
 
 ### Changed (Learny)

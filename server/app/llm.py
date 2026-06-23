@@ -38,12 +38,34 @@ SYSTEM = (
     "The 'paragraphs' array length MUST equal the input length."
 )
 
+# Optional "digest" reading mode (offered for area articles, A2+): a standalone
+# short read of the WHOLE article plus its own comprehension questions. Length
+# scales with level (config.DIGEST_WORDS).
+DIGEST_EXTRA = (
+    "\nADDITIONALLY produce a standalone short-read version of the article:\n"
+    "  - 'digest': a self-contained {lang} summary of the WHOLE article at level "
+    "{level}, about {words} words, in flowing prose (NOT bullet points) — it should "
+    "read as a complete mini-article on its own. Use simpler words and shorter "
+    "sentences for lower levels. Stay in {lang}, do NOT translate.\n"
+    "  - 'digest_questions': exactly 3 comprehension questions ABOUT THE DIGEST, "
+    "each with exactly 3 'options' in {lang} and 'correct' = 0-based index.\n"
+    'Add these keys to the JSON too: "digest":"","digest_questions":'
+    '[{{"q":"","options":["","",""],"correct":0}}].'
+)
 
-def prepare(paragraphs: list[str], lang_code: str, level: str) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+
+def prepare(
+    paragraphs: list[str], lang_code: str, level: str, with_digest: bool = False
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     """Returns (data, meta). data is None on error. meta carries telemetry:
-    model, input_tokens, output_tokens, cost_usd, ms, status, error, excerpt."""
+    model, input_tokens, output_tokens, cost_usd, ms, status, error, excerpt.
+    When `with_digest` and level != A1, also produces a digest + digest_questions."""
     lang = config.LANG_NAMES.get(lang_code, lang_code)
+    want_digest = with_digest and level != "A1"
     system = SYSTEM.format(lang=lang, level=level)
+    if want_digest:
+        words = config.DIGEST_WORDS.get(level, 120)
+        system += DIGEST_EXTRA.format(lang=lang, level=level, words=words)
     user = json.dumps(paragraphs, ensure_ascii=False)
     model = (
         config.OPENAI_MODEL
@@ -62,8 +84,54 @@ def prepare(paragraphs: list[str], lang_code: str, level: str) -> tuple[dict[str
             raw, tin, tout = json.dumps(_mock_raw(paragraphs)), 0, 0
     except Exception as e:  # noqa: BLE001
         return None, _meta(model, 0, 0, t0, "error", str(e), "")
-    data = _normalize(_parse(raw), paragraphs)
+    data = _normalize(_parse(raw), paragraphs, want_digest)
     return data, _meta(model, tin, tout, t0, "ok", None, raw[:4000])
+
+
+DIGEST_ONLY_SYSTEM = (
+    "You write a standalone short read of a Wikipedia article for a learner of "
+    "{lang} at CEFR level {level}. The user message is a JSON array of original "
+    "{lang} paragraphs. Reply with MINIFIED JSON ONLY, no markdown, matching "
+    '{{"digest":"","digest_questions":[{{"q":"","options":["","",""],"correct":0}}]}}:\n'
+    "- 'digest': a self-contained {lang} summary of the WHOLE article at level "
+    "{level}, about {words} words, in flowing prose (NOT bullet points), with "
+    "simpler words and shorter sentences for lower levels. Stay in {lang}, do NOT "
+    "translate.\n"
+    "- 'digest_questions': exactly 3 comprehension questions ABOUT THE DIGEST, each "
+    "with exactly 3 'options' in {lang} and 'correct' = 0-based index."
+)
+
+
+def digest_only(
+    paragraphs: list[str], lang_code: str, level: str
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Generate ONLY the digest + digest_questions for an article (cheaper than a
+    full re-prepare). Used to lazily fill the digest for existing area articles."""
+    lang = config.LANG_NAMES.get(lang_code, lang_code)
+    words = config.DIGEST_WORDS.get(level, 120)
+    system = DIGEST_ONLY_SYSTEM.format(lang=lang, level=level, words=words)
+    user = json.dumps(paragraphs, ensure_ascii=False)
+    model = (
+        config.OPENAI_MODEL if config.PROVIDER == "openai"
+        else config.GEMINI_MODEL if config.PROVIDER == "gemini"
+        else "mock"
+    )
+    t0 = time.monotonic()
+    try:
+        if config.PROVIDER == "openai":
+            raw, tin, tout = _openai(system, user)
+        elif config.PROVIDER == "gemini":
+            raw, tin, tout = _gemini(system, user)
+        else:
+            raw, tin, tout = json.dumps(_mock_raw(paragraphs)), 0, 0
+    except Exception as e:  # noqa: BLE001
+        return None, _meta(model, 0, 0, t0, "error", str(e), "")
+    d = _parse(raw)
+    digest = d.get("digest") if isinstance(d.get("digest"), str) else ""
+    dq = [vq for vq in (_valid_question(q) for q in (d.get("digest_questions") or [])) if vq][:3]
+    if not digest.strip():
+        return None, _meta(model, tin, tout, t0, "error", "empty digest", raw[:1000])
+    return {"digest": digest, "digest_questions": dq}, _meta(model, tin, tout, t0, "ok", None, raw[:1000])
 
 
 WORD_SYSTEM = (
@@ -248,7 +316,18 @@ def _parse(raw: str) -> dict[str, Any]:
     return {}
 
 
-def _normalize(data: dict[str, Any], paragraphs: list[str]) -> dict[str, Any]:
+def _valid_question(q: Any) -> dict[str, Any] | None:
+    """Return a clean MCQ {q, options, correct} or None if malformed."""
+    if not isinstance(q, dict):
+        return None
+    opts = [o for o in (q.get("options") or []) if isinstance(o, str) and o.strip()][:4]
+    correct = q.get("correct")
+    if isinstance(q.get("q"), str) and len(opts) >= 2 and isinstance(correct, int) and 0 <= correct < len(opts):
+        return {"q": q["q"], "options": opts, "correct": correct}
+    return None
+
+
+def _normalize(data: dict[str, Any], paragraphs: list[str], with_digest: bool = False) -> dict[str, Any]:
     """Force the paragraph array to line up with the input; drop bad questions."""
     out_paras: list[dict[str, Any]] = []
     raw_paras = data.get("paragraphs") or []
@@ -269,7 +348,12 @@ def _normalize(data: dict[str, Any], paragraphs: list[str]) -> dict[str, Any]:
         if isinstance(v, dict) and isinstance(v.get("word"), str) and v["word"].strip()
     ][:8]
     summary = data.get("summary") if isinstance(data.get("summary"), str) else ""
-    return {"paragraphs": out_paras, "vocab": vocab, "summary": summary}
+    out: dict[str, Any] = {"paragraphs": out_paras, "vocab": vocab, "summary": summary}
+    if with_digest:
+        out["digest"] = data.get("digest") if isinstance(data.get("digest"), str) else ""
+        dq = [vq for vq in (_valid_question(q) for q in (data.get("digest_questions") or [])) if vq]
+        out["digest_questions"] = dq[:3]
+    return out
 
 
 def _mock_raw(paragraphs: list[str]) -> dict[str, Any]:
@@ -278,4 +362,8 @@ def _mock_raw(paragraphs: list[str]) -> dict[str, Any]:
         "paragraphs": [{"simplified": p, "question": None} for p in paragraphs],
         "vocab": [],
         "summary": paragraphs[0][:200] if paragraphs else "",
+        "digest": " ".join(paragraphs)[:400] if paragraphs else "",
+        "digest_questions": [
+            {"q": "Mock-Frage?", "options": ["A", "B", "C"], "correct": 0},
+        ],
     }
