@@ -290,6 +290,24 @@ def telemetry_by_day(limit: int = 14) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def telemetry_daily_series(days: int = 365) -> list[dict[str, Any]]:
+    """Per-calendar-day {day, calls, ok, err, cost}, zero-filled over the last
+    `days` days (continuous, so charts can show empty days)."""
+    from datetime import datetime, timedelta, timezone
+
+    rows = {d["day"]: d for d in telemetry_by_day(max(days, 1) + 5)}
+    today = datetime.now(timezone.utc).date()
+    out: list[dict[str, Any]] = []
+    for i in range(days - 1, -1, -1):
+        key = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+        r = rows.get(key)
+        out.append(
+            {"day": key, "calls": r["calls"] if r else 0, "ok": r["ok"] if r else 0,
+             "err": r["err"] if r else 0, "cost": r["cost"] if r else 0.0}
+        )
+    return out
+
+
 def area_pool_overview() -> list[dict[str, Any]]:
     with conn() as c:
         rows = c.execute(

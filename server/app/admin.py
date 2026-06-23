@@ -4,6 +4,7 @@ Mutating actions are POST (so crawlers can't trigger them); protect /admin* with
 Caddy basicauth in front. No build step — plain HTML + a little inline CSS.
 """
 
+import json
 from datetime import date
 from html import escape
 
@@ -105,7 +106,8 @@ td.num,th.num{text-align:right}
 .daybar .okp{background:var(--ok)}.daybar .errp{background:var(--err)}
 .daycol .d{font-size:11px;color:var(--muted)}.daycol .cst{font-size:11px;font-weight:700}
 .pillrow{display:flex;gap:6px;align-items:center;margin:0 0 10px}
-.npill{padding:3px 11px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:700;color:var(--text)}
+.npill{padding:3px 11px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer}
+#recentGrid{margin-top:8px}
 .npill.on{background:var(--accent);color:#fff;border-color:transparent}
 """
 
@@ -198,11 +200,9 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
 
 
 @router.get("/admin/stats", response_class=HTMLResponse)
-def admin_stats(n: int = 25) -> HTMLResponse:
-    n = n if n in (10, 25, 50) else 25
+def admin_stats() -> HTMLResponse:
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
-    recent = db.telemetry_recent(n)
     maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
 
     bars = []
@@ -218,16 +218,18 @@ def admin_stats(n: int = 25) -> HTMLResponse:
             f"<div class=statnum>{r['tin']:,} / {r['tout']:,} · ${r['cost']:.4f} · {r['calls']}×</div></div>"
         )
 
-    rows = []
-    for r in recent:
-        st = "<span class=err>error</span>" if r["status"] == "error" else "ok"
-        rows.append(
-            f"<tr><td>{escape((r['ts'] or '')[:19])}</td><td>{escape(r['model'] or '')}</td>"
-            f"<td>{escape((r['fn'] or '') + ':' + (r['level'] or ''))}</td><td>{escape(r['lang'] or '')}</td>"
-            f"<td class=num>{r['input_tokens']:,}</td><td class=num>{r['output_tokens']:,}</td>"
-            f"<td class=num>${r['cost_usd'] or 0:.4f}</td><td class=num>{r['ms']} ms</td><td>{st}</td>"
-            f"<td>{escape((r['article_url'] or '').replace('https://', ''))[:40]}</td></tr>"
-        )
+    # Data for the JS chart (zero-filled year) + Grid.js recent table
+    daily_json = json.dumps(db.telemetry_daily_series(365))
+    recent_json = json.dumps([
+        {
+            "ts": (r["ts"] or "")[:19].replace("T", " "), "model": r["model"] or "",
+            "typ": (r["fn"] or "") + ((":" + r["level"]) if r["level"] else ""), "lang": r["lang"] or "",
+            "in": r["input_tokens"] or 0, "out": r["output_tokens"] or 0,
+            "cost": round(r["cost_usd"] or 0, 4), "ms": r["ms"] or 0, "status": r["status"] or "",
+            "art": (r["article_url"] or "").replace("https://", "")[:48],
+        }
+        for r in db.telemetry_recent(200)
+    ])
 
     kpis = (
         "<div class=cards>"
@@ -239,38 +241,15 @@ def admin_stats(n: int = 25) -> HTMLResponse:
         "</div>"
     )
 
-    # Per-day success / error / cost — table + vertical bar chart
-    days = db.telemetry_by_day(14)
-    day_rows = "".join(
-        f"<tr><td>{escape(d['day'] or '')}</td><td class=num>{d['calls']}</td>"
-        f"<td class=num style='color:var(--ok)'>{d['ok']}</td>"
-        f"<td class=num style='color:var(--err)'>{d['err']}</td><td class=num>${d['cost']:.4f}</td></tr>"
-        for d in days
-    )
-    day_table = (
-        "<table><tr><th>Tag</th><th class=num>Calls</th><th class=num>OK</th>"
-        "<th class=num>Fehler</th><th class=num>Kosten</th></tr>"
-        + (day_rows or "<tr><td colspan=5>—</td></tr>") + "</table>"
-    )
-    maxc = max([d["calls"] for d in days] + [1])
-    cols = ""
-    for d in reversed(days):  # oldest left → newest right
-        bh = max(3, round(d["calls"] / maxc * 150))
-        okpct = round(d["ok"] / d["calls"] * 100) if d["calls"] else 0
-        cols += (
-            f"<div class=daycol><div class=daybar style='height:{bh}px' title='{d['calls']} calls'>"
-            f"<span class=okp style='height:{okpct}%'></span><span class=errp style='flex:1'></span></div>"
-            f"<div class=d>{escape((d['day'] or '')[5:])}</div><div class=cst>${d['cost']:.2f}</div></div>"
-        )
-    day_chart = (
-        "<div class=daychart>" + (cols or "<p class=muted>—</p>") + "</div>"
-        "<div class=legend><i style='background:var(--ok)'></i>OK "
-        "<i style='background:var(--err)'></i>Fehler · Höhe = Calls</div>"
-    )
     day_panel = (
         "<section class=panel><h3>Pro Tag (Erfolg / Fehler / Kosten)</h3>"
         "<p class=cap>LLM-Calls je Kalendertag (UTC). Hohe Tage = Daily-Build + Area-Pool-Nachschub.</p>"
-        f"<div class=split><div>{day_chart}</div><div class=t>{day_table}</div></div></section>"
+        "<div class=pillrow><span class=muted>Zeitraum:</span>"
+        "<a class='npill rng on' data-d=7>1 Woche</a><a class='npill rng' data-d=28>4 Wochen</a>"
+        "<a class='npill rng' data-d=90>3 Monate</a><a class='npill rng' data-d=365>1 Jahr</a></div>"
+        "<div class=split><div style='position:relative;height:260px;flex:1 1 0;min-width:260px'>"
+        "<canvas id=dayChart></canvas></div>"
+        "<div class=t><div id=dayTable></div></div></div></section>"
     )
 
     # Area pool: articles per rubric × language
@@ -300,16 +279,44 @@ def admin_stats(n: int = 25) -> HTMLResponse:
         + ("".join(bars) or "<p class=muted>Noch keine Calls.</p>") + "</section>"
     )
 
-    npills = "".join(
-        f"<a class='npill {'on' if k == n else ''}' href='/admin/stats?n={k}'>{k}</a>" for k in (10, 25, 50)
-    )
     recent_panel = (
         "<section class=panel><h3>Letzte Calls</h3>"
-        f"<div class=pillrow><span class=muted>Zeilen:</span>{npills}</div>"
-        "<div class=tscroll><table><tr><th>Zeit</th><th>Modell</th><th>Typ</th><th>Lang</th><th class=num>In</th>"
-        "<th class=num>Out</th><th class=num>Kosten</th><th class=num>Dauer</th><th>Status</th><th>Artikel</th></tr>"
-        + ("".join(rows) or "<tr><td colspan=10>—</td></tr>") + "</table></div>"
-        "<p class=muted>Kosten sind Schätzungen (Preise in config.PRICES).</p></section>"
+        "<p class=cap>Sortier-, such- und seitenweise. Kosten sind Schätzungen (config.PRICES).</p>"
+        "<div id=recentGrid></div></section>"
+    )
+
+    scripts = (
+        "<link rel=stylesheet href='https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css'>"
+        "<script src='https://cdn.jsdelivr.net/npm/chart.js@4'></script>"
+        "<script src='https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js'></script>"
+        "<script>\n"
+        f"const DAILY={daily_json};const RECENT={recent_json};\n"
+        "Chart.defaults.color='#8a8590';Chart.defaults.font.family='system-ui';\n"
+        "const fc=v=>'$'+(v<1?v.toFixed(4):v.toFixed(2));let chart;\n"
+        "function render(days){const d=DAILY.slice(-days);const labels=d.map(x=>x.day.slice(5));\n"
+        " if(chart)chart.destroy();\n"
+        " chart=new Chart(document.getElementById('dayChart'),{data:{labels,datasets:[\n"
+        "  {type:'bar',label:'OK',data:d.map(x=>x.ok),backgroundColor:'#2f9e6b',stack:'s',borderRadius:3},\n"
+        "  {type:'bar',label:'Fehler',data:d.map(x=>x.err),backgroundColor:'#d2603f',stack:'s',borderRadius:3},\n"
+        "  {type:'line',label:'Kosten $',data:d.map(x=>x.cost),yAxisID:'y2',borderColor:'#6b57d6',backgroundColor:'#6b57d6',tension:.3,pointRadius:2}\n"
+        " ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},\n"
+        "  scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Calls'}},\n"
+        "  y2:{position:'right',beginAtZero:true,grid:{display:false},title:{display:true,text:'Kosten $'}}},\n"
+        "  plugins:{legend:{labels:{boxWidth:12}}}}});\n"
+        " const nz=d.filter(x=>x.calls>0).reverse();\n"
+        " document.getElementById('dayTable').innerHTML='<table><tr><th>Tag</th><th class=num>Calls</th>'+\n"
+        "  '<th class=num>OK</th><th class=num>Fehler</th><th class=num>Kosten</th></tr>'+(nz.map(x=>\n"
+        "  `<tr><td>${x.day}</td><td class=num>${x.calls}</td><td class=num style=\"color:var(--ok)\">${x.ok}</td>`+\n"
+        "  `<td class=num style=\"color:var(--err)\">${x.err}</td><td class=num>${fc(x.cost)}</td></tr>`).join('')\n"
+        "  ||'<tr><td colspan=5>—</td></tr>')+'</table>';}\n"
+        "document.querySelectorAll('.rng').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rng').forEach(x=>x.classList.remove('on'));b.classList.add('on');render(+b.dataset.d);});\n"
+        "render(7);\n"
+        "new gridjs.Grid({columns:['Zeit','Modell','Typ','Lang',\n"
+        " {name:'In',formatter:c=>c.toLocaleString()},{name:'Out',formatter:c=>c.toLocaleString()},\n"
+        " {name:'Kosten',formatter:c=>'$'+Number(c).toFixed(4)},'Dauer','Status','Artikel'],\n"
+        " data:RECENT.map(r=>[r.ts,r.model,r.typ,r.lang,r['in'],r.out,r.cost,r.ms+' ms',r.status,r.art]),\n"
+        " search:true,sort:true,pagination:{limit:25}}).render(document.getElementById('recentGrid'));\n"
+        "</script>"
     )
 
     body = (
@@ -317,7 +324,7 @@ def admin_stats(n: int = 25) -> HTMLResponse:
         f"<section class=panel><h3>Gesamt (seit Start)</h3>"
         "<p class=cap>Kumulierte LLM-Nutzung über die gesamte Laufzeit — nicht nur heute.</p>"
         f"{kpis}</section>"
-        f"{day_panel}{pool_panel}{fn_panel}{recent_panel}"
+        f"{day_panel}{pool_panel}{fn_panel}{recent_panel}{scripts}"
     )
     return page("Telemetrie", body)
 
