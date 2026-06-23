@@ -3,6 +3,29 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.89] — 2026-06-23
+
+### Changed (Learny)
+- **Progression klarer**: Der Home-Balken zeigt jetzt den **Level-Fortschritt**
+  (node/30, „A2 → B1") statt des Etappen-Drittels — 1 Artikel + 1 Vokabeltest sind
+  ~7 %, nicht 67 %. **Freie Reads (Artikelrubriken/Kurzfassung) geben XP, treiben
+  aber die Lernroute nicht** (nur Tageslektion + Übungen/Tests).
+- **Vokabeltest = Multiple Choice**: „Was bedeutet X?" mit 4 Optionen (richtige
+  Bedeutung + 3 Distraktoren aus dem Pool), auto-bewertet, Beispielsatz danach —
+  statt Selbsteinschätzung „Gewusst/Nochmal".
+
+### Added (Learny) — reiches, leveled Wörterbuch
+- **richdict-<lang>-de.json** (fr/es/en/nl/it, je bis ~6000 Wörter, CEFR-gebandet):
+  pro Wort 1–3 Bedeutungen mit **Wortart + Beispiel (Lernsprache + Deutsch)** —
+  offline, gecacht. **Bedeutungen grounded auf FreeDict** (kein Halluzinieren im
+  Kern), Beispiele/Wortart/Reihenfolge per LLM (gemini), dominante Alltagsbedeutung
+  zuerst (behebt z. B. „pas → nicht" statt „Schritt").
+- Wörterbuch zeigt reiche, aufklappbare Einträge; **WordPopover** nutzt zuerst das
+  Offline-richdict (instant), Server-/translate nur als Fallback. Vokabeltest/Seed
+  ziehen den Primär-Sense aus richdict.
+- **Italienisch-Offline** komplett: `freq-it`, `forms-it`, `dict-it-de` (FreeDict)
+  + `richdict-it-de` — Wörterbuch & Vokabeltest funktionieren jetzt auch auf Italienisch.
+
 ## [0.6.88] — 2026-06-23
 
 ### Added — Kurzfassung (digest) read mode for area articles

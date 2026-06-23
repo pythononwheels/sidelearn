@@ -11,12 +11,16 @@
 import { type Language } from '@/core/config';
 import { type CefrLevel, rankToBand, levelIndex } from '@/core/difficulty/banding';
 import { loadRanks } from '@/core/difficulty/frequency';
-import { lookup } from '@/core/dict/freedict';
+import { lookup, loadRichDict } from '@/core/dict/freedict';
 
 export interface SeedWord {
   word: string;
   translation: string;
   band: CefrLevel;
+  pos?: string;
+  example?: string;
+  exampleDe?: string;
+  alternatives?: string[];
 }
 
 const cache = new Map<string, SeedWord[]>();
@@ -44,6 +48,9 @@ export async function seedVocab(
   }
   entries.sort((a, b) => a[1] - b[1]); // ascending rank = most frequent first
 
+  // Prefer the rich dictionary (correct primary sense + example/pos); fall back
+  // to the flat FreeDict lookup where richdict isn't built yet.
+  const rich = await loadRichDict(learn, native);
   const maxIdx = levelIndex(level);
   const out: SeedWord[] = [];
   const seen = new Set<string>();
@@ -52,11 +59,20 @@ export async function seedVocab(
     const band = rankToBand(rank);
     if (levelIndex(band) > maxIdx) continue; // harder than the learner's level
     const w = word.toLowerCase();
-    // Skip 2-letter glue words: they make poor flashcards and FreeDict's entries
-    // for them are often noisy (e.g. es "de" → "Handvoll"). Content words start
-    // a little deeper and are reliably translated.
+    // Skip 2-letter glue words: they make poor flashcards.
     if (w.length < 3 || seen.has(w)) continue;
-    if (!/^[\p{L}]+$/u.test(w)) continue; // letters only — skip numbers/punctuation
+    if (!/^[\p{L}]+$/u.test(w)) continue; // letters only
+
+    const re = rich[w];
+    if (re?.s?.length) {
+      const s0 = re.s[0]!;
+      seen.add(w);
+      out.push({
+        word, band, translation: s0.t, pos: s0.p, example: s0.ex, exampleDe: s0.exd,
+        alternatives: [...new Set([...re.s.slice(1).map((s) => s.t), ...(re.alt ?? [])])],
+      });
+      continue;
+    }
     const senses = await lookup(word, learn, native);
     const tr = senses[0]?.translations?.slice(0, 2).join(', ');
     if (!tr) continue;

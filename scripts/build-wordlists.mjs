@@ -27,12 +27,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'src', 'public', 'data');
 const SRC = join(ROOT, 'data', 'sources');
 
-const LANGS = ['fr', 'de', 'en', 'nl', 'es'];
-const ISO3 = { fr: 'fra', de: 'deu', en: 'eng', nl: 'nld', es: 'spa' };
+const LANGS = ['fr', 'de', 'en', 'nl', 'es', 'it'];
+const ISO3 = { fr: 'fra', de: 'deu', en: 'eng', nl: 'nld', es: 'spa', it: 'ita' };
 
 /** Directed dictionary pairs [learn, native]. Missing FreeDict pairs are skipped. */
 const DICT_PAIRS = [
-  ['fr', 'de'], ['en', 'de'], ['nl', 'de'], ['es', 'de'],
+  ['fr', 'de'], ['en', 'de'], ['nl', 'de'], ['es', 'de'], ['it', 'de'],
   ['de', 'en'], ['fr', 'en'], ['nl', 'en'], ['es', 'en'],
   ['es', 'fr'], ['es', 'nl'],
   ['de', 'es'], ['en', 'es'], ['fr', 'es'], ['nl', 'es'],
