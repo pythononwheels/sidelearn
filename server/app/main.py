@@ -359,6 +359,20 @@ def areas() -> dict:
     return {a: sorted(by_lang.keys()) for a, by_lang in wiki.AREAS.items()}
 
 
+@app.get("/areas/list", dependencies=[Depends(require_origin)])
+def areas_list(
+    lang: str = Query(...),
+    level: str = Query("A2"),
+    date_: str | None = Query(None, alias="date"),
+) -> dict:
+    """Already-prepared area-pool articles for (lang, level) — instant, no LLM.
+    Optionally restricted to those added on `date` (YYYY-MM-DD). For the Challenges
+    library list. Cached content only, so no cost guard / rate limit needed."""
+    _check_lang(lang)
+    _check_level(level)
+    return {"lang": lang, "level": level, "articles": db.area_pool_prepared(lang, level, date_)}
+
+
 @app.get("/surprise", dependencies=[Depends(require_origin)])
 @limiter.limit(config.RL_SURPRISE)
 async def surprise(
