@@ -72,6 +72,31 @@ AREA_DAILY_CAP = int(os.getenv("SL_AREA_DAILY_CAP", "500"))
 # prompt scales the standalone summary so it reads naturally at each level.
 DIGEST_WORDS = {"A2": 80, "B1": 110, "B2": 140, "C1": 170}
 
+# --- Abuse / cost protection for the public LLM endpoints -------------------
+# Only browser requests from these origins may hit the cost endpoints. Default:
+# the Learny PWA in prod + localhost for dev. Tune via SL_ALLOWED_ORIGIN_REGEX.
+ALLOWED_ORIGIN_REGEX = os.getenv(
+    "SL_ALLOWED_ORIGIN_REGEX",
+    r"^https://learny\.pyrates\.io$|^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+)
+
+# Hard input-length limits (reject above → 400). Kills the "send 100k words" attack.
+MAX_WORD_LEN = int(os.getenv("SL_MAX_WORD_LEN", "64"))
+MAX_SENTENCE_LEN = int(os.getenv("SL_MAX_SENTENCE_LEN", "300"))
+MAX_TEXT_LEN = int(os.getenv("SL_MAX_TEXT_LEN", "400"))
+
+# Output-token caps per LLM call (bounds cost + cuts "…and also do xyz" essays).
+TRANSLATE_MAX_OUT = int(os.getenv("SL_TRANSLATE_MAX_OUT", "120"))
+SENTENCE_MAX_OUT = int(os.getenv("SL_SENTENCE_MAX_OUT", "300"))
+
+# Per-IP rate limits (slowapi syntax) for the cost endpoints.
+RL_DEFAULT = os.getenv("SL_RL_DEFAULT", "120/minute")
+RL_TRANSLATE = os.getenv("SL_RL_TRANSLATE", "30/minute")
+RL_SENTENCE = os.getenv("SL_RL_SENTENCE", "20/minute")
+RL_SURPRISE = os.getenv("SL_RL_SURPRISE", "8/minute")
+RL_DIGEST = os.getenv("SL_RL_DIGEST", "20/minute")
+RL_LESSON = os.getenv("SL_RL_LESSON", "60/minute")
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",

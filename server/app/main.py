@@ -6,22 +6,56 @@ from datetime import date
 import hashlib
 from datetime import datetime, timezone
 
+import re
+from urllib.parse import urlparse
+
 import httpx
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from . import admin, config, db, llm, pipeline, wiki
 
 app = FastAPI(title="Sidelearn Content Server", version="0.1")
 
-# Public, read-only data → permissive CORS so the extension can fetch it.
+# CORS limited to the Learny PWA origin (+ localhost for dev) — not "*".
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=config.ALLOWED_ORIGIN_REGEX,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+# --- Per-IP rate limiting + origin gate for the cost (LLM) endpoints ---------
+def _client_ip(request: Request) -> str:
+    # Behind Caddy: use the real client IP from X-Forwarded-For (else everyone
+    # shares the proxy IP and one bucket).
+    xff = request.headers.get("x-forwarded-for")
+    return xff.split(",")[0].strip() if xff else get_remote_address(request)
+
+
+limiter = Limiter(key_func=_client_ip)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+_ORIGIN_RE = re.compile(config.ALLOWED_ORIGIN_REGEX)
+
+
+def require_origin(request: Request) -> None:
+    """Reject requests that don't come from an allowed browser origin. Browsers
+    send `Origin` on cross-origin fetch; curl/bots usually don't → 403. (A forged
+    Origin can pass — the rate limit + input/output caps bound the damage.)"""
+    origin = request.headers.get("origin")
+    if not origin:
+        ref = request.headers.get("referer", "")
+        p = urlparse(ref)
+        origin = f"{p.scheme}://{p.netloc}" if p.scheme and p.netloc else ""
+    if not (origin and _ORIGIN_RE.match(origin)):
+        raise HTTPException(403, "forbidden")
+
 
 app.include_router(admin.router)
 
@@ -115,8 +149,7 @@ async def _ensure_prepared(article_id: str, level: str) -> dict | None:
     return db.get_prepared(article_id, level)
 
 
-@app.get("/lesson/{article_id}")
-async def lesson(article_id: str, level: str = Query("A2")) -> dict:
+async def _lesson_payload(article_id: str, level: str) -> dict:
     _check_level(level)
     art = db.get_article(article_id)
     if not art:
@@ -153,8 +186,15 @@ async def lesson(article_id: str, level: str = Query("A2")) -> dict:
     }
 
 
-@app.get("/digest/{article_id}")
-async def digest(article_id: str, level: str = Query("A2")) -> dict:
+@app.get("/lesson/{article_id}", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_LESSON)
+async def lesson(request: Request, article_id: str, level: str = Query("A2")) -> dict:
+    return await _lesson_payload(article_id, level)
+
+
+@app.get("/digest/{article_id}", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_DIGEST)
+async def digest(request: Request, article_id: str, level: str = Query("A2")) -> dict:
     """Digest (short-read) for an area article, generated lazily on first request
     and cached into the prepared row. A1 has no digest."""
     _check_level(level)
@@ -197,8 +237,10 @@ def archive(lang: str = Query(...), limit: int = Query(30, le=120)) -> dict:
     return {"lang": lang, "dates": dates}
 
 
-@app.get("/translate")
+@app.get("/translate", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_TRANSLATE)
 def translate(
+    request: Request,
     lang: str = Query(...),
     native: str = Query(...),
     word: str = Query(...),
@@ -212,6 +254,10 @@ def translate(
     word = word.strip()
     if not word:
         raise HTTPException(400, "empty word")
+    if len(word) > config.MAX_WORD_LEN or "\n" in word or len(word.split()) > 3:
+        raise HTTPException(400, "word too long")
+    if len(sentence) > config.MAX_SENTENCE_LEN:
+        raise HTTPException(400, "sentence too long")
     shash = hashlib.sha1(sentence.strip().lower().encode("utf-8")).hexdigest()[:12]
 
     cached = db.get_word_cache(lang, native, word, shash)
@@ -238,8 +284,10 @@ def translate(
     return {**data, "cached": False}
 
 
-@app.get("/sentence")
+@app.get("/sentence", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_SENTENCE)
 def sentence(
+    request: Request,
     lang: str = Query(...),
     native: str = Query(...),
     text: str = Query(...),
@@ -252,6 +300,8 @@ def sentence(
     text = text.strip()
     if not text:
         raise HTTPException(400, "empty text")
+    if len(text) > config.MAX_TEXT_LEN:
+        raise HTTPException(400, "text too long")
     thash = hashlib.sha1(text.lower().encode("utf-8")).hexdigest()[:16]
 
     cached = db.get_word_cache(lang, native, thash, "s2")
@@ -284,8 +334,10 @@ def areas() -> dict:
     return {a: sorted(by_lang.keys()) for a, by_lang in wiki.AREAS.items()}
 
 
-@app.get("/surprise")
+@app.get("/surprise", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_SURPRISE)
 async def surprise(
+    request: Request,
     lang: str = Query(...),
     level: str = Query("A2"),
     area: str = Query("technik"),
@@ -302,7 +354,7 @@ async def surprise(
     # (instant, no LLM). The daily build keeps this topped up.
     pooled = db.random_area_prepared(area, lang, level)
     if pooled:
-        return await lesson(pooled, level)
+        return await _lesson_payload(pooled, level)
 
     # Try a few candidates so a random too-short article (or a one-off prepare
     # hiccup) doesn't surface as a user-facing error. Cheap checks (length) skip
@@ -317,7 +369,7 @@ async def surprise(
 
             # Already in the library and prepared for this level → free, return.
             if db.has_prepared(art["id"], level):
-                return await lesson(art["id"], level)
+                return await _lesson_payload(art["id"], level)
 
             if not db.has_article(art["id"]):
                 paras = await wiki.fetch_paragraphs(client, lang, art["title"], config.MAX_PARAS)
@@ -332,16 +384,17 @@ async def surprise(
             prepares += 1
             await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise", True)
             if db.has_prepared(art["id"], level):
-                return await lesson(art["id"], level)
+                return await _lesson_payload(art["id"], level)
 
     raise HTTPException(404, "couldn't find a good article right now — try again")
 
 
-@app.get("/random")
-async def random_lesson(lang: str = Query(...), level: str = Query("A2")) -> dict:
+@app.get("/random", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_LESSON)
+async def random_lesson(request: Request, lang: str = Query(...), level: str = Query("A2")) -> dict:
     _check_lang(lang)
     _check_level(level)
     art = db.random_article(lang)
     if not art:
         raise HTTPException(404, "no articles yet")
-    return await lesson(art["id"], level)
+    return await _lesson_payload(art["id"], level)

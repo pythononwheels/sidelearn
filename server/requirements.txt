@@ -5,3 +5,4 @@ apscheduler>=3.10
 python-dotenv>=1.0
 openai>=1.40
 google-genai>=1.0
+slowapi>=0.1.9
