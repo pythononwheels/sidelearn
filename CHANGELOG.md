@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.92] — 2026-06-24
+
+### Added (Learny)
+- **Vokabeltest: „Weiß nicht"-Button** + nach jeder Antwort eine **ausführliche
+  Worterklärung** (alle Bedeutungen · Wortart · Beispiel FR/DE · Alternativen) aus
+  richdict. „Weiß nicht" deckt die richtige Lösung auf und zählt als nicht gewusst.
+
 ## [0.6.91] — 2026-06-24
 
 ### Changed (Learny) — Lernpfad-Redesign + passives Vokabellernen
