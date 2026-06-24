@@ -1599,7 +1599,9 @@ function ChallengesTab({ settings, onOpen }: {
   const doneCount = articles.filter((a) => isCompleted(a.url)).length;
   const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
 
-  const days = dates ?? [];
+  // The server archive includes today; drop it so it isn't shown twice (next to
+  // the dedicated "Heute" pill).
+  const days = (dates ?? []).filter((d) => d !== dayStamp());
   return (
     <main class="sl-main with-nav">
       <h1 class="tab-screen-title">Challenges</h1>

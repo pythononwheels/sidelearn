@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.109] — 2026-06-24 — Challenges: heutiges Datum nicht mehr doppelt
+
+- Im Challenges-View tauchte „heute" sowohl als „Heute"-Pill als auch als datierter Pill auf. Das
+  heutige Datum wird jetzt aus der Archiv-Liste gefiltert.
+
 ## [0.6.108] — 2026-06-24 — „Ganzen Lernpfad ansehen": pinker Text, lila Rahmen
 
 - Der Button-Text/-Icon war im dunklen Lila zu schwer. Jetzt **pinker Text + Icon** (greift die aktive
