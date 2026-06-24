@@ -77,6 +77,17 @@ function markDailyDone(kind: DailyKind): void {
   } catch { /* ignore */ }
 }
 
+// Pastel dot colours for numbered (future) etappes; gold for chest checkpoints.
+const PASTEL_DOTS = [
+  { background: '#d9ecff', color: '#4f86d6' },
+  { background: '#e0f5d6', color: '#5aa648' },
+  { background: '#fde3ca', color: '#df7f33' },
+  { background: '#e9dcfb', color: '#9162da' },
+  { background: '#d3f1ea', color: '#2fa893' },
+];
+const CHEST_DOT = { background: '#ffe39c', color: '#d99a14' };
+const pastelDot = (i: number) => PASTEL_DOTS[((i % PASTEL_DOTS.length) + PASTEL_DOTS.length) % PASTEL_DOTS.length];
+
 /** This Etappe's next-level target words (seeded into the SRS deck) + how many
  * are "cleared" (box≥2). The weekly word goal that gates the Etappentest. */
 async function etappeBatch(settings: PwaSettings, etappe: number): Promise<{ words: string[]; cleared: number; targets: SeedWord[]; batch: SeedWord[] }> {
@@ -598,7 +609,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
           </button>
         </div>
         <div class={`rn r ${etappeReady ? 'current' : 'locked'} ${weeklyNext === 'check' ? 'pulse' : ''}`}>
-          <div class="rn-rail"><span class="rn-dot">{etappeReady ? (prog.atAufstieg ? <IconSummit /> : <IconFlag />) : <IconLock />}</span></div>
+          <div class="rn-rail"><span class="rn-dot" style={etappeReady ? undefined : CHEST_DOT}><IconChest /></span></div>
           <button class="rn-card" disabled={!etappeReady} onClick={() => etappeReady && onTest()}>
             <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappen-Check'}</span>
             <span class="rn-sub">{etappeReady ? 'freigeschaltet · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
@@ -1498,15 +1509,15 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
           <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
           <span class="rn-card flat"><span class="rn-title">Sprachniveau {level}.{e + 1} — diese Woche</span></span>
         </div>,
-        <div class={`rn current ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
-          <div class="rn-rail"><span class="rn-dot"><IconCards /></span></div>
+        <div class={`rn ${ready ? 'done' : 'current'} ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
+          <div class="rn-rail"><span class="rn-dot">{ready ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
             <span class="rn-title">Lerne neue Wörter</span>
             <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} diese Woche · tippen</span>
           </button>
         </div>,
         <div class={`rn ${ready ? 'current' : 'locked'} ${ready ? 'pulse' : ''} ${side()}`} key={`t${e}`}>
-          <div class="rn-rail"><span class="rn-dot">{ready ? <IconFlag /> : <IconLock />}</span></div>
+          <div class="rn-rail"><span class="rn-dot" style={ready ? undefined : CHEST_DOT}><IconChest /></span></div>
           <button class="rn-card" disabled={!ready} onClick={() => ready && onTest()}>
             <span class="rn-title">Etappen-Check</span>
             <span class="rn-sub">{ready ? 'kurzer Test über die neuen Wörter · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
@@ -1514,17 +1525,19 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
         </div>,
       );
     } else {
+      const n = e + 1;
+      const milestone = n % 5 === 0; // every 5th etappe is a treasure milestone
       rows.push(
         <div class={`rn locked ${side()}`} key={`e${e}`}>
-          <div class="rn-rail"><span class="rn-dot"><IconLock /></span></div>
-          <span class="rn-card"><span class="rn-title">Etappe {e + 1}</span><span class="rn-sub">{ETAPPE_GOAL} Wörter + Check</span></span>
+          <div class="rn-rail"><span class="rn-dot" style={milestone ? CHEST_DOT : pastelDot(e)}>{milestone ? <IconChest /> : n}</span></div>
+          <span class="rn-card"><span class="rn-title">Etappe {n}</span><span class="rn-sub">{milestone ? `Meilenstein · ${ETAPPE_GOAL} Wörter` : `${ETAPPE_GOAL} Wörter + Check`}</span></span>
         </div>,
       );
     }
   }
   rows.push(
-    <div class={`rn ${prog.atAufstieg ? 'current' : 'locked'} ${side()}`} key="auf">
-      <div class="rn-rail"><span class="rn-dot" ref={prog.atAufstieg ? curRef : undefined}>{prog.atAufstieg ? <IconSummit /> : <IconLock />}</span></div>
+    <div class={`rn ${prog.atAufstieg ? 'current' : 'locked'} ${prog.atAufstieg ? 'pulse' : ''} ${side()}`} key="auf">
+      <div class="rn-rail"><span class="rn-dot" ref={prog.atAufstieg ? curRef : undefined} style={prog.atAufstieg ? undefined : CHEST_DOT}><IconChest /></span></div>
       <button class="rn-card" disabled={!prog.atAufstieg} onClick={() => prog.atAufstieg && onTest()}>
         <span class="rn-title">Aufstiegstest → {prog.nextLevel}</span>
         <span class="rn-sub">{prog.atAufstieg ? `alle Wörter für ${prog.nextLevel} · tippen` : 'nach Etappe 10'}</span>

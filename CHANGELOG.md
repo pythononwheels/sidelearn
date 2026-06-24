@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.98] — 2026-06-24 — Lernpfad entpinkt: Journey + Card-Style
+
+- **Lernpfad neu gestaltet** (Mini + voller Pfad): Card-Style (jeder Schritt eine ruhige Karte),
+  weniger Pink — pink nur noch für den **aktiven** Schritt, erledigt = grün.
+- **Nummerierte Pastell-Bullets** für künftige Etappen (blau/grün/amber/lila/türkis im Wechsel)
+  statt monotoner grauer Schlösser → Reisekarten-Gefühl.
+- **Konsistente goldene Truhe** für ALLE Checkpoints (Etappen-Check, Meilenstein-Etappen alle 5,
+  Aufstiegstest) — kein gemischtes Schloss/Truhe mehr.
+- Stil zuvor als eigenständige HTML-Mocks vergleichen statt am Live-Design zu basteln
+  (`pwa/mocks/lernpfad-mocks.html`, untracked).
+
 ## [Server] — 2026-06-24 — Surprise-Artikel landen im Area-Pool
 
 - **`/surprise` füllt den `area_pool`**: jeder ausgelieferte Artikel (live gebaut *oder* zufällig

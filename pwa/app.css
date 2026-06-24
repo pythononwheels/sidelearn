@@ -716,6 +716,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--ll-accent-soft); color: var(--ll-accent-strong);
   border: 3px solid var(--ll-bg);
+  font-family: var(--font-head); font-weight: 800; font-size: 16px; /* numbered etappes */
 }
 .rn-dot svg { width: 22px; height: 22px; }
 .rn-card {
@@ -728,13 +729,21 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn-title { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
 .rn-sub { font-size: 12.5px; color: var(--ll-text-soft); }
 
+/* Card style: every step (except the section header) sits in a calm card. */
+.route .rn:not(.head) .rn-card {
+  background: var(--ll-surface); border: 1px solid var(--ll-border); border-radius: 14px;
+  padding: 11px 14px; box-shadow: 0 2px 6px rgba(40, 30, 80, .05);
+}
+.route.mini .rn:not(.head) .rn-card { padding: 10px 13px; }
+
 /* Node states */
-.rn.done .rn-dot { background: var(--ll-accent); color: var(--ll-accent-ink); }
-.rn.locked .rn-dot { background: var(--ll-border); color: var(--ll-text-muted); }
+.rn.done .rn-dot { background: #cfe8d8; color: var(--ll-ok, #2f9e6b); } /* erledigt = grün */
+.rn.done .rn-card { background: rgba(47, 158, 107, .10) !important; border-color: transparent !important; }
+.rn.locked .rn-dot { background: var(--ll-border); color: var(--ll-text-muted); } /* fallback; pastel/gold set inline */
 .rn.locked .rn-title { color: var(--ll-text-soft); }
 .rn.current .rn-dot { width: 52px; height: 52px; background: var(--ll-accent); color: var(--ll-accent-ink); }
 .rn.current .rn-dot svg { width: 26px; height: 26px; }
-.rn.current .rn-card { background: var(--ll-accent-soft); border-radius: 14px; padding: 12px 14px; }
+.rn.current .rn-card { background: var(--ll-accent-soft) !important; border-color: transparent !important; padding: 12px 14px; }
 .rn.current .rn-sub { color: var(--ll-accent-strong); font-weight: 700; }
 /* Only the single "next" node pulses — the rest stay calm. */
 .rn.pulse .rn-dot::after {
