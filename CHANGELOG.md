@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.100] — 2026-06-24 — „Ganzen Lernpfad ansehen" entpinkt
+
+- Der „Ganzen Lernpfad ansehen"-Button war ein lauter pinker Block (zu viel), als reiner weißer
+  Button dann ununterscheidbar von den Karten. Jetzt **soft-lila mit Route-Icon** — bezieht sich
+  auf die Pfad-Farbe (lila Fortschrittsring/Schiene), hebt sich von den weißen Karten und vom Pink ab.
+
 ## [0.6.99] — 2026-06-24 — Lückentext-Feinschliff
 
 - **Übersetzungs-Bug behoben**: die „Übersetzung" blieb beim Lücken-Wechsel stehen und wurde gegen

@@ -616,7 +616,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
           </button>
         </div>
       </div>
-      <button class="mini-all" onClick={onRoute}>Ganzen Lernpfad ansehen →</button>
+      <button class="mini-all" onClick={onRoute}><IconRoute />Ganzen Lernpfad ansehen →</button>
     </main>
   );
 }
