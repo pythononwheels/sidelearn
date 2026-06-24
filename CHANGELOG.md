@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.91] — 2026-06-24
+
+### Changed (Learny) — Lernpfad-Redesign + passives Vokabellernen
+- **„Lernroute" → „Lernpfad".** Fertige Etappen zeigen jetzt **was man geschafft hat**:
+  „Sprachniveau A2.3 · 50 Wörter · 5 Artikel · Check ✓" (statt nur „geschafft"),
+  via neuen Milestone-Speicher (`pwa/milestones.ts`, Snapshot beim Etappen-Check).
+- **Verspieltere Optik**: Karten wechseln links/rechts an einer zentralen Linie.
+- **Klarere Labels**: „Neue Wörter für A2.4 · beim Lesen & im Vokabeltest";
+  „Etappentest" → „Etappen-Check · kurzer Test über die neuen Wörter"; Home-Subline
+  zeigt das Sublevel („A2.4 · 0/50 neue Wörter").
+- **Passives Vokabellernen**: Beim Lesen einer Tageslektion (und im Lückentext)
+  werden die **Next-Level-Zielwörter, die im Text vorkommen**, automatisch als
+  SRS-Kontakt gewertet (+1 Box) — mit Referenz auf den Text. Der Fertig-Screen zeigt
+  „+N neue Wörter aus diesem Artikel gelernt". Lesen & Lückentext speisen so das
+  Wochenziel mit (neu: `srs.encounter`, Wort-Scan via normalize/lemmaCandidates/forms).
+
 ## [0.6.90] — 2026-06-24
 
 ### Changed (Learny) — vokabel-getriebene Progression (SRS + i+1)

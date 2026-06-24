@@ -53,6 +53,26 @@ export function grade(lang: Language, word: string, ok: boolean): void {
   if (changed) writeDeck(deck);
 }
 
+/** Credit a word encountered in a read text: counts like a correct review (+1
+ * box) and records where it was seen (entry.context) if not set. No-op if the
+ * word isn't in the deck. Returns true if it was credited. */
+export function encounter(lang: Language, word: string, ref?: string): boolean {
+  const deck = getDeck();
+  const k = key(lang, word);
+  for (const e of deck) {
+    if (key(e.lang, e.word) !== k) continue;
+    const b = Math.min(box(e) + 1, MAX_BOX);
+    e.box = b;
+    e.seen = (e.seen ?? 0) + 1;
+    e.correct = (e.correct ?? 0) + 1;
+    e.due = now() + INTERVAL_DAYS[b]! * DAY;
+    if (ref && !e.context) e.context = ref;
+    writeDeck(deck);
+    return true;
+  }
+  return false;
+}
+
 export interface TargetWord {
   word: string;
   translation: string;

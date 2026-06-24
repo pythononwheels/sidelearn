@@ -638,15 +638,16 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn.cap .rn-sub { color: var(--ll-text-muted); }
 
 /* Lernroute timeline */
+/* Lernpfad — central rail, cards alternate left/right for a livelier path. */
 .route { margin-top: 6px; }
-.rn { position: relative; display: flex; align-items: stretch; gap: 14px; }
-.rn-rail { position: relative; width: 44px; flex: none; display: flex; justify-content: center; }
+.rn { position: relative; display: grid; grid-template-columns: 1fr 56px 1fr; align-items: center; min-height: 70px; }
+.rn-rail { position: relative; grid-column: 2; align-self: stretch; display: flex; align-items: center; justify-content: center; }
 .rn-rail::before {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
   transform: translateX(-50%); background: var(--ll-border);
 }
-.rn:first-child .rn-rail::before { top: 22px; }
-.rn:last-child .rn-rail::before { bottom: calc(100% - 22px); }
+.rn:first-child .rn-rail::before { top: 50%; }
+.rn:last-child .rn-rail::before { bottom: 50%; }
 .rn-dot {
   position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
@@ -655,11 +656,12 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 }
 .rn-dot svg { width: 22px; height: 22px; }
 .rn-card {
-  flex: 1; text-align: left; font: inherit; cursor: default;
-  background: transparent; border: none; padding: 4px 0 18px;
+  font: inherit; cursor: default; background: transparent; border: none; padding: 8px 4px;
   display: flex; flex-direction: column; gap: 2px;
 }
 .rn-card:enabled { cursor: pointer; }
+.rn.l .rn-card { grid-column: 1; text-align: right; align-items: flex-end; }
+.rn.r .rn-card { grid-column: 3; text-align: left; align-items: flex-start; }
 .rn-title { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
 .rn-sub { font-size: 12.5px; color: var(--ll-text-soft); }
 
@@ -669,14 +671,19 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn.locked .rn-title { color: var(--ll-text-soft); }
 .rn.current .rn-dot { width: 52px; height: 52px; background: var(--ll-accent); color: var(--ll-accent-ink); }
 .rn.current .rn-dot svg { width: 26px; height: 26px; }
-.rn.current .rn-card { background: var(--ll-accent-soft); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+.rn.current .rn-card { background: var(--ll-accent-soft); border-radius: 14px; padding: 12px 14px; }
 .rn.current .rn-sub { color: var(--ll-accent-strong); font-weight: 700; }
 .rn.current .rn-dot::after {
   content: ''; position: absolute; inset: -6px; border-radius: 50%;
   border: 2px solid var(--ll-accent); animation: rn-ring 1.6s ease-out infinite;
 }
 @keyframes rn-ring { 0% { transform: scale(.9); opacity: .6; } 100% { transform: scale(1.5); opacity: 0; } }
-.rn-gurki { position: absolute; right: 8px; top: -12px; width: 62px; pointer-events: none; }
+.rn-gurki { position: absolute; top: -10px; width: 54px; pointer-events: none; z-index: 2; }
+.rn.l .rn-gurki { left: 4px; }
+.rn.r .rn-gurki { right: 4px; }
+
+/* passive-learning highlight on lesson completion */
+.sl-done-words { color: var(--ll-ok, #2f9e6b); font-weight: 800; font-size: 14px; margin: 2px 0; }
 
 /* Etappe divider + chest */
 .rt-etappe { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; padding-left: 4px; }
