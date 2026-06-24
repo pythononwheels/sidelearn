@@ -72,6 +72,11 @@ AREA_DAILY_CAP = int(os.getenv("SL_AREA_DAILY_CAP", "500"))
 # prompt scales the standalone summary so it reads naturally at each level.
 DIGEST_WORDS = {"A2": 80, "B1": 110, "B2": 140, "C1": 170}
 
+# Hard daily cost ceiling (USD) across ALL LLM calls, measured from telemetry.
+# Once today's cost reaches this, fresh LLM calls stop (cached/prebuilt content
+# is still served). The ultimate cost backstop above the per-function caps.
+DAILY_COST_CAP_USD = float(os.getenv("SL_DAILY_COST_CAP_USD", "1.50"))
+
 # --- Abuse / cost protection for the public LLM endpoints -------------------
 # Only browser requests from these origins may hit the cost endpoints. Default:
 # the Learny PWA in prod + localhost for dev. Tune via SL_ALLOWED_ORIGIN_REGEX.

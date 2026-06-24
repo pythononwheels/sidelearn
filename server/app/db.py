@@ -329,6 +329,19 @@ def telemetry_count_today(fn: str) -> int:
     return row["n"]
 
 
+def cost_today() -> float:
+    """Total LLM cost (USD) recorded today (UTC) across all functions — drives the
+    hard daily cost cap."""
+    from datetime import datetime, timezone
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with conn() as c:
+        row = c.execute(
+            "SELECT COALESCE(SUM(cost_usd), 0) c FROM telemetry WHERE ts LIKE ?", (today + "%",)
+        ).fetchone()
+    return float(row["c"] or 0.0)
+
+
 def get_word_cache(lang: str, native: str, word: str, shash: str) -> Optional[dict[str, Any]]:
     with conn() as c:
         row = c.execute(

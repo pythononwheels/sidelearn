@@ -57,6 +57,13 @@ def require_origin(request: Request) -> None:
         raise HTTPException(403, "forbidden")
 
 
+def _cost_guard() -> None:
+    """Hard daily cost ceiling: once today's LLM spend hits the cap, refuse fresh
+    LLM calls (cached/prebuilt content is still served)."""
+    if db.cost_today() >= config.DAILY_COST_CAP_USD:
+        raise HTTPException(429, "daily cost cap reached — try again tomorrow")
+
+
 app.include_router(admin.router)
 
 scheduler = BackgroundScheduler()
@@ -143,6 +150,8 @@ async def _ensure_prepared(article_id: str, level: str) -> dict | None:
     prepared = db.get_prepared(article_id, level)
     if prepared:
         return prepared
+    if db.cost_today() >= config.DAILY_COST_CAP_USD:
+        return None
     if db.telemetry_count_today("ondemand") >= config.ONDEMAND_DAILY_CAP:
         return None
     await asyncio.to_thread(pipeline.process_article, article_id, [level], False, "ondemand")
@@ -206,6 +215,7 @@ async def digest(request: Request, article_id: str, level: str = Query("A2")) ->
     prepared = db.get_prepared(article_id, level)
     if prepared and prepared.get("digest"):
         return {"digest": prepared["digest"], "digestQuestions": prepared.get("digest_questions", [])}
+    _cost_guard()
     if db.telemetry_count_today("digest") >= config.ONDEMAND_DAILY_CAP:
         raise HTTPException(429, "daily digest budget reached — try later")
 
@@ -264,6 +274,7 @@ def translate(
     if cached:
         return {**cached, "cached": True}
 
+    _cost_guard()
     if db.telemetry_count_today("translate") >= config.TRANSLATE_DAILY_CAP:
         raise HTTPException(429, "daily translation budget reached — try later")
 
@@ -308,6 +319,7 @@ def sentence(
     if cached:
         return {"translation": cached.get("translation", ""), "cached": True}
 
+    _cost_guard()
     if db.telemetry_count_today("sentence") >= config.SENTENCE_DAILY_CAP:
         raise HTTPException(429, "daily translation budget reached — try later")
 
@@ -377,6 +389,7 @@ async def surprise(
                     continue  # too short — try another candidate (no LLM spent)
                 db.upsert_article({**art, "paragraphs": paras}, datetime.now(timezone.utc).isoformat())
 
+            _cost_guard()
             if db.telemetry_count_today("surprise") >= config.SURPRISE_DAILY_CAP:
                 raise HTTPException(429, "daily surprise budget reached — try a built lesson")
             if prepares >= MAX_PREPARES:
