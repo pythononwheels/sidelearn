@@ -1117,8 +1117,8 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
           <div class="cloze-xlate">
             <TranslateReveal text={q.prompt} settings={settings} />
           </div>
-          <div class="cloze-opts">
-            <p class="cloze-hint">Tippe auf das fehlende Wort</p>
+          <div class={`cloze-opts ${picked !== null ? 'answered' : ''}`}>
+            {picked === null && <p class="cloze-hint">Tippe auf das fehlende Wort</p>}
             <div class="sl-quiz-opts cloze-opts-list">
               {q.options.map((opt) => {
                 let cls = '';
@@ -1131,6 +1131,14 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
               })}
             </div>
           </div>
+          {picked !== null && (
+            <div class={`cloze-result ${picked === q.answer ? 'ok' : 'no'}`}>
+              <Gurki pose={picked === q.answer ? 'party' : 'sad'} size={48} />
+              <span class="cloze-result-txt">
+                {picked === q.answer ? 'Stark — richtig!' : `Schade — richtig wäre „${q.answer}".`}
+              </span>
+            </div>
+          )}
           {picked !== null && (
             <button class="sl-read cloze-next" onClick={next}>
               {pos + 1 >= questions.length ? 'Fertig ✓' : 'Weiter →'}

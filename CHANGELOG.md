@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.105] — 2026-06-24 — Lückentext: klarer Antwort-Zustand + Gurki-Reaktion
+
+- Nach dem Antworten wird die Lösungs-Card **weiß**, falsche Optionen **grau** (die getippte mit
+  kurzem Shake), die richtige bleibt **grün** mit kleinem Pop. Statt „rosa auf rosa" jetzt klar lesbar.
+- **Gurki-Reaktion** darunter: party-Gurke + „Stark — richtig!" bei richtig, traurige Gurke +
+  „Schade — richtig wäre …" bei falsch (zeigt zugleich die Lösung). Konfetti bei richtig bleibt.
+
 ## [0.6.104] — 2026-06-24 — Lückentext: Anleitung + tiefer eingerückte Optionen
 
 - Anleitung „Tippe auf das fehlende Wort" oben in der Lösungs-Card; die Antwort-Buttons zusätzlich
