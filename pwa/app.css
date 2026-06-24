@@ -309,6 +309,25 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cloze-hint { margin: 2px 6px 12px; font-size: 13px; font-weight: 700; color: var(--ll-text-soft); }
 .cloze-opts-list { gap: 10px; padding: 0 6%; } /* extra inset for the answer buttons */
 .cloze-next { margin-top: 18px; }
+
+/* Answered state: card turns white, wrong options go grey, the right one stays
+ * green (with a little pop); the picked-wrong one shakes once. */
+.cloze-opts.answered { background: var(--ll-surface); border: 1px solid var(--ll-border); }
+.cloze-opts.answered .sl-quiz-opt { background: #f1f2f6; border-color: transparent; color: var(--ll-text-muted); opacity: 1; }
+.cloze-opts.answered .sl-quiz-opt.wrong { color: var(--ll-text-soft); animation: cloze-shake .32s ease; }
+.cloze-opts.answered .sl-quiz-opt.dim { opacity: .6; }
+.cloze-opts.answered .sl-quiz-opt.correct {
+  background: var(--ll-mint-soft, #e2f6ee); border-color: #2f9e6b; color: #2f9e6b; font-weight: 700;
+  opacity: 1; animation: cloze-pop .42s ease;
+}
+@keyframes cloze-pop { 0% { transform: scale(1); } 40% { transform: scale(1.045); } 100% { transform: scale(1); } }
+@keyframes cloze-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+/* Gurki reaction under the options */
+.cloze-result { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 0 4px; }
+.cloze-result .gurki { width: 48px; flex: none; }
+.cloze-result-txt { font-family: var(--font-head); font-weight: 800; font-size: 15px; }
+.cloze-result.ok .cloze-result-txt { color: var(--ll-ok, #2f9e6b); }
+.cloze-result.no .cloze-result-txt { color: var(--ll-text-soft); }
 .cloze-blank {
   display: inline-block; min-width: 58px; vertical-align: baseline;
   border-bottom: 3px solid var(--ll-accent); border-radius: 3px; margin: 0 4px;
