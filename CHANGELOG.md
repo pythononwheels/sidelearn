@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.114] — 2026-06-25 — Vokabeltest: Antwort-Look + stabile Buttons
+
+- **Buttons springen nicht mehr**: „Weiß nicht" und „Weiter" sind beide volle Breite (vorher
+  zentriert vs. links).
+- **Erfolg/Misserfolg klar**: richtige Option grün (Pop), getippte falsche rot (Shake), Rest grau;
+  dazu ein **Gurki-Banner** — Party-Gurke + „Aaah — richtig!" (grün), traurige Gurke + „Ohh — leider
+  nicht." (rot), Think-Gurke bei „Weiß nicht". Eigener Look, aber wiedererkennbar zum Lückentext.
+- Worterklärung (Bedeutungen/Beispiele) bleibt darunter.
+
 ## [0.6.113] — 2026-06-25 — Challenges: Monatskalender statt Liste
 
 - Der „Älter"-Dropdown ist jetzt ein **Monatskalender** (skaliert auf Monate/Jahre): Wochen-Pills

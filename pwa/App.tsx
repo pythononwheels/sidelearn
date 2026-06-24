@@ -736,7 +736,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
         <>
           <p class="sl-progress">Frage {pos + 1} / {cards.length}</p>
           <p class="mc-prompt">Was bedeutet <b>{card.word}</b>?{card.pos ? <span class="dict-pos"> · {card.pos}</span> : null}</p>
-          <div class="sl-quiz-opts">
+          <div class={`sl-quiz-opts mc-opts ${picked !== null ? 'answered' : ''}`}>
             {card.options.map((opt, i) => {
               const cls = picked === null ? '' : i === card.correct ? 'correct' : i === picked ? 'wrong' : 'dim';
               return (
@@ -745,9 +745,21 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
             })}
           </div>
           {picked === null ? (
-            <button class="mc-dunno" onClick={dontKnow}>Weiß nicht</button>
+            <button class="sl-read ghost mc-btn" onClick={dontKnow}>Weiß nicht</button>
           ) : (
             <>
+              {(() => {
+                const ok = picked === card.correct;
+                const dunno = picked === -1;
+                const pose: Pose = ok ? 'party' : dunno ? 'think' : 'sad';
+                const msg = ok ? 'Aaah — richtig!' : dunno ? 'Schau’s dir an — nächstes Mal sitzt’s!' : 'Ohh — leider nicht.';
+                return (
+                  <div class={`mc-result ${ok ? 'ok' : dunno ? 'dunno' : 'no'}`}>
+                    <Gurki pose={pose} size={50} />
+                    <span class="mc-result-txt">{msg}</span>
+                  </div>
+                );
+              })()}
               <div class="mc-detail">
                 {(card.rich?.s?.length ? card.rich.s : [{ t: card.translation, p: card.pos, ex: card.example, exd: card.exampleDe }]).map((s) => (
                   <div class="dict-sense">
@@ -757,7 +769,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
                 ))}
                 {card.rich?.alt?.length ? <p class="mc-alt">auch: {card.rich.alt.join(', ')}</p> : null}
               </div>
-              <button class="sl-read" onClick={next}>{pos + 1 >= cards.length ? 'Fertig ✓' : 'Weiter'}</button>
+              <button class="sl-read mc-btn" onClick={next}>{pos + 1 >= cards.length ? 'Fertig ✓' : 'Weiter'}</button>
             </>
           )}
         </>
