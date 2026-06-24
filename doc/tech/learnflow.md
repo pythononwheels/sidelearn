@@ -35,9 +35,10 @@ localStorage (privatsphäre-first, nichts zentral):
   **SRS-Status**: box/due/seen/correct/band/src/context), `sl_pwa_milestones`,
   `sl_pwa_activity`, Streak/XP, `sl_pwa_progress` (gelesene Artikel).
 
-**Lückentexte** kommen **nicht** vom Server: `ClozeView` baut sie **clientseitig aus
-dem Tagesartikel** (`buildClozeQuestions`, **8 Lücken**/Runde; Distraktoren =
-Artikel-Vokabeln + Deck). Keine feste „Daily-Anzahl" — 8 pro Artikel-Runde.
+**Lückentexte** kommen **nicht** vom Server: `ClozeView` baut sie **clientseitig**
+(`buildClozeQuestions`, **8 Lücken**/Runde). **i+1-Blend:** ~4 Lücken aus dem
+Tagesartikel (Festigung) + ~4 **Next-Level-Zielwörter** der Etappe, ausgeblendet in
+ihren richdict-Beispielsätzen (MC). Treffer/Kontakte zählen aufs Wochenziel.
 
 ## 3. Tagesablauf (Daily)
 - **Tageslektion** = 2 Pflicht-Artikel (`goal=2`), je 5 Pflichtabsätze (`CHALLENGE=5`),
@@ -94,5 +95,5 @@ Vokabeltest-Erklärungen.
 ## 8. Offene Ideen
 - **i+1 im at-level-Text** (Variante C): Prep lässt gezielt einige Zielwörter
   unvereinfacht stehen — pädagogisch ideal, aber Prompt-Änderung + Rebuild aller Artikel.
-- Lückentext-Gaps gezielt auf Etappen-Zielwörter legen.
-- Offline-Daten weiter ausbauen / richdict-Qualität per Stichprobe nachschärfen.
+- richdict-Qualität per Stichprobe nachschärfen / Offline-Daten weiter ausbauen.
+- Lernpfad-Optik weiter verspielen (Screenshot-getrieben).
