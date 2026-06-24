@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.112] — 2026-06-25 — Challenges: Tage skalieren (Woche + „Älter ▾")
+
+- Die Datums-Pills zeigen jetzt **Heute + die letzten ~6 verfügbaren Tage**; ältere Tage liegen
+  hinter einem **„Älter ▾"-Dropdown** (scrollbar). Skaliert über Wochen/Monate, ohne dass die
+  Pill-Zeile ausufert. Ein gewählter alter Tag wird im „Älter"-Button angezeigt.
+
 ## [0.6.111] — 2026-06-25 — Challenges: Rubriken als Akkordeon
 
 - Die „Aus den Rubriken"-Sektion ist jetzt **pro Rubrik aufklappbar** (standardmäßig zu, mit

@@ -1593,6 +1593,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
   const [area, setArea] = useState<AreaArticle[] | null>(null);
   const [choice, setChoice] = useState<AreaArticle | null>(null);
   const [openAreas, setOpenAreas] = useState<Set<string>>(new Set()); // expanded rubriken
+  const [olderOpen, setOlderOpen] = useState(false); // "Älter" date dropdown
   const toggleArea = (id: string) => setOpenAreas((prev) => {
     const n = new Set(prev);
     if (n.has(id)) n.delete(id); else n.add(id);
@@ -1622,8 +1623,11 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
   }, [settings.learn, settings.level, dateForArea]);
 
   // The server archive includes today; drop it so it isn't shown twice (next to
-  // the dedicated "Heute" pill).
+  // the dedicated "Heute" pill). Show ~a week as pills, the rest behind "Älter ▾".
   const days = (dates ?? []).filter((d) => d !== dayStamp());
+  const recent = days.slice(0, 6);
+  const older = days.slice(6);
+  const selOlder = !!sel && older.includes(sel);
 
   const toRef = (a: AreaArticle): ArticleRef => ({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail });
   const pickArea = (a: AreaArticle) => { if (settings.level === 'A1') onOpen(toRef(a), false); else setChoice(a); };
@@ -1660,13 +1664,29 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
       <h1 class="tab-screen-title">Challenges</h1>
       <p class="lr-section">Heutige & frühere Tageslektionen</p>
       {days.length > 0 && (
-        <div class="lr-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => setSel(undefined)}>Heute</button>
-          {days.map((d) => (
-            <button class={`pill-day ${sel === d ? 'on' : ''}`} onClick={() => setSel(d)}>
+        <div class="lr-pick day-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => { setSel(undefined); setOlderOpen(false); }}>Heute</button>
+          {recent.map((d) => (
+            <button class={`pill-day ${sel === d ? 'on' : ''}`} onClick={() => { setSel(d); setOlderOpen(false); }}>
               {d.slice(5)}
             </button>
           ))}
+          {older.length > 0 && (
+            <div class="day-older">
+              <button class={`pill-day older ${selOlder ? 'on' : ''}`} onClick={() => setOlderOpen((o) => !o)} aria-expanded={olderOpen}>
+                {selOlder ? `${sel!.slice(5)} ▾` : 'Älter ▾'}
+              </button>
+              {olderOpen && (
+                <div class="day-older-menu">
+                  {older.map((d) => (
+                    <button class={`day-older-item ${sel === d ? 'on' : ''}`} onClick={() => { setSel(d); setOlderOpen(false); }}>
+                      {d.slice(5)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
       {daily && articles.length > 0 && (
