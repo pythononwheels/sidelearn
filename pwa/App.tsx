@@ -45,7 +45,7 @@ import {
   type CompleteResult,
   type NodeType,
 } from './route';
-import { addTargets, dueEntries, dueCount, grade as srsGrade, clearedCount, encounter as srsEncounter } from './srs';
+import { addTargets, dueEntries, grade as srsGrade, clearedCount, encounter as srsEncounter } from './srs';
 import { recordMilestone, getMilestone, lastMilestoneTs } from './milestones';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
@@ -58,6 +58,22 @@ declare const __APP_VERSION__: string;
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+
+/** Tiny per-day "done today" flags for the Lernpfad activity chain (article /
+ * cloze). Resets at local midnight. The vocab goal has its own SRS state. */
+const DAILY_ACT_KEY = 'sl_pwa_daily_act';
+function dayStamp(): string { return new Date().toLocaleDateString('sv'); } // YYYY-MM-DD, local
+function dailyDone(kind: 'article' | 'cloze'): boolean {
+  try { const o = JSON.parse(localStorage.getItem(DAILY_ACT_KEY) || '{}'); return o.d === dayStamp() && !!o[kind]; } catch { return false; }
+}
+function markDailyDone(kind: 'article' | 'cloze'): void {
+  try {
+    const o = JSON.parse(localStorage.getItem(DAILY_ACT_KEY) || '{}');
+    const cur = o.d === dayStamp() ? o : { d: dayStamp() };
+    cur[kind] = true;
+    localStorage.setItem(DAILY_ACT_KEY, JSON.stringify(cur));
+  } catch { /* ignore */ }
+}
 
 /** This Etappe's next-level target words (seeded into the SRS deck) + how many
  * are "cleared" (box≥2). The weekly word goal that gates the Etappentest. */
@@ -193,6 +209,8 @@ export function App() {
         settings={settings}
         onTrainer={() => setOverlay({ kind: 'trainer' })}
         onTest={() => setOverlay({ kind: 'test' })}
+        onCloze={() => setOverlay({ kind: 'cloze' })}
+        onArticle={() => { setOverlay(null); setTab('home'); }}
         onBack={() => setOverlay(null)}
       />
     );
@@ -462,7 +480,10 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
   }, [settings.learn, settings.native, settings.level, prog.etappe, tick]);
   const levelPct = Math.round((prog.etappe + (prog.atAufstieg ? 0 : Math.min(batchCleared / ETAPPE_GOAL, 1))) / ETAPPEN_PER_LEVEL * 100);
   const etappeReady = prog.atAufstieg || batchCleared >= ETAPPE_GOAL;
-  const dueN = dueCount(settings.learn);
+  const articleDone = doneCount > 0;
+  const clozeDone = dailyDone('cloze');
+  // The single "next" activity in the weekly chain — only this one pulses.
+  const nextStep = !articleDone ? 'article' : !clozeDone ? 'cloze' : !etappeReady ? 'vocab' : 'check';
   const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
   const pose: Pose = allDone ? 'party' : 'yay';
   const bubble = allDone
@@ -532,26 +553,39 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
 
       <button class="mini-head" onClick={onRoute}>
         <span class="mini-head-t">Dein Lernpfad</span>
-        <span class="mini-head-s">{prog.label} · alle ansehen →</span>
+        <span class="mini-head-s">{prog.label}</span>
       </button>
       <div class="route mini">
-        <div class={`rn ${etappeReady && !prog.atAufstieg ? 'done' : 'current'}`}>
+        <div class={`rn l ${articleDone ? 'done' : 'current'} ${nextStep === 'article' ? 'pulse' : ''}`}>
+          <div class="rn-rail"><span class="rn-dot">{articleDone ? <IconCheck /> : <IconNewspaper />}</span></div>
+          <button class="rn-card" onClick={() => next && onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(articles, next.url, settings.level))} disabled={!next}>
+            <span class="rn-title">Lies einen Artikel</span>
+            <span class="rn-sub">{articleDone ? 'heute erledigt ✓' : 'Tageslektion · tippen'}</span>
+          </button>
+        </div>
+        <div class={`rn r ${clozeDone ? 'done' : 'current'} ${nextStep === 'cloze' ? 'pulse' : ''}`}>
+          <div class="rn-rail"><span class="rn-dot">{clozeDone ? <IconCheck /> : <IconGap />}</span></div>
+          <button class="rn-card" onClick={onCloze}>
+            <span class="rn-title">Mach einen Lückentext</span>
+            <span class="rn-sub">{clozeDone ? 'heute erledigt ✓' : 'Lücken füllen · tippen'}</span>
+          </button>
+        </div>
+        <div class={`rn l ${etappeReady && !prog.atAufstieg ? 'done' : 'current'} ${nextStep === 'vocab' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot">{etappeReady && !prog.atAufstieg ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
-            <span class="rn-title">Neue Wörter lernen</span>
-            <span class="rn-sub">{prog.atAufstieg ? 'Wortschatz wiederholen' : `${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL}${dueN > 0 ? ` · ${dueN} fällig` : ''} · tippen`}</span>
+            <span class="rn-title">Lerne neue Wörter</span>
+            <span class="rn-sub">{prog.atAufstieg ? 'Wortschatz wiederholen · tippen' : `${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} diese Woche · tippen`}</span>
           </button>
-          {!etappeReady && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
         </div>
-        <div class={`rn ${etappeReady ? 'current' : 'locked'}`}>
-          <div class="rn-rail"><span class="rn-dot">{etappeReady ? (prog.atAufstieg ? <IconSummit /> : <IconCheck />) : <IconLock />}</span></div>
+        <div class={`rn r ${etappeReady ? 'current' : 'locked'} ${nextStep === 'check' ? 'pulse' : ''}`}>
+          <div class="rn-rail"><span class="rn-dot">{etappeReady ? (prog.atAufstieg ? <IconSummit /> : <IconFlag />) : <IconLock />}</span></div>
           <button class="rn-card" disabled={!etappeReady} onClick={() => etappeReady && onTest()}>
-            <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappentest'}</span>
+            <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappen-Check'}</span>
             <span class="rn-sub">{etappeReady ? 'freigeschaltet · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
           </button>
-          {etappeReady && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
         </div>
       </div>
+      <button class="mini-all" onClick={onRoute}>Ganzen Lernpfad ansehen →</button>
     </main>
   );
 }
@@ -1003,6 +1037,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
     if (done && !credited.current) {
       credited.current = true;
       completeActivity(settings.level, 'cloze');
+      markDailyDone('cloze');
       void creditWordsFromText(settings, clozeText.current, `Lückentext: ${title}`);
     }
   }, [done]);
@@ -1388,16 +1423,20 @@ function timeAgo(ts: number): string {
   return `vor ${Math.floor(d / 7)} Wochen`;
 }
 
-function RouteView({ settings, onTrainer, onTest, onBack }: {
+function RouteView({ settings, onTrainer, onTest, onCloze, onArticle, onBack }: {
   settings: PwaSettings;
   onTrainer: () => void;
   onTest: () => void;
+  onCloze: () => void;
+  onArticle: () => void;
   onBack: () => void;
 }) {
   const prog = getStageProgress(settings.level);
   const level = prog.level;
   const [cleared, setCleared] = useState(0);
   const curRef = useRef<HTMLDivElement>(null);
+  const artDone = dailyDone('article');
+  const clzDone = dailyDone('cloze');
 
   useEffect(() => {
     let alive = true;
@@ -1408,6 +1447,7 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
   useEffect(() => { curRef.current?.scrollIntoView({ block: 'center' }); }, [cleared]);
 
   const ready = prog.atAufstieg || cleared >= ETAPPE_GOAL;
+  const curNext = !artDone ? 'article' : !clzDone ? 'cloze' : !ready ? 'vocab' : 'check';
   const levelIdx = STAGE_LEVELS.indexOf(level);
   const rows: ComponentChildren[] = [];
   let idx = 0;
@@ -1428,15 +1468,32 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
       );
     } else if (isCur) {
       rows.push(
-        <div class={`rn current ${side()}`} key={`e${e}`}>
-          <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconCards /></span></div>
-          <button class="rn-card" onClick={onTrainer}>
-            <span class="rn-title">Neue Wörter für {level}.{e + 1}</span>
-            <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} · beim Lesen & im Vokabeltest</span>
-          </button>
-          <img class="rn-gurki" src="/gurki/yay.png" alt="" width={62} />
+        <div class={`rn head ${side()}`} key={`h${e}`}>
+          <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
+          <span class="rn-card flat"><span class="rn-title">Sprachniveau {level}.{e + 1} — diese Woche</span></span>
         </div>,
-        <div class={`rn ${ready ? 'current' : 'locked'} ${side()}`} key={`t${e}`}>
+        <div class={`rn ${artDone ? 'done' : 'current'} ${curNext === 'article' ? 'pulse' : ''} ${side()}`} key={`a${e}`}>
+          <div class="rn-rail"><span class="rn-dot">{artDone ? <IconCheck /> : <IconNewspaper />}</span></div>
+          <button class="rn-card" onClick={onArticle}>
+            <span class="rn-title">Lies einen Artikel</span>
+            <span class="rn-sub">{artDone ? 'heute erledigt ✓' : 'Tageslektion · tippen'}</span>
+          </button>
+        </div>,
+        <div class={`rn ${clzDone ? 'done' : 'current'} ${curNext === 'cloze' ? 'pulse' : ''} ${side()}`} key={`c${e}`}>
+          <div class="rn-rail"><span class="rn-dot">{clzDone ? <IconCheck /> : <IconGap />}</span></div>
+          <button class="rn-card" onClick={onCloze}>
+            <span class="rn-title">Mach einen Lückentext</span>
+            <span class="rn-sub">{clzDone ? 'heute erledigt ✓' : 'Lücken füllen · tippen'}</span>
+          </button>
+        </div>,
+        <div class={`rn current ${curNext === 'vocab' ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
+          <div class="rn-rail"><span class="rn-dot"><IconCards /></span></div>
+          <button class="rn-card" onClick={onTrainer}>
+            <span class="rn-title">Lerne neue Wörter</span>
+            <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} diese Woche · tippen</span>
+          </button>
+        </div>,
+        <div class={`rn ${ready ? 'current' : 'locked'} ${curNext === 'check' ? 'pulse' : ''} ${side()}`} key={`t${e}`}>
           <div class="rn-rail"><span class="rn-dot">{ready ? <IconFlag /> : <IconLock />}</span></div>
           <button class="rn-card" disabled={!ready} onClick={() => ready && onTest()}>
             <span class="rn-title">Etappen-Check</span>
@@ -1448,7 +1505,7 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
       rows.push(
         <div class={`rn locked ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot"><IconLock /></span></div>
-          <span class="rn-card"><span class="rn-title">Etappe {e + 1}</span><span class="rn-sub">gesperrt</span></span>
+          <span class="rn-card"><span class="rn-title">Etappe {e + 1}</span><span class="rn-sub">{ETAPPE_GOAL} Wörter + Check</span></span>
         </div>,
       );
     }
@@ -1460,7 +1517,6 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
         <span class="rn-title">Aufstiegstest → {prog.nextLevel}</span>
         <span class="rn-sub">{prog.atAufstieg ? `alle Wörter für ${prog.nextLevel} · tippen` : 'nach Etappe 10'}</span>
       </button>
-      {prog.atAufstieg && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={62} />}
     </div>,
   );
 
@@ -1699,10 +1755,12 @@ function UpdateCheck() {
   }, []);
   async function check() {
     setState('checking');
-    const u = (window as unknown as { __slUpdate?: (r?: boolean) => Promise<void> }).__slUpdate;
-    try { await u?.(); } catch { /* ignore */ }
-    // If an update was waiting, the banner fires; otherwise we're up to date.
-    setTimeout(() => setState((s) => (s === 'checking' ? 'current' : s)), 1200);
+    const c = (window as unknown as { __slCheckUpdate?: () => Promise<boolean> }).__slCheckUpdate;
+    let found = false;
+    try { found = (await c?.()) ?? false; } catch { /* ignore */ }
+    // If a new version was detected the banner fires (sl-need-refresh → 'idle');
+    // give the SW a moment to install, then settle on "up to date" if nothing came.
+    setTimeout(() => setState((s) => (s === 'checking' ? 'current' : s)), found ? 2500 : 1200);
   }
   return (
     <button class="set-update" onClick={check} disabled={state === 'checking'}>
@@ -2018,7 +2076,7 @@ function Lesson({
       title: article.title,
       detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
     });
-    if (route) completeActivity(settings.level, 'lesson'); // free reads give XP but don't advance the route
+    if (route) { completeActivity(settings.level, 'lesson'); markDailyDone('article'); } // free reads give XP but don't advance the route
     // Passive learning: credit next-level target words that appear in this article.
     if (lesson) {
       void creditWordsFromText(settings, lesson.paragraphs.map((p) => p.simplified).join(' '), article.title)

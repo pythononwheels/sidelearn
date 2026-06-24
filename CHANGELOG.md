@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.95] — 2026-06-24 — Lernpfad als Wochen-Ablauf + Update-Check-Fix
+
+- **Lernpfad = Aktivitäts-Kette** statt nur „Wörter → Test": Lies einen Artikel → Mach einen
+  Lückentext → Lerne neue Wörter (0/50 diese Woche) → Etappen-Check. Artikel/Lückentext zeigen
+  „heute erledigt ✓" (per-Tag-Flag, reset um Mitternacht); füttern weiterhin passiv die Vokabeln.
+- **Home-Mini-Pfad**: zeigt die 4 Wochenschritte; „Ganzen Lernpfad ansehen" als Button (statt
+  übersehbarem Link); Gurki-Bild links entfernt; verwirrendes „0/50 · 51 fällig" → „0/50 diese Woche".
+- **Voller Lernpfad**: aktuelle Etappe als Wochen-Kette mit Etappen-Header; gesperrte Etappen ohne
+  „gesperrt"-Text (Schloss + „50 Wörter + Check" zeigt, was kommt); Gurki-Clutter entfernt.
+- **Nur der nächste Schritt pulsiert** (statt aller offenen) — ruhigeres Bild; Pfad-Karten wechseln
+  links/rechts (Zickzack, luftiger). Layout-Fix: linke Karte saß unter ihrem Bullet (`grid-auto-flow`
+  sparse) — Rail + Karte jetzt fest auf einer Zeile.
+- **Update-Check repariert**: „Auf Updates prüfen" ruft jetzt `registration.update()` (fragt den Server
+  nach einer neuen Version) statt nur einen schon wartenden Worker zu aktivieren.
+
 ## [Server] — 2026-06-24 — Rate-Limits & Missbrauchsschutz
 
 - **Abuse-Logging + IP-Blocklist**: 429/403-Treffer landen in der DB (`abuse`, mit IP); Übersicht
