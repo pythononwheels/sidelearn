@@ -21,7 +21,7 @@ const glossCache = new Map<string, GlossMap>();
 /** inflected form → lemma, from Wiktionary (per learning language). */
 const formsCache = new Map<Language, Record<string, string>>();
 
-async function loadForms(learn: Language): Promise<Record<string, string>> {
+export async function loadForms(learn: Language): Promise<Record<string, string>> {
   const cached = formsCache.get(learn);
   if (cached) return cached;
   let map: Record<string, string> = {};
