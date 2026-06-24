@@ -12,6 +12,7 @@ import { type Language } from '@/core/config';
 import { type CefrLevel, rankToBand, levelIndex } from '@/core/difficulty/banding';
 import { loadRanks } from '@/core/difficulty/frequency';
 import { lookup, loadRichDict } from '@/core/dict/freedict';
+import { nextLevel } from './route';
 
 export interface SeedWord {
   word: string;
@@ -80,5 +81,44 @@ export async function seedVocab(
     out.push({ word, translation: tr, band });
   }
   cache.set(key, out);
+  return out;
+}
+
+const targetCache = new Map<string, SeedWord[]>();
+
+/**
+ * The NEXT level's vocabulary, in frequency order — the "i+1" target words a
+ * learner must acquire to level up. Pulled from richdict (band === next level),
+ * with meaning + example. Empty if richdict isn't built for the pair.
+ */
+export async function nextLevelTargets(
+  learn: Language,
+  native: Language,
+  level: CefrLevel,
+  n: number,
+): Promise<SeedWord[]> {
+  const target = nextLevel(level);
+  if (target === level) return []; // already at the top
+  const key = `${learn}-${native}-${target}-${n}`;
+  const hit = targetCache.get(key);
+  if (hit) return hit;
+
+  const ranks = await loadRanks(learn);
+  const rich = await loadRichDict(learn, native);
+  // Frequency order: iterate ranks ascending, keep words whose richdict band is
+  // the next level (so they are genuinely one step above the learner).
+  const order = Object.entries(ranks).sort((a, b) => a[1] - b[1]);
+  const out: SeedWord[] = [];
+  for (const [word] of order) {
+    if (out.length >= n) break;
+    const e = rich[word.toLowerCase()];
+    if (!e?.s?.length || e.b !== target) continue;
+    const s0 = e.s[0]!;
+    out.push({
+      word, band: target as CefrLevel, translation: s0.t, pos: s0.p, example: s0.ex, exampleDe: s0.exd,
+      alternatives: [...new Set([...e.s.slice(1).map((s) => s.t), ...(e.alt ?? [])])],
+    });
+  }
+  targetCache.set(key, out);
   return out;
 }

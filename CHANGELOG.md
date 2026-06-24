@@ -3,6 +3,25 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.90] — 2026-06-24
+
+### Changed (Learny) — vokabel-getriebene Progression (SRS + i+1)
+- **Levelaufstieg läuft jetzt über Wortschatz, nicht Aktivitäten.** Ein Level = 10
+  Etappen (≈ 1 Woche). Jede Etappe bekommt einen Batch von ~50 **Next-Level-
+  Zielwörtern** (i+1); der **Vokabeltest ist jetzt eine Spaced-Repetition-Session**
+  (fällige Wiederholungen + neue Zielwörter, Leitner-Boxen). Sitzt der Wochen-Batch,
+  schaltet der **Etappentest** frei (1×/Woche). Behebt „Etappentest nach 1 Artikel".
+- **Tageslektion (2 Artikel/Tag) bleibt** Lesegewohnheit & i+1-Quelle, treibt die
+  Route nicht mehr; SRS-Spacing taktet ~1 Etappe/Woche.
+- **Etappentest** prüft die just gelernten Etappen-Zielwörter; **Aufstiegstest**
+  prüft die Next-Level-Zielwörter des Levels (≥70 %) → man wird A2 nur, wer A2-Wörter
+  kann. Home/Report/Lernroute zeigen das Wochenziel „X/50 neue Wörter".
+- Neu: `pwa/srs.ts` (Leitner) + Deck-SRS-Felder; `nextLevelTargets()` aus richdict;
+  `route.ts` auf Etappen-/Wortziel-Modell umgebaut (alte Node-Route migriert).
+
+### Offen
+- Lückentext: Next-Level-Zielwörter als i+1-Distraktoren einmischen (Folge-Schritt).
+
 ## [0.6.89] — 2026-06-23
 
 ### Changed (Learny)
