@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.111] — 2026-06-25 — Challenges: Rubriken als Akkordeon
+
+- Die „Aus den Rubriken"-Sektion ist jetzt **pro Rubrik aufklappbar** (standardmäßig zu, mit
+  Anzahl/Fortschritt im Header) statt alles offen — viel ruhiger.
+
 ## [0.6.110] — 2026-06-24 — Challenges: Rubrik-Bibliothek pro Tag
 
 - Neue Sektion **„Aus den Rubriken"** in der Challenges-Ansicht: die für das Sprachniveau **schon
