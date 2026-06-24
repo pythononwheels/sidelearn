@@ -958,9 +958,24 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       const vocab = lesson.vocab.map((v) => v.word);
       const deckWords = getDeck().filter((d) => d.lang === settings.learn).map((d) => d.word);
       const pool = [...new Set([...vocab, ...deckWords])];
-      const qs = buildClozeQuestions(text, vocab, pool, Math.random, 8);
+      // ~half consolidation (from the article), ~half i+1 drill of this Etappe's
+      // next-level target words, blanked in their own (richdict) example sentences.
+      const articleQs = buildClozeQuestions(text, vocab, pool, Math.random, 4);
+      let iqs: QuizQuestion[] = [];
+      const prog = getStageProgress(settings.level);
+      if (!prog.atAufstieg) {
+        const { batch } = await etappeBatch(settings, prog.etappe);
+        if (!alive) return;
+        const withEx = batch.filter((b) => b.example && b.example.trim());
+        const exText = withEx.map((b) => b.example!.trim()).join(' ');
+        const targetWords = withEx.map((b) => b.word);
+        const iPool = [...new Set([...targetWords, ...vocab])];
+        iqs = buildClozeQuestions(exText, targetWords, iPool, Math.random, 4);
+        clozeText.current += ' ' + exText; // so the completion scan credits these targets
+      }
+      const qs = shuffleInPlace([...articleQs, ...iqs]).slice(0, 8);
       setTitle(lesson.title);
-      setQuestions(qs);
+      setQuestions(qs.length ? qs : buildClozeQuestions(text, vocab, pool, Math.random, 8));
     })();
     return () => { alive = false; };
   }, [settings.learn, settings.level]);
