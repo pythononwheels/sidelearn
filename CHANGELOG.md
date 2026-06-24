@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.103] — 2026-06-24 — Lückentext: Lösungs-Card
+
+- Die Antwort-Optionen sitzen jetzt in einer eigenen getönten Card (gleicher Stil wie die Satz-Card) →
+  visuelle Klammer Satz → Lösungen, mit dem Übersetzen-Button klar dazwischen. Weiße Optionen leicht
+  eingerückt in der Card.
+
 ## [0.6.102] — 2026-06-24 — Lückentext in drei Zonen
 
 - Lückentext entzerrt: **Satz in eigener Card** (oben) · **Übersetzen-Button rechtsbündig** im
