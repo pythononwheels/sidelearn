@@ -688,12 +688,16 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .route.mini .rn-card { padding-bottom: 14px; }
 .route.mini .rn { min-height: 58px; }
 /* "Ganzen Lernpfad ansehen" — clear button instead of an easy-to-miss link */
+/* Tied to the Lernpfad's own colour (the purple progress ring/rail) so it reads
+ * as "your path" — distinct from the white cards above and the pink CTAs. */
 .mini-all {
-  display: block; width: 100%; margin: 8px 0 2px; padding: 11px;
-  background: var(--ll-accent-soft); color: var(--ll-accent-strong);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin: 10px 0 2px; padding: 12px;
+  background: rgba(124, 92, 252, .13); color: #5b3fd0;
   border: none; border-radius: 12px; cursor: pointer;
   font-family: var(--font-head); font-weight: 800; font-size: 13.5px;
 }
+.mini-all svg { width: 18px; height: 18px; }
 .mini-all:active { transform: scale(.98); }
 /* Etappe header row in the full path (section label, not a tappable node) */
 .rn.head { min-height: 38px; }
