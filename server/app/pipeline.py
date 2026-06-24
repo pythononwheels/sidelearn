@@ -75,6 +75,9 @@ def process_article(
             if not force and db.has_prepared(article_id, level):
                 skipped += 1
                 continue
+            if db.cost_today() >= config.DAILY_COST_CAP_USD:
+                errors.append("cost cap reached")  # hard daily cost ceiling (incl. nightly build)
+                break
             data, meta = llm.prepare(art["paragraphs"], art["lang"], level, with_digest)
             _log(meta, level)
             if data is None:
