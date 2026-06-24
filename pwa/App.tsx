@@ -95,8 +95,16 @@ async function creditWordsFromText(settings: PwaSettings, text: string, ref: str
   return credited.size;
 }
 
+/** The daily "+1 Stretch": the 2nd daily article is read one level up (i+1) so the
+ * learner meets next-level vocabulary in context. Returns the read-level or undefined. */
+function stretchReadLevel(articles: { url: string }[], url: string, level: CefrLevel): CefrLevel | undefined {
+  const nl = nextLevel(level);
+  if (nl === level) return undefined; // already at the top level
+  return articles.length > 1 && articles[1]?.url === url ? nl : undefined;
+}
+
 type Overlay =
-  | { kind: 'lesson'; article: ArticleRef; route: boolean }
+  | { kind: 'lesson'; article: ArticleRef; route: boolean; readLevel?: CefrLevel }
   | { kind: 'digest'; article: ArticleRef }
   | { kind: 'dict'; mode: 'all' | 'mine' }
   | { kind: 'trainer' }
@@ -132,16 +140,17 @@ export function App() {
 
   // route=true → completing the read advances the learning route (daily lesson).
   // Free reads (Artikelrubriken, digest fallback) pass route=false: XP only.
-  const openLesson = (article: ArticleRef, route = true) => setOverlay({ kind: 'lesson', article, route });
+  const openLesson = (article: ArticleRef, route = true, readLevel?: CefrLevel) => setOverlay({ kind: 'lesson', article, route, readLevel });
   const goTab = (t: Tab) => { setOverlay(null); setTab(t); };
 
   let content: ComponentChildren;
   if (overlay?.kind === 'lesson') {
     content = (
       <Lesson
-        key={overlay.article.id + settings.level}
+        key={overlay.article.id + (overlay.readLevel ?? settings.level)}
         article={overlay.article}
         route={overlay.route}
+        readLevel={overlay.readLevel}
         settings={settings}
         onLevel={(level) => patch({ level })}
         onBack={() => setOverlay(null)}
@@ -417,7 +426,7 @@ function ArticleList({ articles, next, allDone, onOpen }: {
 function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onCloze, onRoute, onTest }: {
   settings: PwaSettings;
   onPatch: (p: Partial<PwaSettings>) => void;
-  onOpen: (a: ArticleRef) => void;
+  onOpen: (a: ArticleRef, route?: boolean, readLevel?: CefrLevel) => void;
   onTrainer: () => void;
   onDict: () => void;
   onSurprise: () => void;
@@ -504,9 +513,9 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
             <span class="h2-card-ico"><IconNewspaper /></span>
             <span class="h2-card-body">
               <span class="h2-card-lbl">Tageslektion</span>
-              <span class="h2-card-sub">{articles.length} Mini-Artikel · {Math.min(doneCount, goal)}/{goal} geschafft</span>
+              <span class="h2-card-sub">{articles.length} Mini-Artikel · {Math.min(doneCount, goal)}/{goal} geschafft{nextLevel(settings.level) !== settings.level && articles.length > 1 ? ' · 1× +1' : ''}</span>
             </span>
-            <button class="h2-go" onClick={() => next && onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail })}>
+            <button class="h2-go" onClick={() => next && onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(articles, next.url, settings.level))}>
               {allDone ? 'Mehr' : doneCount > 0 ? 'Weiter' : 'Start'}
             </button>
           </div>
@@ -1887,6 +1896,7 @@ async function buildLessonQuestions(lesson: ServerLesson, settings: PwaSettings)
 function Lesson({
   article,
   route,
+  readLevel,
   settings,
   onLevel,
   onBack,
@@ -1895,10 +1905,11 @@ function Lesson({
 }: {
   article: { id: string; title: string; url: string; thumb?: string };
   route: boolean;
+  readLevel?: CefrLevel; // when set, read this article one step above the user's level (i+1 stretch)
   settings: PwaSettings;
   onLevel: (l: CefrLevel) => void;
   onBack: () => void;
-  onOpen: (a: ArticleRef, route?: boolean) => void;
+  onOpen: (a: ArticleRef, route?: boolean, readLevel?: CefrLevel) => void;
   onHome: () => void;
 }) {
   const { daily } = useDaily(settings.learn, settings.level);
@@ -1931,6 +1942,8 @@ function Lesson({
     void loadNames().then(setNames);
   }, [settings.learn]);
 
+  const lvl = readLevel ?? settings.level; // level this article is read at (+1 for a stretch read)
+
   const isHard = (w: string): boolean => {
     if (!ranks || w.length < 3 || names.has(w.toLowerCase())) return false;
     const r = rankOf(ranks, w);
@@ -1939,7 +1952,7 @@ function Lesson({
 
   useEffect(() => {
     let alive = true;
-    void fetchServerLesson(SERVER, article.id, settings.level).then((l) => {
+    void fetchServerLesson(SERVER, article.id, lvl).then((l) => {
       if (!alive) return;
       if (l) setLesson(l);
       else setError(true);
@@ -1947,7 +1960,7 @@ function Lesson({
     return () => {
       alive = false;
     };
-  }, [article.id, settings.level]);
+  }, [article.id, lvl]);
 
   // Build one question per paragraph (random type, no LLM). See buildLessonQuestions.
   useEffect(() => {
@@ -2028,18 +2041,23 @@ function Lesson({
       title={article.title}
       onBack={onBack}
       level={
-        <div class="sl-levels">
-          {LEVELS.map((l) => (
-            <button class={`sl-lvlbtn ${l === settings.level ? 'on' : ''}`} onClick={() => onLevel(l)}>
-              {l}
-            </button>
-          ))}
-        </div>
+        readLevel ? (
+          <span class="sl-stretch" title="Eine Stufe über deinem Level — für neue Wörter">+1 · {lvl}</span>
+        ) : (
+          <div class="sl-levels">
+            {LEVELS.map((l) => (
+              <button class={`sl-lvlbtn ${l === settings.level ? 'on' : ''}`} onClick={() => onLevel(l)}>
+                {l}
+              </button>
+            ))}
+          </div>
+        )
       }
     >
       <p class="sl-progress">
         Absatz {Math.min(visible, total)} / {total}
         {total >= 8 ? ' · Auszug' : ''}
+        {readLevel ? ` · +1 (${lvl})` : ''}
       </p>
       <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
 
@@ -2074,7 +2092,7 @@ function Lesson({
                 Weiterlesen · Bonus +
               </button>
               {next && (
-                <button class="sl-read ghost" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail })}>
+                <button class="sl-read ghost" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(daily?.articles ?? [], next.url, settings.level))}>
                   Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
                 </button>
               )}
@@ -2131,7 +2149,7 @@ function Lesson({
             )}
             <div class="sl-done-actions">
               {inDaily && !allDone && next && (
-                <button class="sl-read primary" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail })}>
+                <button class="sl-read primary" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(daily?.articles ?? [], next.url, settings.level))}>
                   Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
                 </button>
               )}

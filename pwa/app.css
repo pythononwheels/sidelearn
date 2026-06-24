@@ -232,6 +232,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 }
 .sl-lessontitle { font-weight: 800; font-size: 18px; }
 .sl-levels { display: flex; gap: 6px; margin-bottom: 10px; }
+.sl-stretch { display: inline-block; margin-bottom: 10px; font-family: var(--font-head); font-weight: 800; font-size: 13px; color: var(--ll-accent-ink); background: var(--ll-accent-grad, var(--ll-accent)); border-radius: 99px; padding: 4px 12px; }
 .sl-lvlbtn {
   font: inherit; font-weight: 700; font-size: 13px; padding: 4px 14px; border-radius: 999px;
   border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text); cursor: pointer;
