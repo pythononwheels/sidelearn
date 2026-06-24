@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.93] — 2026-06-24
+
+### Changed (Learny)
+- **Daily i+1 (Variante A):** Von den 2 Pflicht-Artikeln wird der **zweite eine Stufe
+  höher** gelesen („+1 · A2" für A1-User) — nutzt die ohnehin vorbereitete Level+1-
+  Fassung (kein Mehraufwand/keine neuen Artikel-Stufen). So begegnet man neuen
+  Next-Level-Wörtern im Kontext; der Passiv-Credit greift dort deutlich stärker.
+  Stretch-Artikel zeigen ein „+1"-Badge statt des Level-Schalters; das globale Level
+  bleibt unverändert.
+
 ## [0.6.92] — 2026-06-24
 
 ### Added (Learny)
