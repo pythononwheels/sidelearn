@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.104] — 2026-06-24 — Lückentext: Anleitung + tiefer eingerückte Optionen
+
+- Anleitung „Tippe auf das fehlende Wort" oben in der Lösungs-Card; die Antwort-Buttons zusätzlich
+  ~6 % eingerückt → ruhigerer, geführter Eindruck.
+
 ## [0.6.103] — 2026-06-24 — Lückentext: Lösungs-Card
 
 - Die Antwort-Optionen sitzen jetzt in einer eigenen getönten Card (gleicher Stil wie die Satz-Card) →

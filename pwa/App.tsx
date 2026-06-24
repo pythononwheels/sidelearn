@@ -1117,16 +1117,19 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
           <div class="cloze-xlate">
             <TranslateReveal text={q.prompt} settings={settings} />
           </div>
-          <div class="sl-quiz-opts cloze-opts">
-            {q.options.map((opt) => {
-              let cls = '';
-              if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
-              return (
-                <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
-                  {opt}
-                </button>
-              );
-            })}
+          <div class="cloze-opts">
+            <p class="cloze-hint">Tippe auf das fehlende Wort</p>
+            <div class="sl-quiz-opts cloze-opts-list">
+              {q.options.map((opt) => {
+                let cls = '';
+                if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
+                return (
+                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {picked !== null && (
             <button class="sl-read cloze-next" onClick={next}>
