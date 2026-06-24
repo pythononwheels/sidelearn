@@ -532,21 +532,33 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text); cursor: pointer;
 }
 .pill-day.on { background: var(--ll-accent); color: var(--ll-accent-ink); border-color: transparent; }
-/* "Älter ▾" dropdown for older archive days */
+/* "Kalender ▾" month picker for older archive days */
 .day-pick { position: relative; }
 .day-older { position: relative; display: inline-block; }
-.day-older-menu {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; min-width: 116px; max-height: 240px; overflow: auto;
-  display: flex; flex-direction: column; gap: 2px; padding: 6px;
-  background: var(--ll-surface); border: 1px solid var(--ll-border); border-radius: 12px;
-  box-shadow: 0 10px 28px rgba(40, 30, 80, .16);
+.cal {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 25; width: 286px; padding: 12px;
+  background: var(--ll-surface); border: 1px solid var(--ll-border); border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(40, 30, 80, .18);
 }
-.day-older-item {
-  font: inherit; font-weight: 700; font-size: 13px; text-align: left; padding: 8px 12px; border-radius: 8px;
-  border: none; background: none; color: var(--ll-text); cursor: pointer;
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-title { font-family: var(--font-head); font-weight: 800; font-size: 14px; color: var(--ll-text); }
+.cal-nav {
+  width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--ll-bg);
+  color: var(--ll-text); font-size: 18px; font-weight: 800; line-height: 1; cursor: pointer;
 }
-.day-older-item:active { background: var(--ll-bg); }
-.day-older-item.on { background: var(--ll-accent-soft); color: var(--ll-accent-strong); }
+.cal-nav:disabled { opacity: .3; cursor: default; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-wd { margin-bottom: 4px; }
+.cal-wdl { text-align: center; font-size: 11px; font-weight: 700; color: var(--ll-text-muted); padding: 2px 0; }
+.cal-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: none; background: none;
+  border-radius: 9px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ll-text-muted); cursor: default;
+}
+.cal-cell.empty { visibility: hidden; }
+.cal-cell.has { color: var(--ll-text); background: var(--ll-accent-soft); cursor: pointer; }
+.cal-cell.has:active { transform: scale(.92); }
+.cal-cell.today { box-shadow: inset 0 0 0 2px var(--ll-accent); }
+.cal-cell.sel { background: var(--ll-accent); color: var(--ll-accent-ink); box-shadow: none; }
 
 /* Redesigned Home (Knuddel) -------------------------------------------- */
 .gurki { display: block; }

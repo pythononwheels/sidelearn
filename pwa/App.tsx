@@ -1583,6 +1583,53 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
 
 /* ----------------------------------------------------------- Challenges --- */
 
+const CAL_WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const CAL_MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+/** Month calendar that only enables days present in `available` (the sparse
+ * archive). Scales to months/years far better than a flat dropdown list. */
+function DayCalendar({ available, sel, today, onPick }: {
+  available: Set<string>; sel: string | undefined; today: string; onPick: (d: string) => void;
+}) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const minYM = ([...available].sort()[0] ?? today).slice(0, 7);
+  const maxYM = today.slice(0, 7);
+  const [ym, setYM] = useState(() => (sel ?? today).slice(0, 7));
+  const [y, m] = ym.split('-').map(Number) as [number, number]; // m: 1–12
+  const firstWd = (new Date(y, m - 1, 1).getDay() + 6) % 7; // Monday = 0
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstWd).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const canPrev = ym > minYM;
+  const canNext = ym < maxYM;
+  const shift = (d: number) => {
+    const nm = m - 1 + d;
+    setYM(`${y + Math.floor(nm / 12)}-${pad(((nm % 12) + 12) % 12 + 1)}`);
+  };
+  return (
+    <div class="cal">
+      <div class="cal-head">
+        <button class="cal-nav" disabled={!canPrev} onClick={() => canPrev && shift(-1)} aria-label="Früher">‹</button>
+        <span class="cal-title">{CAL_MONTHS[m - 1]} {y}</span>
+        <button class="cal-nav" disabled={!canNext} onClick={() => canNext && shift(1)} aria-label="Später">›</button>
+      </div>
+      <div class="cal-grid cal-wd">{CAL_WD.map((w) => <span class="cal-wdl">{w}</span>)}</div>
+      <div class="cal-grid">
+        {cells.map((d, i) => {
+          if (d === null) return <span class="cal-cell empty" key={`e${i}`} />;
+          const str = `${y}-${pad(m)}-${pad(d)}`;
+          const has = available.has(str);
+          return (
+            <button key={str} disabled={!has} onClick={() => has && onPick(str)}
+              class={`cal-cell ${has ? 'has' : 'none'} ${str === (sel ?? today) ? 'sel' : ''} ${str === today ? 'today' : ''}`}>
+              {d}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ChallengesTab({ settings, onOpen, onDigest }: {
   settings: PwaSettings;
   onOpen: (a: ArticleRef, route?: boolean) => void;
@@ -1674,16 +1721,15 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
           {older.length > 0 && (
             <div class="day-older">
               <button class={`pill-day older ${selOlder ? 'on' : ''}`} onClick={() => setOlderOpen((o) => !o)} aria-expanded={olderOpen}>
-                {selOlder ? `${sel!.slice(5)} ▾` : 'Älter ▾'}
+                {selOlder ? `${sel!.slice(5)} ▾` : 'Kalender ▾'}
               </button>
               {olderOpen && (
-                <div class="day-older-menu">
-                  {older.map((d) => (
-                    <button class={`day-older-item ${sel === d ? 'on' : ''}`} onClick={() => { setSel(d); setOlderOpen(false); }}>
-                      {d.slice(5)}
-                    </button>
-                  ))}
-                </div>
+                <DayCalendar
+                  available={new Set(dates ?? [])}
+                  sel={sel}
+                  today={dayStamp()}
+                  onPick={(d) => { setSel(d === dayStamp() ? undefined : d); setOlderOpen(false); }}
+                />
               )}
             </div>
           )}

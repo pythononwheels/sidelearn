@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.113] — 2026-06-25 — Challenges: Monatskalender statt Liste
+
+- Der „Älter"-Dropdown ist jetzt ein **Monatskalender** (skaliert auf Monate/Jahre): Wochen-Pills
+  direkt + „Kalender ▾" → Monatsraster. Nur Tage **mit Inhalt** sind wählbar/hervorgehoben, heute
+  markiert, Monats-Navigation ‹ › (begrenzt auf Monate mit Inhalt).
+
 ## [0.6.112] — 2026-06-25 — Challenges: Tage skalieren (Woche + „Älter ▾")
 
 - Die Datums-Pills zeigen jetzt **Heute + die letzten ~6 verfügbaren Tage**; ältere Tage liegen
