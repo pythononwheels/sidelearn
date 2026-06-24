@@ -393,7 +393,10 @@ async def surprise(
                 continue
 
             # Already in the library and prepared for this level → free, return.
+            # Also fold it into the area pool so the NEXT user finds it instantly
+            # via pool-first (random_area_prepared), instead of re-rolling a random.
             if db.has_prepared(art["id"], level):
+                db.add_area_pool(area, lang, art["id"], datetime.now(timezone.utc).isoformat())
                 return await _lesson_payload(art["id"], level)
 
             if not db.has_article(art["id"]):
@@ -410,6 +413,10 @@ async def surprise(
             prepares += 1
             await asyncio.to_thread(pipeline.process_article, art["id"], [level], False, "surprise", True)
             if db.has_prepared(art["id"], level):
+                # Live-prepped → register in the area pool so it becomes a
+                # first-class, reusable pool entry (instant for the next user at
+                # this level; other levels fill in as users at those levels hit it).
+                db.add_area_pool(area, lang, art["id"], datetime.now(timezone.utc).isoformat())
                 return await _lesson_payload(art["id"], level)
 
     raise HTTPException(404, "couldn't find a good article right now — try again")
