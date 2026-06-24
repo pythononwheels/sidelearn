@@ -1,30 +1,25 @@
 /**
- * Staged learning progress as a **typed node route** (on-device). Each CEFR level
- * is a sequence of 10 Etappen × 3 nodes = 30 nodes. Node types repeat per Etappe:
- *   pos 0 → lesson, pos 1 → vocab/cloze (alternating), pos 2 → etappentest
- * The last Etappe's test is the full Aufstiegstest, which levels you up.
- * A node is completed by doing its matching activity (see completeActivity).
+ * Vocabulary-driven learning route (on-device). A CEFR level is reached by
+ * acquiring the NEXT level's words (i+1) with spaced repetition:
+ *   - a level = 10 Etappen (~1 week each).
+ *   - each Etappe assigns a batch of ETAPPE_GOAL next-level target words; you
+ *     "clear" them via the Vokabeltest (SRS). When the batch sits, the weekly
+ *     Etappentest unlocks. After 10 Etappen the Aufstiegstest promotes you.
+ * The actual word-progress lives in the SRS deck (srs.ts); this module tracks
+ * which Etappe you're on and handles Etappentest/Aufstieg advancement.
  *
- * Replaces the old points-based 3-Etappen model (sl_pwa_stage); migrated on read.
+ * Migrated from the old node-sequence model (sl_pwa_route {node}) on read.
  */
 
 import { type CefrLevel } from '@/core/difficulty/banding';
 
 export const STAGE_LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 export const ETAPPEN_PER_LEVEL = 10;
-export const NODES_PER_ETAPPE = 3;
-export const NODES_PER_LEVEL = ETAPPEN_PER_LEVEL * NODES_PER_ETAPPE; // 30
+export const ETAPPE_GOAL = 50; // next-level target words per Etappe (week)
+export const TARGETS_PER_LEVEL = ETAPPEN_PER_LEVEL * ETAPPE_GOAL; // 500
 
+/** Activities that can advance the route (only the tests do, now). */
 export type NodeType = 'lesson' | 'vocab' | 'cloze' | 'etappentest' | 'aufstieg';
-
-/** The node type at index i (0..29) within a level. */
-export function nodeType(_level: CefrLevel, i: number): NodeType {
-  const etappe = Math.floor(i / NODES_PER_ETAPPE);
-  const pos = i % NODES_PER_ETAPPE;
-  if (pos === 0) return 'lesson';
-  if (pos === 1) return etappe % 2 === 0 ? 'vocab' : 'cloze';
-  return etappe === ETAPPEN_PER_LEVEL - 1 ? 'aufstieg' : 'etappentest';
-}
 
 export function nextLevel(level: CefrLevel): CefrLevel {
   const i = STAGE_LEVELS.indexOf(level);
@@ -33,7 +28,7 @@ export function nextLevel(level: CefrLevel): CefrLevel {
 
 interface RouteState {
   level: CefrLevel;
-  node: number; // completed-count = index of the current node (0..NODES_PER_LEVEL)
+  etappe: number; // completed Etappen this level, 0..10 (10 = ready for Aufstieg)
 }
 
 const KEY = 'sl_pwa_route';
@@ -42,7 +37,11 @@ const OLD_KEY = 'sl_pwa_stage';
 function read(): RouteState | null {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (s && typeof s.node === 'number' && s.level) return s as RouteState;
+    if (s && s.level && typeof s.etappe === 'number') return s as RouteState;
+    // Migrate the older node-sequence model ({level, node}, 30 nodes / 3 per Etappe).
+    if (s && s.level && typeof s.node === 'number') {
+      return { level: s.level, etappe: Math.min(ETAPPEN_PER_LEVEL, Math.floor(s.node / 3)) };
+    }
   } catch {
     /* ignore */
   }
@@ -57,13 +56,12 @@ function write(s: RouteState): void {
   }
 }
 
-/** Migrate the old 3-Etappen stage model, if present, to the node route. */
 function migrate(): RouteState | null {
   try {
     const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
     if (old && old.baseLevel) {
       const step = typeof old.step === 'number' ? old.step : 1;
-      return { level: old.baseLevel, node: Math.min(NODES_PER_LEVEL - 1, (step - 1) * NODES_PER_ETAPPE) };
+      return { level: old.baseLevel, etappe: Math.min(ETAPPEN_PER_LEVEL, step - 1) };
     }
   } catch {
     /* ignore */
@@ -71,78 +69,68 @@ function migrate(): RouteState | null {
   return null;
 }
 
-/**
- * Current route state, reconciled with the active reading level. A manual reading
- * level change restarts the route at that level (node 0).
- */
+/** Current route state, reconciled with the active reading level (manual level
+ * change restarts the route at that level). */
 export function getRoute(currentLevel: CefrLevel): RouteState {
-  let s = read() ?? migrate() ?? { level: currentLevel, node: 0 };
-  if (s.level !== currentLevel) s = { level: currentLevel, node: 0 };
+  let s = read() ?? migrate() ?? { level: currentLevel, etappe: 0 };
+  if (s.level !== currentLevel) s = { level: currentLevel, etappe: 0 };
+  s.etappe = Math.max(0, Math.min(ETAPPEN_PER_LEVEL, s.etappe));
   write(s);
   return s;
 }
 
+/** [start, end) index range into the level's ordered next-level target words. */
+export function batchRange(etappe: number): [number, number] {
+  const start = Math.min(etappe, ETAPPEN_PER_LEVEL - 1) * ETAPPE_GOAL;
+  return [start, start + ETAPPE_GOAL];
+}
+
 export interface RouteProgress {
   level: CefrLevel;
-  node: number;
-  etappe: number; // 1..10
-  pos: number; // 0..NODES_PER_ETAPPE-1
-  nodeType: NodeType;
-  ratio: number; // progress within current Etappe (0..1)
-  label: string; // "A2 · Etappe 3/10"
-  ready: boolean; // current node is a test (etappentest/aufstieg)
-  levelDone: boolean;
+  etappe: number; // 0-based index of the current Etappe (0..10)
+  etappeDisplay: number; // 1..10 for UI
+  atAufstieg: boolean; // all 10 Etappen done → Aufstiegstest is the next step
+  nextLevel: CefrLevel;
+  label: string; // "A2 · Etappe 3/10" or "A2 · Aufstieg"
 }
 
 export function getRouteProgress(currentLevel: CefrLevel): RouteProgress {
   const s = getRoute(currentLevel);
-  const levelDone = s.node >= NODES_PER_LEVEL;
-  const node = Math.min(s.node, NODES_PER_LEVEL - 1);
-  const etappe = Math.floor(node / NODES_PER_ETAPPE);
-  const pos = node % NODES_PER_ETAPPE;
-  const t = nodeType(s.level, node);
+  const atAufstieg = s.etappe >= ETAPPEN_PER_LEVEL;
   return {
     level: s.level,
-    node: s.node,
-    etappe: etappe + 1,
-    pos,
-    nodeType: t,
-    ratio: pos / NODES_PER_ETAPPE,
-    label: `${s.level} · Etappe ${etappe + 1}/${ETAPPEN_PER_LEVEL}`,
-    ready: t === 'etappentest' || t === 'aufstieg',
-    levelDone,
+    etappe: s.etappe,
+    etappeDisplay: Math.min(s.etappe + 1, ETAPPEN_PER_LEVEL),
+    atAufstieg,
+    nextLevel: nextLevel(s.level),
+    label: atAufstieg ? `${s.level} · Aufstieg` : `${s.level} · Etappe ${s.etappe + 1}/${ETAPPEN_PER_LEVEL}`,
   };
 }
 
 export interface CompleteResult {
   advanced: boolean;
-  etappeDone: boolean; // finished an Etappe (completed its test)
+  etappeDone: boolean;
   levelUp: boolean;
-  level: CefrLevel; // (possibly new) level after completion
-  node: number;
+  level: CefrLevel;
 }
 
-/**
- * Mark the current node done if `type` matches it. Completing the last node
- * (the Aufstiegstest) levels up. No-op if it doesn't match — non-matching
- * activities still give XP elsewhere, they just don't advance the route.
- */
+/** Advance the route. Only the tests move it now:
+ *  - 'etappentest' → next Etappe (caller ensures the weekly word goal is met).
+ *  - 'aufstieg'    → level up (only when all 10 Etappen are done).
+ *  Everything else is a no-op (lessons/vocab/cloze give XP but don't advance). */
 export function completeActivity(currentLevel: CefrLevel, type: NodeType): CompleteResult {
   const s = getRoute(currentLevel);
-  const idle: CompleteResult = { advanced: false, etappeDone: false, levelUp: false, level: s.level, node: s.node };
-  if (s.node >= NODES_PER_LEVEL) return idle;
-  if (nodeType(s.level, s.node) !== type) return idle;
-
-  const etappeDone = s.node % NODES_PER_ETAPPE === NODES_PER_ETAPPE - 1;
-  const wasLast = s.node === NODES_PER_LEVEL - 1; // the Aufstiegstest
-  if (wasLast) {
-    const next = nextLevel(s.level);
-    const levelUp = next !== s.level;
-    write({ level: next, node: levelUp ? 0 : NODES_PER_LEVEL });
-    return { advanced: true, etappeDone: true, levelUp, level: next, node: levelUp ? 0 : NODES_PER_LEVEL };
+  const idle: CompleteResult = { advanced: false, etappeDone: false, levelUp: false, level: s.level };
+  if (type === 'etappentest' && s.etappe < ETAPPEN_PER_LEVEL) {
+    write({ level: s.level, etappe: s.etappe + 1 });
+    return { advanced: true, etappeDone: true, levelUp: false, level: s.level };
   }
-  write({ level: s.level, node: s.node + 1 });
-  return { advanced: true, etappeDone, levelUp: false, level: s.level, node: s.node + 1 };
+  if (type === 'aufstieg' && s.etappe >= ETAPPEN_PER_LEVEL) {
+    const next = nextLevel(s.level);
+    write({ level: next, etappe: 0 });
+    return { advanced: true, etappeDone: true, levelUp: next !== s.level, level: next };
+  }
+  return idle;
 }
 
 /** Frequency-rank window [lo, hi] for a CEFR band (1-based ranks). */

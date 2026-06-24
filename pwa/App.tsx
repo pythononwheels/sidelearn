@@ -29,21 +29,22 @@ import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
-import { seedVocab, type SeedWord } from './seedvocab';
+import { seedVocab, nextLevelTargets, type SeedWord } from './seedvocab';
 import { THEMES, applyTheme } from './theme';
 import {
   bandRankRange,
   completeActivity,
   getRouteProgress as getStageProgress,
-  nodeType,
   nextLevel,
+  batchRange,
   ETAPPEN_PER_LEVEL,
-  NODES_PER_ETAPPE,
-  NODES_PER_LEVEL,
+  ETAPPE_GOAL,
+  TARGETS_PER_LEVEL,
   STAGE_LEVELS,
   type CompleteResult,
   type NodeType,
 } from './route';
+import { addTargets, dueEntries, dueCount, grade as srsGrade, clearedCount } from './srs';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
 import { pop, celebrate } from './confetti';
@@ -55,6 +56,17 @@ declare const __APP_VERSION__: string;
 
 const SERVER = 'https://api.sidelearn.pyrates.io';
 const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+
+/** This Etappe's next-level target words (seeded into the SRS deck) + how many
+ * are "cleared" (box≥2). The weekly word goal that gates the Etappentest. */
+async function etappeBatch(settings: PwaSettings, etappe: number): Promise<{ words: string[]; cleared: number; targets: SeedWord[]; batch: SeedWord[] }> {
+  const targets = await nextLevelTargets(settings.learn, settings.native, settings.level, TARGETS_PER_LEVEL);
+  const [start, end] = batchRange(etappe);
+  const batch = targets.slice(start, end);
+  addTargets(settings.learn, batch.map((t) => ({ word: t.word, translation: t.translation, band: t.band })));
+  const words = batch.map((t) => t.word);
+  return { words, cleared: clearedCount(settings.learn, words), targets, batch };
+}
 
 type Overlay =
   | { kind: 'lesson'; article: ArticleRef; route: boolean }
@@ -130,7 +142,7 @@ export function App() {
   } else if (overlay?.kind === 'cloze') {
     content = <ClozeView settings={settings} onBack={() => setOverlay(null)} />;
   } else if (overlay?.kind === 'test') {
-    content = getStageProgress(settings.level).nodeType === 'aufstieg' ? (
+    content = getStageProgress(settings.level).atAufstieg ? (
       <LevelTestView
         settings={settings}
         onAdvance={(r) => { if (r.levelUp) patch({ level: r.level }); }}
@@ -143,9 +155,7 @@ export function App() {
     content = (
       <RouteView
         settings={settings}
-        onLesson={() => goTab('home')}
         onTrainer={() => setOverlay({ kind: 'trainer' })}
-        onCloze={() => setOverlay({ kind: 'cloze' })}
         onTest={() => setOverlay({ kind: 'test' })}
         onBack={() => setOverlay(null)}
       />
@@ -404,12 +414,19 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
 
   const stats = getStats();
   const prog = getStageProgress(settings.level);
-  const level = prog.level;
-  const levelPct = Math.round(Math.min(prog.node, NODES_PER_LEVEL) / NODES_PER_LEVEL * 100);
-  // Home bar shows progress through the whole level (node/30), labelled current→next
-  // level (e.g. A2 → B1). The per-Etappe detail stays in the subline.
   const lvlL = prog.level;
-  const lvlR = nextLevel(prog.level);
+  const lvlR = prog.nextLevel;
+  // Weekly word goal: how many of this Etappe's next-level target words are cleared.
+  const [batchCleared, setBatchCleared] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    if (prog.atAufstieg) { setBatchCleared(ETAPPE_GOAL); return; }
+    void etappeBatch(settings, prog.etappe).then((b) => { if (alive) setBatchCleared(b.cleared); });
+    return () => { alive = false; };
+  }, [settings.learn, settings.native, settings.level, prog.etappe, tick]);
+  const levelPct = Math.round((prog.etappe + (prog.atAufstieg ? 0 : Math.min(batchCleared / ETAPPE_GOAL, 1))) / ETAPPEN_PER_LEVEL * 100);
+  const etappeReady = prog.atAufstieg || batchCleared >= ETAPPE_GOAL;
+  const dueN = dueCount(settings.learn);
   const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
   const pose: Pose = allDone ? 'party' : 'yay';
   const bubble = allDone
@@ -417,15 +434,6 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
     : articles.length > 0 && doneCount > 0 && doneCount >= goal - 1
     ? 'Nur noch einer bis zum Ziel!'
     : hype;
-
-  const launchNode = (t: NodeType) => {
-    if (t === 'lesson') { if (next) onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }); }
-    else if (t === 'vocab') onTrainer();
-    else if (t === 'cloze') onCloze();
-    else onTest();
-  };
-  const cur = Math.min(prog.node, NODES_PER_LEVEL - 1);
-  const miniIdx = [cur - 1, cur, cur + 1].filter((i) => i >= 0 && i < NODES_PER_LEVEL);
 
   return (
     <main class="sl-main with-nav h2" key={tick}>
@@ -455,7 +463,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
           <div class="h2-lvl-track"><i style={{ width: `${levelPct}%` }} /></div>
           <span class="h2-lvl-end next">{lvlR}</span>
         </div>
-        <span class="h2-sub">Etappe {prog.etappe}/{ETAPPEN_PER_LEVEL} im Level {prog.level}{articles.length > 0 ? ` · Tagesziel ${Math.min(doneCount, goal)}/${goal}` : ''}</span>
+        <span class="h2-sub">{prog.atAufstieg ? `Aufstiegstest bereit · Level ${prog.level}` : `Etappe ${prog.etappeDisplay}/${ETAPPEN_PER_LEVEL} · ${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} neue Wörter`}{articles.length > 0 ? ` · Tagesziel ${Math.min(doneCount, goal)}/${goal}` : ''}</span>
         <div class="h2-bubble">{bubble}</div>
       </section>
 
@@ -491,34 +499,22 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
         <span class="mini-head-s">{prog.label} · alle ansehen →</span>
       </button>
       <div class="route mini">
-        {[-1, 0, 1].map((off) => {
-          const i = cur + off;
-          if (i < 0 || i >= NODES_PER_LEVEL) {
-            const start = i < 0;
-            return (
-              <div class="rn cap" key={off}>
-                <div class="rn-rail"><span class="rn-dot">{start ? <IconFlag /> : <IconCheck />}</span></div>
-                <span class="rn-card">
-                  <span class="rn-title">{start ? 'Los geht’s' : 'Level geschafft'}</span>
-                  <span class="rn-sub">{start ? 'Start' : ''}</span>
-                </span>
-              </div>
-            );
-          }
-          const t = nodeType(level, i);
-          const state: 'done' | 'current' | 'locked' = i < prog.node ? 'done' : i === cur && prog.node < NODES_PER_LEVEL ? 'current' : 'locked';
-          const M = NODE_META[t];
-          return (
-            <div class={`rn ${state}`} key={off}>
-              <div class="rn-rail"><span class="rn-dot">{state === 'done' ? <IconCheck /> : state === 'locked' ? <IconLock /> : <M.Icon />}</span></div>
-              <button class="rn-card" disabled={state !== 'current'} onClick={() => state === 'current' && launchNode(t)}>
-                <span class="rn-title">{M.label}</span>
-                <span class="rn-sub">{state === 'current' ? 'Jetzt dran · tippen' : state === 'done' ? 'erledigt' : 'gesperrt'}</span>
-              </button>
-              {state === 'current' && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
-            </div>
-          );
-        })}
+        <div class={`rn ${etappeReady && !prog.atAufstieg ? 'done' : 'current'}`}>
+          <div class="rn-rail"><span class="rn-dot">{etappeReady && !prog.atAufstieg ? <IconCheck /> : <IconCards />}</span></div>
+          <button class="rn-card" onClick={onTrainer}>
+            <span class="rn-title">Neue Wörter lernen</span>
+            <span class="rn-sub">{prog.atAufstieg ? 'Wortschatz wiederholen' : `${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL}${dueN > 0 ? ` · ${dueN} fällig` : ''} · tippen`}</span>
+          </button>
+          {!etappeReady && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
+        </div>
+        <div class={`rn ${etappeReady ? 'current' : 'locked'}`}>
+          <div class="rn-rail"><span class="rn-dot">{etappeReady ? (prog.atAufstieg ? <IconSummit /> : <IconCheck />) : <IconLock />}</span></div>
+          <button class="rn-card" disabled={!etappeReady} onClick={() => etappeReady && onTest()}>
+            <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappentest'}</span>
+            <span class="rn-sub">{etappeReady ? 'freigeschaltet · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
+          </button>
+          {etappeReady && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={56} />}
+        </div>
       </div>
     </main>
   );
@@ -548,31 +544,27 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const TARGET = 12;
+      const SESSION = 15;
+      const prog = getStageProgress(settings.level);
+      // Seed this Etappe's next-level target words into the SRS deck (idempotent).
+      if (!prog.atAufstieg) await etappeBatch(settings, prog.etappe);
       const seed = await seedVocab(settings.learn, settings.native, settings.level, 80);
-      const deck = getDeck().filter((d) => d.lang === settings.learn);
-
-      // Build card sources (deck first, then seed), each with its meaning + extras.
-      type Src = { word: string; translation: string; pos?: string; example?: string; exampleDe?: string };
-      const sources: Src[] = [];
-      const have = new Set<string>();
-      const push = (s: Src) => {
-        const k = s.word.toLowerCase();
-        if (sources.length >= TARGET || have.has(k) || !s.translation) return;
-        have.add(k); sources.push(s);
-      };
-      for (const d of deck) push({ word: d.word, translation: d.translation || '' });
-      for (const s of seed) push({ word: s.word, translation: s.translation, pos: s.pos, example: s.example, exampleDe: s.exampleDe });
-
-      // Distractor pool = meanings from the seed (+ deck), deduped.
-      const pool = [...new Set([...seed.map((s) => s.translation), ...deck.map((d) => d.translation)].filter(Boolean))];
-      const cards: MCCard[] = sources.map((src) => {
-        const correct = src.translation;
+      const due = dueEntries(settings.learn, SESSION); // reviews + freshly-due new targets
+      const pool = [...new Set([
+        ...getDeck().filter((d) => d.lang === settings.learn).map((d) => d.translation),
+        ...seed.map((s) => s.translation),
+      ].filter(Boolean))];
+      const cards: MCCard[] = [];
+      for (const d of due) {
+        const correct = d.translation;
+        if (!correct) continue;
+        const rich = await richLookup(d.word, settings.learn, settings.native);
+        const s0 = rich?.s?.[0];
         const distractors = sampleN(pool.filter((t) => t.toLowerCase() !== correct.toLowerCase()), 3);
         const options = shuffleInPlace([correct, ...distractors]);
-        return { ...src, options, correct: options.indexOf(correct) };
-      }).filter((c) => c.options.length >= 2);
-      shuffleInPlace(cards);
+        if (options.length < 2) continue;
+        cards.push({ word: d.word, translation: correct, pos: s0?.p, example: s0?.ex, exampleDe: s0?.exd, options, correct: options.indexOf(correct) });
+      }
       if (alive) setCards(cards);
     })();
     return () => { alive = false; };
@@ -583,7 +575,9 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
   function choose(idx: number, e: MouseEvent) {
     if (picked !== null || !card) return;
     setPicked(idx);
-    if (idx === card.correct) {
+    const ok = idx === card.correct;
+    srsGrade(settings.learn, card.word, ok); // update spaced-repetition box/due
+    if (ok) {
       setScore((s) => s + 1);
       award(XP.correct);
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -592,7 +586,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
   }
   function next() {
     if (!cards) return;
-    if (pos + 1 >= cards.length) { setDone(true); completeActivity(settings.level, 'vocab'); }
+    if (pos + 1 >= cards.length) setDone(true);
     else { setPos((p) => p + 1); setPicked(null); }
   }
 
@@ -606,13 +600,16 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
       {cards === null ? (
         <Dots />
       ) : cards.length === 0 ? (
-        <p class="sl-muted">
-          Noch keine Vokabeln für {LANG_LABELS[settings.learn]}. Tippe beim Lesen ein Wort an und drücke „★ merken".
-        </p>
+        <section class="sl-done">
+          <span class="sl-done-ico"><IconCheck /></span>
+          <h2>Alles wiederholt!</h2>
+          <p class="sl-muted">Gerade sind keine Wörter fällig. Lies eine Lektion und komm später wieder — die Wiederholungen kommen über die Tage verteilt.</p>
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </section>
       ) : done ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Fertig</h2>
+          <h2>Session fertig</h2>
           <p>{score} von {cards.length} richtig.</p>
           <button class="sl-read" onClick={onBack}>Zurück</button>
         </section>
@@ -1008,12 +1005,22 @@ function LevelTestView({ settings, onAdvance, onBack }: {
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const [ranks, names] = await Promise.all([loadRanks(settings.learn), loadNames()]);
+      const [ranks, names, targets] = await Promise.all([
+        loadRanks(settings.learn), loadNames(),
+        nextLevelTargets(settings.learn, settings.native, settings.level, TARGETS_PER_LEVEL),
+      ]);
       if (!alive) return;
-      const [lo, hi] = bandRankRange(settings.level);
-      const reals = Object.entries(ranks)
-        .filter(([w, r]) => r >= lo && r <= hi && w.length >= 4 && /^\p{L}+$/u.test(w) && !names.has(w.toLowerCase()))
-        .map(([w]) => w);
+      // The Aufstieg proves NEXT-level mastery: test the level's target words.
+      // Fallback to the current band if richdict targets aren't available.
+      let reals: string[];
+      if (targets.length >= 14) {
+        reals = targets.map((t) => t.word).filter((w) => w.length >= 3 && /^\p{L}+$/u.test(w) && !names.has(w.toLowerCase()));
+      } else {
+        const [lo, hi] = bandRankRange(settings.level);
+        reals = Object.entries(ranks)
+          .filter(([w, r]) => r >= lo && r <= hi && w.length >= 4 && /^\p{L}+$/u.test(w) && !names.has(w.toLowerCase()))
+          .map(([w]) => w);
+      }
       shuffleInPlace(reals);
       const pseudos = shuffleInPlace([...pseudoWordsFor(settings.learn)]);
       const list = [
@@ -1181,19 +1188,34 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
   const [picked, setPicked] = useState<number | null>(null);
   const correct = useRef(0);
   const [result, setResult] = useState<{ passed: boolean } | null>(null);
+  const [locked, setLocked] = useState(false);
   const optsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let alive = true;
     void (async () => {
+      const prog = getStageProgress(settings.level);
+      const { batch, targets, cleared } = await etappeBatch(settings, prog.etappe);
+      if (!alive) return;
+      if (cleared < ETAPPE_GOAL && batch.length > 0) { setLocked(true); setQuestions([]); return; }
+      // Mostly the Etappe's just-learned target words, plus a couple article questions.
+      const pool = [...new Set(targets.map((t) => t.translation).filter(Boolean))];
+      const vq: LessonQuestion[] = sampleN(batch, 3).map((t) => {
+        const c = t.translation;
+        const distractors = sampleN(pool.filter((x) => x.toLowerCase() !== c.toLowerCase()), 3);
+        const options = shuffleInPlace([c, ...distractors]);
+        return { kind: 'vocab' as const, q: `Was bedeutet «${t.word}»?`, options, correct: options.indexOf(c) };
+      }).filter((q) => q.options.length >= 2);
+      let articleQs: LessonQuestion[] = [];
       const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
       const art = daily?.articles[0];
-      if (!art) { if (alive) setQuestions([]); return; }
-      const lesson = await fetchServerLesson(SERVER, art.id, settings.level);
+      if (art) {
+        const lesson = await fetchServerLesson(SERVER, art.id, settings.level);
+        if (lesson) articleQs = (await buildLessonQuestions(lesson, settings)).filter(Boolean) as LessonQuestion[];
+      }
       if (!alive) return;
-      if (!lesson) { setQuestions([]); return; }
-      const qs = (await buildLessonQuestions(lesson, settings)).filter(Boolean) as LessonQuestion[];
-      setQuestions(shuffleInPlace(qs).slice(0, 5));
+      const qs = shuffleInPlace([...vq, ...sampleN(articleQs, 2)]).slice(0, 5);
+      setQuestions(qs.length ? qs : shuffleInPlace(articleQs).slice(0, 5));
     })();
     return () => { alive = false; };
   }, [settings.learn, settings.level]);
@@ -1239,6 +1261,11 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
         </section>
       ) : questions === null ? (
         <Dots />
+      ) : locked ? (
+        <>
+          <p class="sl-muted">Der Etappentest schaltet frei, wenn du das Wochenziel von {ETAPPE_GOAL} neuen Wörtern geschafft hast. Üb noch im Vokabeltest.</p>
+          <button class="sl-read" onClick={onBack}>Zurück</button>
+        </>
       ) : questions.length === 0 ? (
         <>
           <p class="sl-muted">Gerade keine Fragen verfügbar — lies erst eine Tageslektion.</p>
@@ -1281,72 +1308,75 @@ function timeAgo(ts: number): string {
   return `vor ${Math.floor(d / 7)} Wochen`;
 }
 
-const NODE_META: Record<NodeType, { label: string; Icon: () => ComponentChildren }> = {
-  lesson: { label: 'Artikel lesen', Icon: IconNewspaper },
-  vocab: { label: 'Vokabeltest', Icon: IconCards },
-  cloze: { label: 'Lückentext', Icon: IconGap },
-  etappentest: { label: 'Etappentest', Icon: IconFlag },
-  aufstieg: { label: 'Aufstiegstest', Icon: IconSummit },
-};
-
-type NodeState = 'done' | 'current' | 'locked';
-
-function RouteView({ settings, onLesson, onTrainer, onCloze, onTest, onBack }: {
+function RouteView({ settings, onTrainer, onTest, onBack }: {
   settings: PwaSettings;
-  onLesson: () => void;
   onTrainer: () => void;
-  onCloze: () => void;
   onTest: () => void;
   onBack: () => void;
 }) {
   const prog = getStageProgress(settings.level);
   const level = prog.level;
-  const current = Math.min(prog.node, NODES_PER_LEVEL - 1);
+  const [cleared, setCleared] = useState(0);
   const curRef = useRef<HTMLDivElement>(null);
 
-  // Center the current node on open.
   useEffect(() => {
-    curRef.current?.scrollIntoView({ block: 'center' });
-  }, []);
+    let alive = true;
+    if (prog.atAufstieg) setCleared(ETAPPE_GOAL);
+    else void etappeBatch(settings, prog.etappe).then((b) => { if (alive) setCleared(b.cleared); });
+    return () => { alive = false; };
+  }, [settings.learn, settings.native, settings.level, prog.etappe]);
+  useEffect(() => { curRef.current?.scrollIntoView({ block: 'center' }); }, [cleared]);
 
-  const launch = (t: NodeType) => {
-    if (t === 'lesson') onLesson();
-    else if (t === 'vocab') onTrainer();
-    else if (t === 'cloze') onCloze();
-    else onTest();
-  };
-
+  const ready = prog.atAufstieg || cleared >= ETAPPE_GOAL;
   const levelIdx = STAGE_LEVELS.indexOf(level);
   const rows: ComponentChildren[] = [];
   for (let e = 0; e < ETAPPEN_PER_LEVEL; e++) {
-    const etappeDone = prog.node >= (e + 1) * NODES_PER_ETAPPE;
-    rows.push(
-      <div class="rt-etappe" key={`e${e}`}>
-        <span class="rt-etappe-n">Etappe {e + 1}</span>
-        <span class={`rt-chest ${etappeDone ? 'done' : ''}`}><IconChest /></span>
-      </div>,
-    );
-    for (let p = 0; p < NODES_PER_ETAPPE; p++) {
-      const i = e * NODES_PER_ETAPPE + p;
-      const t = nodeType(level, i);
-      const state: NodeState = i < prog.node ? 'done' : i === current && prog.node < NODES_PER_LEVEL ? 'current' : 'locked';
-      const M = NODE_META[t];
+    const done = e < prog.etappe;
+    const isCur = e === prog.etappe && !prog.atAufstieg;
+    if (done) {
       rows.push(
-        <div class={`rn ${state}`} key={i}>
-          <div class="rn-rail">
-            <span class="rn-dot" ref={state === 'current' ? curRef : undefined}>
-              {state === 'done' ? <IconCheck /> : state === 'locked' ? <IconLock /> : <M.Icon />}
-            </span>
-          </div>
-          <button class="rn-card" disabled={state !== 'current'} onClick={() => state === 'current' && launch(t)}>
-            <span class="rn-title">{M.label}</span>
-            <span class="rn-sub">{state === 'current' ? 'Jetzt dran · tippen' : state === 'done' ? 'erledigt' : 'gesperrt'}</span>
+        <div class="rn done" key={`e${e}`}>
+          <div class="rn-rail"><span class="rn-dot"><IconCheck /></span></div>
+          <span class="rn-card"><span class="rn-title">Etappe {e + 1}</span><span class="rn-sub">geschafft</span></span>
+        </div>,
+      );
+    } else if (isCur) {
+      rows.push(
+        <div class="rn current" key={`e${e}`}>
+          <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconCards /></span></div>
+          <button class="rn-card" onClick={onTrainer}>
+            <span class="rn-title">Etappe {e + 1} · Neue Wörter</span>
+            <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} · tippen</span>
           </button>
-          {state === 'current' && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={62} />}
+          <img class="rn-gurki" src="/gurki/yay.png" alt="" width={62} />
+        </div>,
+        <div class={`rn ${ready ? 'current' : 'locked'}`} key={`t${e}`}>
+          <div class="rn-rail"><span class="rn-dot">{ready ? <IconFlag /> : <IconLock />}</span></div>
+          <button class="rn-card" disabled={!ready} onClick={() => ready && onTest()}>
+            <span class="rn-title">Etappentest</span>
+            <span class="rn-sub">{ready ? 'freigeschaltet · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
+          </button>
+        </div>,
+      );
+    } else {
+      rows.push(
+        <div class="rn locked" key={`e${e}`}>
+          <div class="rn-rail"><span class="rn-dot"><IconLock /></span></div>
+          <span class="rn-card"><span class="rn-title">Etappe {e + 1}</span><span class="rn-sub">gesperrt</span></span>
         </div>,
       );
     }
   }
+  rows.push(
+    <div class={`rn ${prog.atAufstieg ? 'current' : 'locked'}`} key="auf">
+      <div class="rn-rail"><span class="rn-dot" ref={prog.atAufstieg ? curRef : undefined}>{prog.atAufstieg ? <IconSummit /> : <IconLock />}</span></div>
+      <button class="rn-card" disabled={!prog.atAufstieg} onClick={() => prog.atAufstieg && onTest()}>
+        <span class="rn-title">Aufstiegstest → {prog.nextLevel}</span>
+        <span class="rn-sub">{prog.atAufstieg ? 'freigeschaltet · tippen' : 'nach Etappe 10'}</span>
+      </button>
+      {prog.atAufstieg && <img class="rn-gurki" src="/gurki/yay.png" alt="" width={62} />}
+    </div>,
+  );
 
   return (
     <main class="sl-main with-nav">
@@ -1355,7 +1385,7 @@ function RouteView({ settings, onLesson, onTrainer, onCloze, onTest, onBack }: {
         <span class="sl-lessontitle">Lernroute</span>
       </header>
       <div class="rt-head">
-        <b>{level}</b><span>Etappe {prog.etappe}/{ETAPPEN_PER_LEVEL}</span>
+        <b>{level}</b><span>Etappe {prog.etappeDisplay}/{ETAPPEN_PER_LEVEL} → {prog.nextLevel}</span>
         {levelIdx > 0 && <span class="rt-prev">{STAGE_LEVELS.slice(0, levelIdx).join(' ✓ ')} ✓</span>}
       </div>
       <div class="route">{rows}</div>
@@ -1425,20 +1455,29 @@ function ReportTab({ settings, onDeck, onTest, onRoute }: {
   const maxDay = Math.max(1, ...s.last7.map((d) => d.xp));
   const acc = s.streak; // streak kept here (not as a home flame)
   const prog = getStageProgress(settings.level);
+  const [cleared, setCleared] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    if (prog.atAufstieg) setCleared(ETAPPE_GOAL);
+    else void etappeBatch(settings, prog.etappe).then((b) => { if (alive) setCleared(b.cleared); });
+    return () => { alive = false; };
+  }, [settings.learn, settings.native, settings.level, prog.etappe]);
+  const ready = prog.atAufstieg || cleared >= ETAPPE_GOAL;
+  const pct = Math.round((prog.etappe + (prog.atAufstieg ? 0 : Math.min(cleared / ETAPPE_GOAL, 1))) / ETAPPEN_PER_LEVEL * 100);
   return (
     <main class="sl-main with-nav">
       <h1 class="tab-screen-title">Report</h1>
 
-      <div class={`rep-stage ${prog.ready ? 'ready' : ''}`}>
+      <div class={`rep-stage ${ready ? 'ready' : ''}`}>
         <div class="rep-stage-top">
-          <span class="rep-stage-label">{prog.label}</span>
-          <span class="rep-stage-pct">{Math.round(prog.ratio * 100)}%</span>
+          <span class="rep-stage-label">{prog.label} → {prog.nextLevel}</span>
+          <span class="rep-stage-pct">{pct}%</span>
         </div>
-        <div class="rep-stage-bar"><i style={{ width: `${Math.round(prog.ratio * 100)}%` }} /></div>
-        {prog.ready ? (
-          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>Etappen-Test starten</button>
+        <div class="rep-stage-bar"><i style={{ width: `${pct}%` }} /></div>
+        {ready ? (
+          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>{prog.atAufstieg ? 'Aufstiegstest starten' : 'Etappentest starten'}</button>
         ) : (
-          <p class="rep-stage-hint">Lies & übe weiter — bei 100 % schaltet der Etappen-Test frei.</p>
+          <p class="rep-stage-hint">{prog.atAufstieg ? '' : `Lerne diese Woche ${ETAPPE_GOAL} neue Wörter — dann öffnet der Etappentest (${Math.min(cleared, ETAPPE_GOAL)}/${ETAPPE_GOAL}).`}</p>
         )}
       </div>
 
