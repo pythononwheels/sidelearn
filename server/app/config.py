@@ -105,6 +105,7 @@ RL_SENTENCE = os.getenv("SL_RL_SENTENCE", "20/minute")
 RL_SURPRISE = os.getenv("SL_RL_SURPRISE", "8/minute")
 RL_DIGEST = os.getenv("SL_RL_DIGEST", "20/minute")
 RL_LESSON = os.getenv("SL_RL_LESSON", "60/minute")
+RL_AREAS = os.getenv("SL_RL_AREAS", "60/minute")  # /areas/list — cheap DB join, but guard the DB
 
 LANG_NAMES = {
     "fr": "French",

@@ -25,7 +25,9 @@ auch wenn Caps/Cost-Cap greifen. Nur *frische* LLM-Calls werden blockiert.
 | `/digest/{id}` | 20/min | `SL_RL_DIGEST` |
 | `/surprise` | 8/min | `SL_RL_SURPRISE` |
 | `/lesson/{id}`, `/random` | 60/min | `SL_RL_LESSON` |
-(`/daily`, `/archive`, `/areas`, `/health` haben kein Limit — billig/gecacht.)
+| `/areas/list` | 60/min | `SL_RL_AREAS` |
+(`/daily`, `/archive`, `/areas`, `/health` haben kein Limit — billig/gecacht. `/areas/list` ist
+zwar auch nur DB (kein LLM), aber ein 3-Tabellen-Join → Origin-Gate **+** Rate-Limit als Schutz.)
 
 ## Eingabe-Limits — `config.MAX_*` (→ 400)
 | Feld | Default | Env |
