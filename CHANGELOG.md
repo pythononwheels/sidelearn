@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.96] — 2026-06-24 — Tagesquest + Sidequests zählen als Erfolg
+
+- **Tagesquest**: pro Tag eine Kombi aus 2 Aufgaben, **deterministisch aus dem Datum** gewählt →
+  stabil für den ganzen Tag, kein Neu-Würfeln beim App-Start (gespeichert in `sl_pwa_quest`).
+  Kombis: 2 Artikel (1× +1) · Lückentext + Vokabeltest · Rubrik + Lückentext · +1-Artikel +
+  Vokabeltest · Artikel + Rubrik. Eigene Karte oben (ersetzt „Tageslektion"); Quest komplett →
+  Konfetti + Gurki feiert (1×/Tag).
+- **Sidequests zählen als Erfolg**: Lückentext, Vokabeltest und selbst gestartete Rubrik-Artikel
+  werden jetzt im Verlauf geloggt (`logActivity`) und haken — egal ob geführt oder selbst initiiert —
+  den passenden Quest-Task ab (Off-Combo = Bonus, weiterhin XP + Streak). Per-Tag-Flags um
+  `vocab`/`rubrik`/`article_plus1` erweitert.
+- **Lernpfad** ist jetzt wieder der reine **Wochenbogen** (Wörter 0/50 → Etappen-Check); die
+  täglichen Aktivitäten leben in der Tagesquest. Hero-Subline zeigt „Tagesquest x/2".
+
 ## [0.6.95] — 2026-06-24 — Lernpfad als Wochen-Ablauf + Update-Check-Fix
 
 - **Lernpfad = Aktivitäts-Kette** statt nur „Wörter → Test": Lies einen Artikel → Mach einen

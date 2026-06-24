@@ -539,6 +539,32 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 }
 .h2-go:active { transform: translateY(1px); }
 
+/* Daily quest card ----------------------------------------------------- */
+.quest-card {
+  margin: 14px 0 0; padding: 14px; border-radius: 20px;
+  border: 1px solid var(--ll-border); background: var(--ll-surface); box-shadow: var(--card3d, none);
+}
+.quest-card.done { border-color: var(--ll-accent); background: var(--ll-accent-soft); }
+.quest-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.quest-title { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-head); font-weight: 800; font-size: 16px; color: var(--ll-text); }
+.quest-title svg { width: 20px; height: 20px; color: var(--ll-accent-strong); }
+.quest-count { font-family: var(--font-head); font-weight: 800; font-size: 14px; color: var(--ll-accent-strong); }
+.quest-tasks { display: flex; flex-direction: column; gap: 8px; }
+.quest-task {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit;
+  padding: 11px 12px; border-radius: 14px; border: 1px solid var(--ll-border);
+  background: var(--ll-bg); color: var(--ll-text); cursor: pointer;
+}
+.quest-task:active { transform: scale(0.99); }
+.quest-task.done { background: var(--ll-accent-soft); border-color: transparent; }
+.qt-ico { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: none; border-radius: 11px; background: var(--ll-accent-grad); color: var(--ll-accent-ink); }
+.qt-ico svg { width: 20px; height: 20px; }
+.quest-task.done .qt-ico { background: var(--ll-accent); color: var(--ll-accent-ink); }
+.qt-label { flex: 1; font-family: var(--font-head); font-weight: 700; font-size: 14.5px; display: inline-flex; align-items: center; gap: 7px; }
+.quest-task.done .qt-label { color: var(--ll-text-soft); }
+.qt-badge { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--ll-accent); color: var(--ll-accent-ink); }
+.qt-go { font-size: 18px; font-weight: 800; color: var(--ll-accent-strong); flex: none; }
+
 /* Home quick-action tiles ---------------------------------------------- */
 .lr-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .lr-tiles.three { grid-template-columns: 1fr 1fr 1fr; margin-top: 12px; }

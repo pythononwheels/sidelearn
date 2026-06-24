@@ -49,6 +49,7 @@ import { addTargets, dueEntries, grade as srsGrade, clearedCount, encounter as s
 import { recordMilestone, getMilestone, lastMilestoneTs } from './milestones';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
+import { getTodayQuest, type QuestTask } from './quest';
 import { pop, celebrate } from './confetti';
 
 type Tab = 'home' | 'challenges' | 'report' | 'settings';
@@ -62,11 +63,12 @@ const LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 /** Tiny per-day "done today" flags for the Lernpfad activity chain (article /
  * cloze). Resets at local midnight. The vocab goal has its own SRS state. */
 const DAILY_ACT_KEY = 'sl_pwa_daily_act';
+type DailyKind = 'article' | 'article_plus1' | 'cloze' | 'vocab' | 'rubrik';
 function dayStamp(): string { return new Date().toLocaleDateString('sv'); } // YYYY-MM-DD, local
-function dailyDone(kind: 'article' | 'cloze'): boolean {
+function dailyDone(kind: DailyKind): boolean {
   try { const o = JSON.parse(localStorage.getItem(DAILY_ACT_KEY) || '{}'); return o.d === dayStamp() && !!o[kind]; } catch { return false; }
 }
-function markDailyDone(kind: 'article' | 'cloze'): void {
+function markDailyDone(kind: DailyKind): void {
   try {
     const o = JSON.parse(localStorage.getItem(DAILY_ACT_KEY) || '{}');
     const cur = o.d === dayStamp() ? o : { d: dayStamp() };
@@ -209,8 +211,6 @@ export function App() {
         settings={settings}
         onTrainer={() => setOverlay({ kind: 'trainer' })}
         onTest={() => setOverlay({ kind: 'test' })}
-        onCloze={() => setOverlay({ kind: 'cloze' })}
-        onArticle={() => { setOverlay(null); setTab('home'); }}
         onBack={() => setOverlay(null)}
       />
     );
@@ -461,9 +461,6 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
   }, []);
 
   const articles = daily?.articles ?? [];
-  const goal = daily?.goal ?? 2;
-  const doneCount = articles.filter((a) => isCompleted(a.url)).length;
-  const allDone = articles.length > 0 && doneCount >= goal;
   const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
 
   const stats = getStats();
@@ -480,17 +477,49 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
   }, [settings.learn, settings.native, settings.level, prog.etappe, tick]);
   const levelPct = Math.round((prog.etappe + (prog.atAufstieg ? 0 : Math.min(batchCleared / ETAPPE_GOAL, 1))) / ETAPPEN_PER_LEVEL * 100);
   const etappeReady = prog.atAufstieg || batchCleared >= ETAPPE_GOAL;
-  const articleDone = doneCount > 0;
-  const clozeDone = dailyDone('cloze');
-  // The single "next" activity in the weekly chain — only this one pulses.
-  const nextStep = !articleDone ? 'article' : !clozeDone ? 'cloze' : !etappeReady ? 'vocab' : 'check';
+  const weeklyNext = !etappeReady ? 'vocab' : 'check'; // the next weekly step (pulses)
+
+  // Today's quest: 2 tasks, stable for the day. "done" is read from the per-day
+  // flags, so any way of finishing a task — guided or self-initiated — ticks it.
+  interface QTask { task: QuestTask; label: string; icon: ComponentChildren; done: boolean; onClick: () => void; badge?: string }
+  function questMeta(task: QuestTask): QTask {
+    const open = (a: typeof next, lvl?: CefrLevel) => { if (a) onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail }, true, lvl); };
+    switch (task) {
+      case 'cloze': return { task, label: 'Mach einen Lückentext', icon: <IconGap />, done: dailyDone('cloze'), onClick: onCloze };
+      case 'vocab': return { task, label: 'Mach einen Vokabeltest', icon: <IconCards />, done: dailyDone('vocab'), onClick: onTrainer };
+      case 'rubrik': return { task, label: 'Lies einen Rubrik-Artikel', icon: <IconDice />, done: dailyDone('rubrik'), onClick: onSurprise };
+      case 'article_plus1': {
+        const nl = nextLevel(settings.level);
+        const plus = articles.length > 1 ? articles[1] : undefined;
+        const can = nl !== settings.level && !!plus; // a +1 read needs a higher level + a 2nd article
+        return { task, label: can ? 'Lies einen +1-Artikel' : 'Lies einen Artikel', badge: can ? nl : undefined, icon: <IconNewspaper />,
+          done: can ? dailyDone('article_plus1') : dailyDone('article'),
+          onClick: () => open(plus ?? next, can ? nl : undefined) };
+      }
+      default: return { task, label: 'Lies einen Artikel', icon: <IconNewspaper />, done: dailyDone('article'),
+        onClick: () => open(next, stretchReadLevel(articles, next?.url ?? '', settings.level)) };
+    }
+  }
+  const quest = getTodayQuest();
+  const questTasks = quest.tasks.map(questMeta);
+  const questDone = questTasks.filter((t) => t.done).length;
+  const questComplete = articles.length > 0 && questDone >= questTasks.length;
+  // Celebrate finishing the whole quest — once per day.
+  useEffect(() => {
+    if (!questComplete) return;
+    try {
+      if (localStorage.getItem('sl_pwa_quest_cel') !== dayStamp()) {
+        localStorage.setItem('sl_pwa_quest_cel', dayStamp());
+        celebrate();
+      }
+    } catch { /* ignore */ }
+  }, [questComplete]);
+
   const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
-  const pose: Pose = allDone ? 'party' : 'yay';
-  const bubble = allDone
-    ? 'Tagesziel erreicht — Gurki ist stolz.'
-    : articles.length > 0 && doneCount > 0 && doneCount >= goal - 1
-    ? 'Nur noch einer bis zum Ziel!'
-    : hype;
+  const pose: Pose = questComplete ? 'party' : 'yay';
+  const bubble = questComplete
+    ? 'Tagesquest geschafft — Gurki ist stolz!'
+    : questDone > 0 ? 'Stark — noch eine Aufgabe!' : hype;
 
   return (
     <main class="sl-main with-nav h2" key={tick}>
@@ -520,7 +549,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
           <div class="h2-lvl-track"><i style={{ width: `${levelPct}%` }} /></div>
           <span class="h2-lvl-end next">{lvlR}</span>
         </div>
-        <span class="h2-sub">{prog.atAufstieg ? `Aufstiegstest bereit · Level ${prog.level}` : `${prog.level}.${prog.etappeDisplay} · ${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} neue Wörter`}{articles.length > 0 ? ` · Tagesziel ${Math.min(doneCount, goal)}/${goal}` : ''}</span>
+        <span class="h2-sub">{prog.atAufstieg ? `Aufstiegstest bereit · Level ${prog.level}` : `${prog.level}.${prog.etappeDisplay} · ${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} neue Wörter`}{articles.length > 0 ? ` · Tagesquest ${questDone}/${questTasks.length}` : ''}</span>
         <div class="h2-bubble">{bubble}</div>
       </section>
 
@@ -530,15 +559,20 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
         <div class="h2-card empty">Heute noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später wieder vorbei.</div>
       ) : (
         <>
-          <div class="h2-card">
-            <span class="h2-card-ico"><IconNewspaper /></span>
-            <span class="h2-card-body">
-              <span class="h2-card-lbl">Tageslektion</span>
-              <span class="h2-card-sub">{articles.length} Mini-Artikel · {Math.min(doneCount, goal)}/{goal} geschafft{nextLevel(settings.level) !== settings.level && articles.length > 1 ? ' · 1× +1' : ''}</span>
-            </span>
-            <button class="h2-go" onClick={() => next && onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(articles, next.url, settings.level))}>
-              {allDone ? 'Mehr' : doneCount > 0 ? 'Weiter' : 'Start'}
-            </button>
+          <div class={`quest-card ${questComplete ? 'done' : ''}`}>
+            <div class="quest-head">
+              <span class="quest-title"><IconTarget />{questComplete ? 'Tagesquest geschafft!' : 'Tagesquest'}</span>
+              <span class="quest-count">{questDone}/{questTasks.length}{questComplete ? ' ✓' : ''}</span>
+            </div>
+            <div class="quest-tasks">
+              {questTasks.map((t) => (
+                <button class={`quest-task ${t.done ? 'done' : ''}`} onClick={t.onClick} key={t.task}>
+                  <span class="qt-ico">{t.done ? <IconCheck /> : t.icon}</span>
+                  <span class="qt-label">{t.label}{t.badge ? <span class="qt-badge">{t.badge}</span> : null}</span>
+                  <span class="qt-go">{t.done ? '✓' : '›'}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <p class="lr-credit-line">Aus den meistgelesenen Wikipedia-Artikeln des Tages · CC BY-SA</p>
         </>
@@ -556,28 +590,14 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
         <span class="mini-head-s">{prog.label}</span>
       </button>
       <div class="route mini">
-        <div class={`rn l ${articleDone ? 'done' : 'current'} ${nextStep === 'article' ? 'pulse' : ''}`}>
-          <div class="rn-rail"><span class="rn-dot">{articleDone ? <IconCheck /> : <IconNewspaper />}</span></div>
-          <button class="rn-card" onClick={() => next && onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(articles, next.url, settings.level))} disabled={!next}>
-            <span class="rn-title">Lies einen Artikel</span>
-            <span class="rn-sub">{articleDone ? 'heute erledigt ✓' : 'Tageslektion · tippen'}</span>
-          </button>
-        </div>
-        <div class={`rn r ${clozeDone ? 'done' : 'current'} ${nextStep === 'cloze' ? 'pulse' : ''}`}>
-          <div class="rn-rail"><span class="rn-dot">{clozeDone ? <IconCheck /> : <IconGap />}</span></div>
-          <button class="rn-card" onClick={onCloze}>
-            <span class="rn-title">Mach einen Lückentext</span>
-            <span class="rn-sub">{clozeDone ? 'heute erledigt ✓' : 'Lücken füllen · tippen'}</span>
-          </button>
-        </div>
-        <div class={`rn l ${etappeReady && !prog.atAufstieg ? 'done' : 'current'} ${nextStep === 'vocab' ? 'pulse' : ''}`}>
+        <div class={`rn l ${etappeReady && !prog.atAufstieg ? 'done' : 'current'} ${weeklyNext === 'vocab' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot">{etappeReady && !prog.atAufstieg ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
             <span class="rn-title">Lerne neue Wörter</span>
             <span class="rn-sub">{prog.atAufstieg ? 'Wortschatz wiederholen · tippen' : `${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} diese Woche · tippen`}</span>
           </button>
         </div>
-        <div class={`rn r ${etappeReady ? 'current' : 'locked'} ${nextStep === 'check' ? 'pulse' : ''}`}>
+        <div class={`rn r ${etappeReady ? 'current' : 'locked'} ${weeklyNext === 'check' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot">{etappeReady ? (prog.atAufstieg ? <IconSummit /> : <IconFlag />) : <IconLock />}</span></div>
           <button class="rn-card" disabled={!etappeReady} onClick={() => etappeReady && onTest()}>
             <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappen-Check'}</span>
@@ -642,6 +662,16 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
   }, [settings.learn, settings.native, settings.level]);
 
   const card = cards?.[pos];
+
+  // Finishing a round counts as a daily "vocab" success (quest task + trail).
+  const credited = useRef(false);
+  useEffect(() => {
+    if (done && !credited.current) {
+      credited.current = true;
+      markDailyDone('vocab');
+      logActivity({ type: 'lesson', level: settings.level, title: 'Vokabeltest', detail: `${score}/${cards?.length ?? 0} richtig` });
+    }
+  }, [done]);
 
   function choose(idx: number, e: MouseEvent) {
     if (picked !== null || !card) return;
@@ -1038,6 +1068,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       credited.current = true;
       completeActivity(settings.level, 'cloze');
       markDailyDone('cloze');
+      logActivity({ type: 'lesson', level: settings.level, title: `Lückentext: ${title}`, detail: 'Lückentext' });
       void creditWordsFromText(settings, clozeText.current, `Lückentext: ${title}`);
     }
   }, [done]);
@@ -1423,20 +1454,16 @@ function timeAgo(ts: number): string {
   return `vor ${Math.floor(d / 7)} Wochen`;
 }
 
-function RouteView({ settings, onTrainer, onTest, onCloze, onArticle, onBack }: {
+function RouteView({ settings, onTrainer, onTest, onBack }: {
   settings: PwaSettings;
   onTrainer: () => void;
   onTest: () => void;
-  onCloze: () => void;
-  onArticle: () => void;
   onBack: () => void;
 }) {
   const prog = getStageProgress(settings.level);
   const level = prog.level;
   const [cleared, setCleared] = useState(0);
   const curRef = useRef<HTMLDivElement>(null);
-  const artDone = dailyDone('article');
-  const clzDone = dailyDone('cloze');
 
   useEffect(() => {
     let alive = true;
@@ -1447,7 +1474,6 @@ function RouteView({ settings, onTrainer, onTest, onCloze, onArticle, onBack }: 
   useEffect(() => { curRef.current?.scrollIntoView({ block: 'center' }); }, [cleared]);
 
   const ready = prog.atAufstieg || cleared >= ETAPPE_GOAL;
-  const curNext = !artDone ? 'article' : !clzDone ? 'cloze' : !ready ? 'vocab' : 'check';
   const levelIdx = STAGE_LEVELS.indexOf(level);
   const rows: ComponentChildren[] = [];
   let idx = 0;
@@ -1472,28 +1498,14 @@ function RouteView({ settings, onTrainer, onTest, onCloze, onArticle, onBack }: 
           <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
           <span class="rn-card flat"><span class="rn-title">Sprachniveau {level}.{e + 1} — diese Woche</span></span>
         </div>,
-        <div class={`rn ${artDone ? 'done' : 'current'} ${curNext === 'article' ? 'pulse' : ''} ${side()}`} key={`a${e}`}>
-          <div class="rn-rail"><span class="rn-dot">{artDone ? <IconCheck /> : <IconNewspaper />}</span></div>
-          <button class="rn-card" onClick={onArticle}>
-            <span class="rn-title">Lies einen Artikel</span>
-            <span class="rn-sub">{artDone ? 'heute erledigt ✓' : 'Tageslektion · tippen'}</span>
-          </button>
-        </div>,
-        <div class={`rn ${clzDone ? 'done' : 'current'} ${curNext === 'cloze' ? 'pulse' : ''} ${side()}`} key={`c${e}`}>
-          <div class="rn-rail"><span class="rn-dot">{clzDone ? <IconCheck /> : <IconGap />}</span></div>
-          <button class="rn-card" onClick={onCloze}>
-            <span class="rn-title">Mach einen Lückentext</span>
-            <span class="rn-sub">{clzDone ? 'heute erledigt ✓' : 'Lücken füllen · tippen'}</span>
-          </button>
-        </div>,
-        <div class={`rn current ${curNext === 'vocab' ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
+        <div class={`rn current ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot"><IconCards /></span></div>
           <button class="rn-card" onClick={onTrainer}>
             <span class="rn-title">Lerne neue Wörter</span>
             <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} diese Woche · tippen</span>
           </button>
         </div>,
-        <div class={`rn ${ready ? 'current' : 'locked'} ${curNext === 'check' ? 'pulse' : ''} ${side()}`} key={`t${e}`}>
+        <div class={`rn ${ready ? 'current' : 'locked'} ${ready ? 'pulse' : ''} ${side()}`} key={`t${e}`}>
           <div class="rn-rail"><span class="rn-dot">{ready ? <IconFlag /> : <IconLock />}</span></div>
           <button class="rn-card" disabled={!ready} onClick={() => ready && onTest()}>
             <span class="rn-title">Etappen-Check</span>
@@ -2076,7 +2088,13 @@ function Lesson({
       title: article.title,
       detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
     });
-    if (route) { completeActivity(settings.level, 'lesson'); markDailyDone('article'); } // free reads give XP but don't advance the route
+    if (route) {
+      completeActivity(settings.level, 'lesson'); // daily read advances the route
+      markDailyDone('article');
+      if (readLevel) markDailyDone('article_plus1'); // the +1 stretch read
+    } else {
+      markDailyDone('rubrik'); // self-initiated read (Artikelrubriken / free): bonus, no route advance
+    }
     // Passive learning: credit next-level target words that appear in this article.
     if (lesson) {
       void creditWordsFromText(settings, lesson.paragraphs.map((p) => p.simplified).join(' '), article.title)
