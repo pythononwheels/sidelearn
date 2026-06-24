@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Server] — 2026-06-24 — Surprise-Artikel landen im Area-Pool
+
+- **`/surprise` füllt den `area_pool`**: jeder ausgelieferte Artikel (live gebaut *oder* zufällig
+  als schon vorbereitet getroffen) wird jetzt per `db.add_area_pool` registriert. Damit findet ihn
+  der nächste User auf demselben Level sofort über pool-first (`random_area_prepared`) statt erneut
+  einen Zufallsartikel live zu bauen. Andere Levels füllen sich, sobald User dieser Stufen denselben
+  Artikel treffen. Löst den Code-Kommentar „the pool grows into a reusable library" endlich ein.
+
 ## [0.6.97] — 2026-06-24 — Bunte Artikelrubriken
 
 - **Artikelrubriken** bekommen je eine eigene Farbe (Technik blau, Sport grün, Geschichte amber,
