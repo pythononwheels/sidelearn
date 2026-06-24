@@ -557,6 +557,7 @@ interface MCCard {
   exampleDe?: string;
   options: string[];
   correct: number;
+  rich?: RichEntry | null; // full entry for the post-answer explanation
 }
 
 function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
@@ -590,7 +591,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
         const distractors = sampleN(pool.filter((t) => t.toLowerCase() !== correct.toLowerCase()), 3);
         const options = shuffleInPlace([correct, ...distractors]);
         if (options.length < 2) continue;
-        cards.push({ word: d.word, translation: correct, pos: s0?.p, example: s0?.ex, exampleDe: s0?.exd, options, correct: options.indexOf(correct) });
+        cards.push({ word: d.word, translation: correct, pos: s0?.p, example: s0?.ex, exampleDe: s0?.exd, options, correct: options.indexOf(correct), rich });
       }
       if (alive) setCards(cards);
     })();
@@ -610,6 +611,11 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
       pop(r.left + r.width / 2, r.top + r.height / 2);
     }
+  }
+  function dontKnow() {
+    if (picked !== null || !card) return;
+    setPicked(-1); // "weiß nicht" → reveal answer, counts as not known
+    srsGrade(settings.learn, card.word, false);
   }
   function next() {
     if (!cards) return;
@@ -652,9 +658,19 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
               );
             })}
           </div>
-          {picked !== null && (
+          {picked === null ? (
+            <button class="mc-dunno" onClick={dontKnow}>Weiß nicht</button>
+          ) : (
             <>
-              {card.example && <p class="mc-ex">„{card.example}"{card.exampleDe ? <span class="sl-pop-exd"> — {card.exampleDe}</span> : null}</p>}
+              <div class="mc-detail">
+                {(card.rich?.s?.length ? card.rich.s : [{ t: card.translation, p: card.pos, ex: card.example, exd: card.exampleDe }]).map((s) => (
+                  <div class="dict-sense">
+                    <span class="dict-sense-t">{s.t}{s.p ? <span class="dict-pos"> · {s.p}</span> : null}</span>
+                    {s.ex && <span class="dict-sense-ex">„{s.ex}"{s.exd ? <span class="dict-sense-exd"> — {s.exd}</span> : null}</span>}
+                  </div>
+                ))}
+                {card.rich?.alt?.length ? <p class="mc-alt">auch: {card.rich.alt.join(', ')}</p> : null}
+              </div>
               <button class="sl-read" onClick={next}>{pos + 1 >= cards.length ? 'Fertig ✓' : 'Weiter'}</button>
             </>
           )}
