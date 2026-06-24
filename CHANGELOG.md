@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.102] — 2026-06-24 — Lückentext in drei Zonen
+
+- Lückentext entzerrt: **Satz in eigener Card** (oben) · **Übersetzen-Button rechtsbündig** im
+  Zwischenraum · **Antwort-Optionen** darunter aufs ruhige Seiten-bg (vorher alles in einer Box).
+  Mehr Luft zwischen den Bereichen, klar getrennte „Frage / Hilfe / Antworten"-Struktur.
+
 ## [0.6.101] — 2026-06-24 — „Ganzen Lernpfad ansehen": grauer bg + lila Rahmen
 
 - Feinschliff: grauer Hintergrund (wie die „Lies einen Artikel"-Zeilen) + **lila Rahmen**, Route-Icon
