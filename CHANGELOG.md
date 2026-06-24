@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.108] — 2026-06-24 — „Ganzen Lernpfad ansehen": pinker Text, lila Rahmen
+
+- Der Button-Text/-Icon war im dunklen Lila zu schwer. Jetzt **pinker Text + Icon** (greift die aktive
+  Pfad-Karte auf) mit **lila Rahmen** auf grauem bg — leichter und stimmiger.
+
 ## [0.6.107] — 2026-06-24 — Lückentext: Gurki-Reaktion zentriert
 
 - Die Gurki-Reaktion (Bild + „Stark/Schade …") wird jetzt mittig ausgerichtet — passend zu den
