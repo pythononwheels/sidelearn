@@ -246,7 +246,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text); cursor: pointer;
 }
 .sl-lvlbtn.on { background: var(--ll-accent); color: #fff; border-color: transparent; }
-.sl-progress { font-size: 12px; color: var(--ll-text-soft); margin: 0 0 14px; }
+.sl-progress { font-size: 12px; color: var(--ll-text-soft); margin: 8px 0 16px; }
 
 .sl-para {
   padding: 16px 18px; border-radius: 18px; background: var(--ll-surface);
@@ -297,6 +297,14 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .sl-quiz-opt.correct { background: var(--ll-mint-soft, #e2f6ee); border-color: #2f9e6b; color: #2f9e6b; font-weight: 700; }
 .sl-quiz-opt.wrong { border-color: #d2603f; color: #d2603f; }
 .sl-quiz-opt.dim { opacity: 0.5; }
+/* Cloze: roomier card, clearer sentence + visible blank, more air before options */
+.sl-quiz.cloze { padding: 22px 18px 20px; }
+.sl-quiz.cloze .sl-quiz-q { font-size: 17px; line-height: 1.6; margin-bottom: 6px; }
+.sl-quiz.cloze .sl-quiz-opts { margin-top: 18px; gap: 10px; }
+.cloze-blank {
+  display: inline-block; min-width: 58px; vertical-align: baseline;
+  border-bottom: 3px solid var(--ll-accent); border-radius: 3px; margin: 0 4px;
+}
 
 .sl-done { text-align: center; padding: 22px 20px; border-radius: 18px; background: var(--ll-accent-soft); margin-bottom: 14px; }
 .sl-done h2 { margin: 0 0 6px; }

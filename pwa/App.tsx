@@ -1011,6 +1011,11 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
 
 /* ---------------------------------------------------------------- Cloze --- */
 
+/** Render a cloze prompt with the underscore run shown as a clear styled blank. */
+function renderCloze(prompt: string): ComponentChildren {
+  return prompt.split(/(_{2,})/).map((p) => (/^_{2,}$/.test(p) ? <span class="cloze-blank" /> : p));
+}
+
 function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
   const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
   const [title, setTitle] = useState('');
@@ -1105,8 +1110,8 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       ) : q ? (
         <>
           <p class="sl-progress">Lücke {pos + 1} / {questions.length} · {title}</p>
-          <div class="sl-quiz">
-            <p class="sl-quiz-q">{q.prompt}</p>
+          <div class="sl-quiz cloze">
+            <p class="sl-quiz-q">{renderCloze(q.prompt)}</p>
             <TranslateReveal text={q.prompt} settings={settings} />
             <div class="sl-quiz-opts">
               {q.options.map((opt) => {
@@ -2437,6 +2442,9 @@ function WordPopover({
 function TranslateReveal({ text, settings }: { text: string; settings: PwaSettings }) {
   const [t, setT] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Reset when the sentence changes (next gap/question) — otherwise the previous
+  // gap's translation lingers and is shown against the new, unrelated sentence.
+  useEffect(() => { setT(null); setLoading(false); }, [text]);
   if (!text || settings.learn === settings.native) return null;
   async function go() {
     if (t !== null || loading) return;

@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.99] — 2026-06-24 — Lückentext-Feinschliff
+
+- **Übersetzungs-Bug behoben**: die „Übersetzung" blieb beim Lücken-Wechsel stehen und wurde gegen
+  den neuen, unpassenden Satz angezeigt (alte Übersetzung). `TranslateReveal` setzt jetzt bei
+  Textwechsel zurück → pro Lücke frisch.
+- **Lücke sichtbar**: die Unterstrich-Lücke wird als klare farbige Linie dargestellt (statt „____").
+- **Mehr Luft**: größere Karten-Innenabstände, mehr Platz oben und zwischen Satz und Antworten.
+- (Satz-Übersetzungen sind weiterhin server-seitig gecacht — 1 LLM-Call pro Satz, danach Cache für
+  alle User.)
+
 ## [0.6.98] — 2026-06-24 — Lernpfad entpinkt: Journey + Card-Style
 
 - **Lernpfad neu gestaltet** (Mini + voller Pfad): Card-Style (jeder Schritt eine ruhige Karte),
