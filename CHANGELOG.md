@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.94] — 2026-06-24
+
+### Changed (Learny)
+- **Lückentext i+1:** Etwa die Hälfte der Lücken sind jetzt **Next-Level-Zielwörter**
+  deiner aktuellen Etappe — ausgeblendet in ihren eigenen Beispielsätzen (aus richdict),
+  als Multiple-Choice. So festigt der Lückentext zur Hälfte Bekanntes (aus dem Artikel)
+  und drillt zur Hälfte die neuen Wörter im Kontext; Treffer zählen mit aufs Wochenziel.
+  Kein Schalter — wird automatisch eingemischt.
+
 ## [0.6.93] — 2026-06-24
 
 ### Changed (Learny)
