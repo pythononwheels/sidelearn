@@ -304,8 +304,10 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cloze-xlate .sl-xlate { margin: 0; text-align: right; } /* button right-aligned in the gap */
 .cloze-xlate .sl-xlate-txt { text-align: left; margin-top: 4px; } /* revealed text full-width */
 /* Options live in their own tinted card (matching the sentence card) for a clear
- * visual bracket; the white option buttons sit slightly inset within it. */
-.cloze-opts { background: var(--ll-accent-soft); border-radius: 18px; padding: 14px; gap: 10px; }
+ * visual bracket; a hint sits on top and the white buttons are inset within it. */
+.cloze-opts { background: var(--ll-accent-soft); border-radius: 18px; padding: 14px 14px 18px; }
+.cloze-hint { margin: 2px 6px 12px; font-size: 13px; font-weight: 700; color: var(--ll-text-soft); }
+.cloze-opts-list { gap: 10px; padding: 0 6%; } /* extra inset for the answer buttons */
 .cloze-next { margin-top: 18px; }
 .cloze-blank {
   display: inline-block; min-width: 58px; vertical-align: baseline;
