@@ -78,6 +78,15 @@ curl -s -o /dev/null -w '%{http_code}\n' -H 'Origin: https://learny.pyrates.io' 
 # Cost-Cap testen: SL_DAILY_COST_CAP_USD=0 → alle frischen LLM-Calls 429
 ```
 
+## Abuse-Logging & IP-Blocklist
+- Jeder **429 (Rate-Limit)**, **403 (Origin)** und **403 (geblockte IP)** wird in der DB-Tabelle
+  `abuse` protokolliert (`ts, ip, path, kind`) via `db.log_abuse(...)`. IP = echte Client-IP aus
+  `X-Forwarded-For`.
+- **Wiederholungstäter ansehen:** `/admin/abuse` (hinter Caddy-Basicauth) — Top-IPs nach Hits der
+  letzten 24 h / 7 Tage (`db.abuse_top`).
+- **IP hart blocken:** IP in `SL_BLOCKED_IPS` (.env, kommagetrennt) eintragen + Server neu laden →
+  sofort 403 auf den Kosten-Endpoints (`config.BLOCKED_IPS`, geprüft in `require_origin`).
+
 ## Offen / optional
 - **Cloudflare Turnstile** (unsichtbares CAPTCHA) für echten Bot-Schutz statt nur Origin-Gate.
 - Retry/Backoff bei transienten Gemini-503 (statt 502 an den Client).

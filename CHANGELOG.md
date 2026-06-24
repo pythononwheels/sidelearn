@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Server] — 2026-06-24 — Rate-Limits & Missbrauchsschutz
 
+- **Abuse-Logging + IP-Blocklist**: 429/403-Treffer landen in der DB (`abuse`, mit IP); Übersicht
+  unter `/admin/abuse` (Top-IPs 24h/7d); harte Sperre via `SL_BLOCKED_IPS` (.env) → 403.
 - **Per-IP-Rate-Limit** (slowapi, IP via X-Forwarded-For) auf allen LLM-Endpoints
   (/translate 30/min, /sentence 20/min, /surprise 8/min, /digest 20/min, /lesson, /random).
 - **Origin-Gate**: nur Requests von der Learny-PWA-Origin (+ localhost) erlaubt → sonst 403

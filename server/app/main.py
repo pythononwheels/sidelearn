@@ -39,7 +39,15 @@ def _client_ip(request: Request) -> str:
 
 limiter = Limiter(key_func=_client_ip)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+def _on_ratelimit(request: Request, exc: RateLimitExceeded):
+    # Log the offender so repeat hitters can be reviewed / IP-blocked.
+    db.log_abuse(_client_ip(request), request.url.path, "ratelimit")
+    return _rate_limit_exceeded_handler(request, exc)
+
+
+app.add_exception_handler(RateLimitExceeded, _on_ratelimit)
 
 _ORIGIN_RE = re.compile(config.ALLOWED_ORIGIN_REGEX)
 
@@ -48,12 +56,17 @@ def require_origin(request: Request) -> None:
     """Reject requests that don't come from an allowed browser origin. Browsers
     send `Origin` on cross-origin fetch; curl/bots usually don't → 403. (A forged
     Origin can pass — the rate limit + input/output caps bound the damage.)"""
+    ip = _client_ip(request)
+    if ip in config.BLOCKED_IPS:
+        db.log_abuse(ip, request.url.path, "blocked")
+        raise HTTPException(403, "forbidden")
     origin = request.headers.get("origin")
     if not origin:
         ref = request.headers.get("referer", "")
         p = urlparse(ref)
         origin = f"{p.scheme}://{p.netloc}" if p.scheme and p.netloc else ""
     if not (origin and _ORIGIN_RE.match(origin)):
+        db.log_abuse(ip, request.url.path, "origin")
         raise HTTPException(403, "forbidden")
 
 

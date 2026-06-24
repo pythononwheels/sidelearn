@@ -71,6 +71,15 @@ CREATE TABLE IF NOT EXISTS word_cache (
   created_at TEXT NOT NULL,
   PRIMARY KEY (lang, native, word, shash)
 );
+CREATE TABLE IF NOT EXISTS abuse (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts TEXT NOT NULL,
+  ip TEXT,
+  path TEXT,
+  kind TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_abuse_ts ON abuse (ts);
+CREATE INDEX IF NOT EXISTS idx_abuse_ip ON abuse (ip);
 """
 
 
@@ -340,6 +349,35 @@ def cost_today() -> float:
             "SELECT COALESCE(SUM(cost_usd), 0) c FROM telemetry WHERE ts LIKE ?", (today + "%",)
         ).fetchone()
     return float(row["c"] or 0.0)
+
+
+def log_abuse(ip: str, path: str, kind: str) -> None:
+    """Record a blocked/limited request (kind: 'ratelimit' | 'origin' | 'blocked')
+    so repeat offenders can be reviewed and IP-blocked."""
+    from datetime import datetime, timezone
+
+    try:
+        with conn() as c:
+            c.execute(
+                "INSERT INTO abuse (ts, ip, path, kind) VALUES (?,?,?,?)",
+                (datetime.now(timezone.utc).isoformat(), ip, path, kind),
+            )
+    except Exception:  # noqa: BLE001 — logging must never break a request
+        pass
+
+
+def abuse_top(hours: int = 24, limit: int = 50) -> list[dict[str, Any]]:
+    """Repeat offenders in the last `hours`: IP, hit count, kinds, last seen."""
+    from datetime import datetime, timezone, timedelta
+
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+    with conn() as c:
+        rows = c.execute(
+            "SELECT ip, count(*) hits, group_concat(DISTINCT kind) kinds, max(ts) last "
+            "FROM abuse WHERE ts >= ? GROUP BY ip ORDER BY hits DESC LIMIT ?",
+            (since, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def get_word_cache(lang: str, native: str, word: str, shash: str) -> Optional[dict[str, Any]]:
