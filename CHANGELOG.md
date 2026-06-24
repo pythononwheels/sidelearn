@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.106] — 2026-06-24 — Lückentext: zentriert, stabil, klare Wahl
+
+- Optionen **zentriert**, **Weiter** volle Breite → Layout **springt nicht** mehr (Hint-Platz
+  reserviert, Satz-Card mit Mindesthöhe für gleiche Höhe bei 1-/2-zeiligen Sätzen).
+- **Getippte falsche Option** jetzt klar in **soft-rot** (statt kaum unterscheidbarem Grau) — man
+  erkennt sofort die eigene Wahl; richtig grün, übrige grau.
+
 ## [0.6.105] — 2026-06-24 — Lückentext: klarer Antwort-Zustand + Gurki-Reaktion
 
 - Nach dem Antworten wird die Lösungs-Card **weiß**, falsche Optionen **grau** (die getippte mit

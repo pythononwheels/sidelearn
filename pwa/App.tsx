@@ -1118,7 +1118,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
             <TranslateReveal text={q.prompt} settings={settings} />
           </div>
           <div class={`cloze-opts ${picked !== null ? 'answered' : ''}`}>
-            {picked === null && <p class="cloze-hint">Tippe auf das fehlende Wort</p>}
+            <p class="cloze-hint">{picked === null ? 'Tippe auf das fehlende Wort' : ' '}</p>
             <div class="sl-quiz-opts cloze-opts-list">
               {q.options.map((opt) => {
                 let cls = '';
