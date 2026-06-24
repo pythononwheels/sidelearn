@@ -20,10 +20,12 @@ import {
   fetchSentenceTranslation,
   fetchServerLesson,
   fetchSurprise,
+  fetchAreaList,
   fetchWordTranslation,
   fetchDigest,
   type ServerDaily,
   type ServerLesson,
+  type AreaArticle,
 } from '@/core/serverapi';
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
@@ -240,7 +242,7 @@ export function App() {
       />
     );
   } else if (tab === 'challenges') {
-    content = <ChallengesTab settings={settings} onOpen={openLesson} />;
+    content = <ChallengesTab settings={settings} onOpen={openLesson} onDigest={(a) => setOverlay({ kind: 'digest', article: a })} />;
   } else if (tab === 'report') {
     content = (
       <ReportTab
@@ -1581,12 +1583,16 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
 
 /* ----------------------------------------------------------- Challenges --- */
 
-function ChallengesTab({ settings, onOpen }: {
+function ChallengesTab({ settings, onOpen, onDigest }: {
   settings: PwaSettings;
-  onOpen: (a: ArticleRef) => void;
+  onOpen: (a: ArticleRef, route?: boolean) => void;
+  onDigest: (a: ArticleRef) => void;
 }) {
   const [dates, setDates] = useState<string[] | null>(null);
   const [sel, setSel] = useState<string | undefined>(undefined); // undefined = today
+  const [area, setArea] = useState<AreaArticle[] | null>(null);
+  const [choice, setChoice] = useState<AreaArticle | null>(null);
+
   useEffect(() => {
     let alive = true;
     void fetchServerArchive(SERVER, settings.learn).then((d) => alive && setDates(d));
@@ -1599,9 +1605,50 @@ function ChallengesTab({ settings, onOpen }: {
   const doneCount = articles.filter((a) => isCompleted(a.url)).length;
   const next = articles.find((a) => !isCompleted(a.url)) ?? articles[0];
 
+  // Rubrik library for the same day as the shown lessons (server's date for "Heute").
+  const dateForArea = sel ?? daily?.date;
+  useEffect(() => {
+    if (!dateForArea) return;
+    let alive = true;
+    setArea(null);
+    void fetchAreaList(SERVER, settings.learn, settings.level, dateForArea).then((a) => alive && setArea(a));
+    return () => { alive = false; };
+  }, [settings.learn, settings.level, dateForArea]);
+
   // The server archive includes today; drop it so it isn't shown twice (next to
   // the dedicated "Heute" pill).
   const days = (dates ?? []).filter((d) => d !== dayStamp());
+
+  const toRef = (a: AreaArticle): ArticleRef => ({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail });
+  const pickArea = (a: AreaArticle) => { if (settings.level === 'A1') onOpen(toRef(a), false); else setChoice(a); };
+  const groups = AREAS
+    .map((m) => ({ meta: m, items: (area ?? []).filter((x) => x.area === m.id) }))
+    .filter((g) => g.items.length > 0);
+
+  if (choice) {
+    return (
+      <main class="sl-main with-nav">
+        <header class="sl-lessonhead">
+          <button class="sl-back" onClick={() => setChoice(null)} aria-label="Zurück">←</button>
+          <span class="sl-lessontitle">Lesen</span>
+        </header>
+        <section class="dg-choose">
+          <p class="lr-section" style={{ marginTop: '4px' }}>{choice.title}</p>
+          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>Wie möchtest du lesen?</p>
+          <button class="dg-opt" onClick={() => { onOpen(toRef(choice), false); setChoice(null); }}>
+            <span class="dg-opt-ico full"><IconNewspaper /></span>
+            <span class="dg-opt-body"><b>Ganzer Artikel</b><small>8 Absätze · mit Quiz pro Absatz</small></span>
+          </button>
+          <button class="dg-opt" onClick={() => { onDigest(toRef(choice)); setChoice(null); }}>
+            <span class="dg-opt-ico digest"><IconBolt /></span>
+            <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
+          </button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Zurück</button>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main class="sl-main with-nav">
       <h1 class="tab-screen-title">Challenges</h1>
@@ -1625,6 +1672,36 @@ function ChallengesTab({ settings, onOpen }: {
         <p class="sl-muted">Keine Lektionen für diesen Tag.</p>
       ) : (
         <ArticleList articles={articles} next={next} allDone={doneCount >= goal} onOpen={onOpen} />
+      )}
+
+      {groups.length > 0 && (
+        <>
+          <p class="lr-section" style={{ marginTop: '22px' }}>Aus den Rubriken</p>
+          {groups.map((g) => (
+            <div class="ch-rubrik" key={g.meta.id}>
+              <div class="ch-rubrik-head">
+                <span class={`lr-tile-ico ${g.meta.color}`}>{g.meta.icon}</span>
+                <span class="ch-rubrik-label">{g.meta.label}</span>
+              </div>
+              <ul class="lr-list">
+                {g.items.map((a) => {
+                  const done = isCompleted(a.url);
+                  return (
+                    <li key={a.id}>
+                      <button class={`lr-item ${done ? 'done' : ''}`} onClick={() => pickArea(a)}>
+                        {a.thumbnail
+                          ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
+                          : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
+                        <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
+                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : 'lesen ›'}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </>
       )}
     </main>
   );

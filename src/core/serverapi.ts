@@ -134,6 +134,30 @@ export async function fetchSurprise(
   }
 }
 
+export interface AreaArticle { area: string; id: string; title: string; url: string; thumbnail?: string }
+
+/** Already-prepared area-pool articles for (lang, level), optionally for one day.
+ * Instant (cached) — for the Challenges "Aus den Rubriken" list. */
+export async function fetchAreaList(
+  serverUrl: string,
+  lang: Language,
+  level: CefrLevel,
+  date?: string,
+): Promise<AreaArticle[]> {
+  try {
+    const q = new URLSearchParams({ lang, level });
+    if (date) q.set('date', date);
+    const res = await fetch(`${base(serverUrl)}/areas/list?${q}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const d = (await res.json()) as { articles?: AreaArticle[] };
+    return d.articles ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Translate a whole sentence/question into the native language. Null on failure. */
 export async function fetchSentenceTranslation(
   serverUrl: string,

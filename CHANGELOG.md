@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.110] — 2026-06-24 — Challenges: Rubrik-Bibliothek pro Tag
+
+- Neue Sektion **„Aus den Rubriken"** in der Challenges-Ansicht: die für das Sprachniveau **schon
+  vorbereiteten** Rubrik-Artikel (instant), **gruppiert pro Rubrik** (mit Farbe/Icon), **pro Tag**
+  (die Datums-Pills steuern auch diese Liste).
+- Tippen → Wahl **Ganzer Artikel / Kurzfassung** (A2+; A1 direkt). Freier Read (zählt als
+  Rubrik-Bonus, kein Pflicht-Pfad-Fortschritt).
+- **Server**: neuer Endpoint `GET /areas/list?lang=&level=&date=` (Origin-Gate, kein LLM, nur
+  DB-Join über `area_pool ⋈ article ⋈ prepared`).
+
 ## [0.6.109] — 2026-06-24 — Challenges: heutiges Datum nicht mehr doppelt
 
 - Im Challenges-View tauchte „heute" sowohl als „Heute"-Pill als auch als datierter Pill auf. Das

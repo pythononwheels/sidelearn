@@ -613,6 +613,13 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .qt-badge { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--ll-accent); color: var(--ll-accent-ink); }
 .qt-go { font-size: 18px; font-weight: 800; color: var(--ll-accent-strong); flex: none; }
 
+/* Challenges: rubrik library sections */
+.ch-rubrik { margin-bottom: 6px; }
+.ch-rubrik-head { display: flex; align-items: center; gap: 10px; margin: 12px 2px 6px; }
+.ch-rubrik-head .lr-tile-ico { width: 32px; height: 32px; border-radius: 9px; margin: 0; }
+.ch-rubrik-head .lr-tile-ico svg { width: 18px; height: 18px; }
+.ch-rubrik-label { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
+
 /* Home quick-action tiles ---------------------------------------------- */
 .lr-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .lr-tiles.three { grid-template-columns: 1fr 1fr 1fr; margin-top: 12px; }
