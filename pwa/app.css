@@ -443,6 +443,33 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 }
 .mc-alt { color: var(--ll-text-soft); font-size: 13px; margin: 2px 0 0; }
 
+/* Vokabeltest: stable full-width action button (no jump between Weiß-nicht/Weiter) */
+.mc-btn { display: block; width: 100%; margin-top: 14px; text-align: center; }
+/* answered options: correct green (pop), picked-wrong red (shake), rest dimmed */
+.mc-opts.answered .sl-quiz-opt { opacity: 1; }
+.mc-opts.answered .sl-quiz-opt.dim { opacity: .5; }
+.mc-opts.answered .sl-quiz-opt.correct {
+  background: var(--ll-mint-soft, #e2f6ee); border-color: #2f9e6b; color: #2f9e6b; font-weight: 700;
+  animation: cloze-pop .42s ease;
+}
+.mc-opts.answered .sl-quiz-opt.wrong {
+  background: #fdeaea; border-color: transparent; color: #d2603f; animation: cloze-shake .32s ease;
+}
+/* Gurki result banner — own look, recognisable from the cloze */
+.mc-result {
+  display: flex; align-items: center; gap: 12px; margin: 16px 0 0; padding: 12px 14px;
+  border-radius: 14px; animation: mc-pop-in .3s ease;
+}
+.mc-result .gurki { width: 50px; flex: none; }
+.mc-result-txt { font-family: var(--font-head); font-weight: 800; font-size: 16px; }
+.mc-result.ok { background: rgba(47, 158, 107, .12); }
+.mc-result.ok .mc-result-txt { color: var(--ll-ok, #2f9e6b); }
+.mc-result.no { background: rgba(210, 96, 63, .10); }
+.mc-result.no .mc-result-txt { color: #d2603f; }
+.mc-result.dunno { background: var(--ll-accent-soft); }
+.mc-result.dunno .mc-result-txt { color: var(--ll-accent-strong); }
+@keyframes mc-pop-in { 0% { opacity: 0; transform: translateY(8px) scale(.96); } 100% { opacity: 1; transform: none; } }
+
 /* Update banner --------------------------------------------------------- */
 .sl-update {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
