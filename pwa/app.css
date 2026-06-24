@@ -644,6 +644,22 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .mini-head-s { font-size: 12px; color: var(--ll-text-soft); margin-left: auto; font-weight: 700; }
 .route.mini { margin-top: 2px; }
 .route.mini .rn-card { padding-bottom: 14px; }
+.route.mini .rn { min-height: 58px; }
+/* "Ganzen Lernpfad ansehen" — clear button instead of an easy-to-miss link */
+.mini-all {
+  display: block; width: 100%; margin: 8px 0 2px; padding: 11px;
+  background: var(--ll-accent-soft); color: var(--ll-accent-strong);
+  border: none; border-radius: 12px; cursor: pointer;
+  font-family: var(--font-head); font-weight: 800; font-size: 13.5px;
+}
+.mini-all:active { transform: scale(.98); }
+/* Etappe header row in the full path (section label, not a tappable node) */
+.rn.head { min-height: 38px; }
+.rn.head .rn-dot { width: 34px; height: 34px; background: transparent; color: var(--ll-text-soft); border: none; }
+.rn.head .rn-dot svg { width: 19px; height: 19px; }
+.rn.head .rn-dot::after { display: none; }
+.rn-card.flat { cursor: default; }
+.rn.head .rn-title { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--ll-text-soft); }
 .rn.cap .rn-dot { background: var(--ll-accent-soft); color: var(--ll-accent-strong); }
 .rn.cap .rn-title { color: var(--ll-text-soft); font-weight: 800; }
 .rn.cap .rn-sub { color: var(--ll-text-muted); }
@@ -652,7 +668,9 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 /* Lernpfad — central rail, cards alternate left/right for a livelier path. */
 .route { margin-top: 6px; }
 .rn { position: relative; display: grid; grid-template-columns: 1fr 56px 1fr; align-items: center; min-height: 70px; }
-.rn-rail { position: relative; grid-column: 2; align-self: stretch; display: flex; align-items: center; justify-content: center; }
+/* Force rail + card onto the same grid row — without this, a left card (column 1)
+ * placed after the rail (column 2) drops to a new row under sparse auto-flow. */
+.rn-rail { position: relative; grid-column: 2; grid-row: 1; align-self: stretch; display: flex; align-items: center; justify-content: center; }
 .rn-rail::before {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
   transform: translateX(-50%); background: var(--ll-border);
@@ -668,7 +686,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn-dot svg { width: 22px; height: 22px; }
 .rn-card {
   font: inherit; cursor: default; background: transparent; border: none; padding: 8px 4px;
-  display: flex; flex-direction: column; gap: 2px;
+  display: flex; flex-direction: column; gap: 2px; grid-row: 1;
 }
 .rn-card:enabled { cursor: pointer; }
 .rn.l .rn-card { grid-column: 1; text-align: right; align-items: flex-end; }
@@ -684,7 +702,8 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn.current .rn-dot svg { width: 26px; height: 26px; }
 .rn.current .rn-card { background: var(--ll-accent-soft); border-radius: 14px; padding: 12px 14px; }
 .rn.current .rn-sub { color: var(--ll-accent-strong); font-weight: 700; }
-.rn.current .rn-dot::after {
+/* Only the single "next" node pulses — the rest stay calm. */
+.rn.pulse .rn-dot::after {
   content: ''; position: absolute; inset: -6px; border-radius: 50%;
   border: 2px solid var(--ll-accent); animation: rn-ring 1.6s ease-out infinite;
 }
