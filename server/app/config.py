@@ -85,6 +85,10 @@ ALLOWED_ORIGIN_REGEX = os.getenv(
     r"^https://learny\.pyrates\.io$|^http://(localhost|127\.0\.0\.1)(:\d+)?$",
 )
 
+# Hard IP blocklist (comma-separated) — repeat offenders from the abuse log.
+# These get a 403 on the cost endpoints before any work happens.
+BLOCKED_IPS = {ip.strip() for ip in os.getenv("SL_BLOCKED_IPS", "").split(",") if ip.strip()}
+
 # Hard input-length limits (reject above → 400). Kills the "send 100k words" attack.
 MAX_WORD_LEN = int(os.getenv("SL_MAX_WORD_LEN", "64"))
 MAX_SENTENCE_LEN = int(os.getenv("SL_MAX_SENTENCE_LEN", "300"))

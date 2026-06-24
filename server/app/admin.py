@@ -492,6 +492,27 @@ def admin_process_day(background: BackgroundTasks, lang: str, date: str) -> Redi
     return RedirectResponse(f"/admin/day?lang={lang}&date={date}", status_code=303)
 
 
+@router.get("/admin/abuse", response_class=HTMLResponse)
+def admin_abuse(hours: int = 24) -> HTMLResponse:
+    """Repeat offenders (rate-limit / origin / blocked hits) for IP-block review."""
+    rows = db.abuse_top(hours, 100)
+    trs = "".join(
+        f"<tr><td><code>{escape(r['ip'] or '?')}</code></td><td>{r['hits']}</td>"
+        f"<td>{escape(r['kinds'] or '')}</td><td>{escape((r['last'] or '')[11:19])}</td></tr>"
+        for r in rows
+    )
+    body = (
+        f"<h2>Auffällige IPs · letzte {hours}h</h2>"
+        "<p>Blocken: IP in <code>SL_BLOCKED_IPS</code> (.env, kommagetrennt) eintragen + Server neu laden.</p>"
+        "<table border=1 cellpadding=6 style='border-collapse:collapse'>"
+        "<tr><th>IP</th><th>Hits</th><th>Arten</th><th>zuletzt (UTC)</th></tr>"
+        f"{trs or '<tr><td colspan=4>nichts</td></tr>'}</table>"
+        "<p style='margin-top:12px'><a href='/admin/abuse?hours=168'>letzte 7 Tage</a> · "
+        "<a href='/admin/abuse?hours=24'>24h</a></p>"
+    )
+    return page("Abuse", body)
+
+
 def _parse(date_key: str) -> date:
     y, m, d = (int(x) for x in date_key.split("-"))
     return date(y, m, d)
