@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.101] — 2026-06-24 — „Ganzen Lernpfad ansehen": grauer bg + lila Rahmen
+
+- Feinschliff: grauer Hintergrund (wie die „Lies einen Artikel"-Zeilen) + **lila Rahmen**, Route-Icon
+  und Text in Lila. Eigene Identität (Lila + Icon) und sauberer Abschluss durch den grauen bg.
+
 ## [0.6.100] — 2026-06-24 — „Ganzen Lernpfad ansehen" entpinkt
 
 - Der „Ganzen Lernpfad ansehen"-Button war ein lauter pinker Block (zu viel), als reiner weißer

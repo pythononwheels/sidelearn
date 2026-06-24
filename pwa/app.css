@@ -693,8 +693,8 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .mini-all {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; margin: 10px 0 2px; padding: 12px;
-  background: rgba(124, 92, 252, .13); color: #5b3fd0;
-  border: none; border-radius: 12px; cursor: pointer;
+  background: var(--ll-bg); color: #5b3fd0;
+  border: 1.5px solid rgba(124, 92, 252, .40); border-radius: 12px; cursor: pointer;
   font-family: var(--font-head); font-weight: 800; font-size: 13.5px;
 }
 .mini-all svg { width: 18px; height: 18px; }
