@@ -1592,6 +1592,12 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
   const [sel, setSel] = useState<string | undefined>(undefined); // undefined = today
   const [area, setArea] = useState<AreaArticle[] | null>(null);
   const [choice, setChoice] = useState<AreaArticle | null>(null);
+  const [openAreas, setOpenAreas] = useState<Set<string>>(new Set()); // expanded rubriken
+  const toggleArea = (id: string) => setOpenAreas((prev) => {
+    const n = new Set(prev);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  });
 
   useEffect(() => {
     let alive = true;
@@ -1677,30 +1683,38 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
       {groups.length > 0 && (
         <>
           <p class="lr-section" style={{ marginTop: '22px' }}>Aus den Rubriken</p>
-          {groups.map((g) => (
-            <div class="ch-rubrik" key={g.meta.id}>
-              <div class="ch-rubrik-head">
-                <span class={`lr-tile-ico ${g.meta.color}`}>{g.meta.icon}</span>
-                <span class="ch-rubrik-label">{g.meta.label}</span>
+          {groups.map((g) => {
+            const open = openAreas.has(g.meta.id);
+            const seen = g.items.filter((a) => isCompleted(a.url)).length;
+            return (
+              <div class="ch-rubrik" key={g.meta.id}>
+                <button class={`ch-rubrik-head ${open ? 'open' : ''}`} onClick={() => toggleArea(g.meta.id)} aria-expanded={open}>
+                  <span class={`lr-tile-ico ${g.meta.color}`}>{g.meta.icon}</span>
+                  <span class="ch-rubrik-label">{g.meta.label}</span>
+                  <span class="ch-rubrik-count">{seen > 0 ? `${seen}/${g.items.length}` : g.items.length}</span>
+                  <span class="ch-rubrik-chev">›</span>
+                </button>
+                {open && (
+                  <ul class="lr-list">
+                    {g.items.map((a) => {
+                      const done = isCompleted(a.url);
+                      return (
+                        <li key={a.id}>
+                          <button class={`lr-item ${done ? 'done' : ''}`} onClick={() => pickArea(a)}>
+                            {a.thumbnail
+                              ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
+                              : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
+                            <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
+                            <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : 'lesen ›'}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
-              <ul class="lr-list">
-                {g.items.map((a) => {
-                  const done = isCompleted(a.url);
-                  return (
-                    <li key={a.id}>
-                      <button class={`lr-item ${done ? 'done' : ''}`} onClick={() => pickArea(a)}>
-                        {a.thumbnail
-                          ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
-                          : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
-                        <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
-                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : 'lesen ›'}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
+            );
+          })}
         </>
       )}
     </main>
