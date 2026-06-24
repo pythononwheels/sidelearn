@@ -303,7 +303,9 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cloze-xlate { margin: 0 0 18px; }
 .cloze-xlate .sl-xlate { margin: 0; text-align: right; } /* button right-aligned in the gap */
 .cloze-xlate .sl-xlate-txt { text-align: left; margin-top: 4px; } /* revealed text full-width */
-.cloze-opts { gap: 10px; }
+/* Options live in their own tinted card (matching the sentence card) for a clear
+ * visual bracket; the white option buttons sit slightly inset within it. */
+.cloze-opts { background: var(--ll-accent-soft); border-radius: 18px; padding: 14px; gap: 10px; }
 .cloze-next { margin-top: 18px; }
 .cloze-blank {
   display: inline-block; min-width: 58px; vertical-align: baseline;
