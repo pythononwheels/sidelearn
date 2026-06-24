@@ -298,8 +298,11 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .sl-quiz-opt.wrong { border-color: #d2603f; color: #d2603f; }
 .sl-quiz-opt.dim { opacity: 0.5; }
 /* Cloze: three clearly separated zones — sentence card · translate · options */
-.cloze-card { padding: 20px 18px; border-radius: 18px; background: var(--ll-accent-soft); margin-bottom: 16px; }
-.cloze-q { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.6; }
+/* min-height keeps 1- and 2-line sentences at a consistent height so the rest of
+ * the screen doesn't jump between gaps. */
+.cloze-card { padding: 18px; border-radius: 18px; background: var(--ll-accent-soft); margin-bottom: 16px; min-height: 96px; display: flex; align-items: center; }
+.cloze-q { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.55; }
+.cloze-hint { min-height: 18px; } /* reserved so options don't shift up when answered */
 .cloze-xlate { margin: 0 0 18px; }
 .cloze-xlate .sl-xlate { margin: 0; text-align: right; } /* button right-aligned in the gap */
 .cloze-xlate .sl-xlate-txt { text-align: left; margin-top: 4px; } /* revealed text full-width */
@@ -308,14 +311,16 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cloze-opts { background: var(--ll-accent-soft); border-radius: 18px; padding: 14px 14px 18px; }
 .cloze-hint { margin: 2px 6px 12px; font-size: 13px; font-weight: 700; color: var(--ll-text-soft); }
 .cloze-opts-list { gap: 10px; padding: 0 6%; } /* extra inset for the answer buttons */
-.cloze-next { margin-top: 18px; }
+.cloze-opts-list .sl-quiz-opt { text-align: center; } /* centered option labels */
+.cloze-next { margin-top: 18px; display: block; width: 100%; } /* full width → stable position */
 
 /* Answered state: card turns white, wrong options go grey, the right one stays
  * green (with a little pop); the picked-wrong one shakes once. */
 .cloze-opts.answered { background: var(--ll-surface); border: 1px solid var(--ll-border); }
 .cloze-opts.answered .sl-quiz-opt { background: #f1f2f6; border-color: transparent; color: var(--ll-text-muted); opacity: 1; }
-.cloze-opts.answered .sl-quiz-opt.wrong { color: var(--ll-text-soft); animation: cloze-shake .32s ease; }
-.cloze-opts.answered .sl-quiz-opt.dim { opacity: .6; }
+/* the option the user tapped (and got wrong) clearly stands out in soft red */
+.cloze-opts.answered .sl-quiz-opt.wrong { background: #fdeaea; color: #d2603f; border-color: transparent; animation: cloze-shake .32s ease; }
+.cloze-opts.answered .sl-quiz-opt.dim { opacity: .55; }
 .cloze-opts.answered .sl-quiz-opt.correct {
   background: var(--ll-mint-soft, #e2f6ee); border-color: #2f9e6b; color: #2f9e6b; font-weight: 700;
   opacity: 1; animation: cloze-pop .42s ease;
