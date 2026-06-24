@@ -755,14 +755,14 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
 /* -------------------------------------------------------------- Surprise --- */
 
-const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string }[] = [
-  { id: 'technik', label: 'Technik', icon: <IconWrench />, sub: 'Erfindungen, Computer …' },
-  { id: 'sport', label: 'Sport', icon: <IconBall />, sub: 'Fußball, Olympia …' },
-  { id: 'geschichte', label: 'Geschichte', icon: <IconLandmark />, sub: 'Antike, Mittelalter …' },
-  { id: 'gesellschaft', label: 'Stars & Gesellschaft', icon: <IconStar />, sub: 'Promis, Musik, TV …' },
-  { id: 'natur', label: 'Natur & Tiere', icon: <IconLeaf />, sub: 'Tiere, Pflanzen …' },
-  { id: 'kultur', label: 'Kultur', icon: <IconMusic />, sub: 'Musik, Film, Kunst …' },
-  { id: 'wissenschaft', label: 'Wissenschaft', icon: <IconFlask />, sub: 'Weltraum, Physik …' },
+const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string; color: string }[] = [
+  { id: 'technik', label: 'Technik', icon: <IconWrench />, sub: 'Erfindungen, Computer …', color: 'a-technik' },
+  { id: 'sport', label: 'Sport', icon: <IconBall />, sub: 'Fußball, Olympia …', color: 'a-sport' },
+  { id: 'geschichte', label: 'Geschichte', icon: <IconLandmark />, sub: 'Antike, Mittelalter …', color: 'a-geschichte' },
+  { id: 'gesellschaft', label: 'Stars & Gesellschaft', icon: <IconStar />, sub: 'Promis, Musik, TV …', color: 'a-gesellschaft' },
+  { id: 'natur', label: 'Natur & Tiere', icon: <IconLeaf />, sub: 'Tiere, Pflanzen …', color: 'a-natur' },
+  { id: 'kultur', label: 'Kultur', icon: <IconMusic />, sub: 'Musik, Film, Kunst …', color: 'a-kultur' },
+  { id: 'wissenschaft', label: 'Wissenschaft', icon: <IconFlask />, sub: 'Weltraum, Physik …', color: 'a-wissenschaft' },
 ];
 
 function SurpriseView({ settings, onOpen, onDigest, onBack }: {
@@ -826,15 +826,15 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
           <div class="lr-tiles" style={{ marginTop: '10px' }}>
             {AREAS.map((a) => (
               <button class="lr-tile" onClick={() => pick(a.id)}>
-                <span class="lr-tile-ico">{a.icon}</span>
+                <span class={`lr-tile-ico ${a.color}`}>{a.icon}</span>
                 <span class="lr-tile-t">{a.label}</span>
                 <span class="lr-tile-s">{a.sub}</span>
               </button>
             ))}
           </div>
           <p class="sl-muted" style={{ marginTop: '18px' }}>
-            Frisch aus Wikipedia, auf dein Niveau gebracht. Beim ersten Mal dauert
-            es ein paar Sekunden.
+            Frisch aus Wikipedia, auf dein Sprachniveau gebracht. Ist ein Bereich
+            neu, dauert das erste Mal ein paar Sekunden — danach ist er sofort da.
           </p>
         </>
       )}

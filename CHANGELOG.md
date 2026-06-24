@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.97] — 2026-06-24 — Bunte Artikelrubriken
+
+- **Artikelrubriken** bekommen je eine eigene Farbe (Technik blau, Sport grün, Geschichte amber,
+  Stars pink, Natur grün, Kultur lila, Wissenschaft türkis) statt einheitlichem Blass-Rosa.
+- Hinweistext: „auf dein **Sprachniveau** gebracht" + ehrlicher zur Wartezeit („Ist ein Bereich neu,
+  dauert das erste Mal ein paar Sekunden — danach sofort da").
+
 ## [0.6.96] — 2026-06-24 — Tagesquest + Sidequests zählen als Erfolg
 
 - **Tagesquest**: pro Tag eine Kombi aus 2 Aufgaben, **deterministisch aus dem Datum** gewählt →

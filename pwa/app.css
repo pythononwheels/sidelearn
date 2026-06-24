@@ -118,6 +118,14 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 [data-theme='jelly'] .lr-tile-ico.t-luecke { background: linear-gradient(#7fdcff, #5ac8fa); }
 [data-theme='jelly'] .lr-tile-ico.t-vokab { background: linear-gradient(#caa9ff, #9b6bff); }
 [data-theme='jelly'] .lr-tile-ico.t-dict { background: linear-gradient(#ffc777, #ff9f5a); }
+/* Artikelrubrik colours — one hue per area so the grid isn't monotone */
+[data-theme='jelly'] .lr-tile-ico.a-technik { background: linear-gradient(#8fb6ff, #5a7fff); }
+[data-theme='jelly'] .lr-tile-ico.a-sport { background: linear-gradient(#b6f06a, #8fd84a); }
+[data-theme='jelly'] .lr-tile-ico.a-geschichte { background: linear-gradient(#ffc777, #ff9f5a); }
+[data-theme='jelly'] .lr-tile-ico.a-gesellschaft { background: linear-gradient(#ff9ecb, #ff6fae); }
+[data-theme='jelly'] .lr-tile-ico.a-natur { background: linear-gradient(#8fe388, #57c84d); }
+[data-theme='jelly'] .lr-tile-ico.a-kultur { background: linear-gradient(#caa9ff, #9b6bff); }
+[data-theme='jelly'] .lr-tile-ico.a-wissenschaft { background: linear-gradient(#6fe0d0, #2fc5b0); }
 @media (min-width: 520px) {
   body { background: color-mix(in srgb, var(--ll-bg) 78%, #777 10%); }
   .app-col { box-shadow: 0 0 0 1px var(--ll-border), 0 30px 80px rgba(0,0,0,.18); }
