@@ -297,10 +297,14 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .sl-quiz-opt.correct { background: var(--ll-mint-soft, #e2f6ee); border-color: #2f9e6b; color: #2f9e6b; font-weight: 700; }
 .sl-quiz-opt.wrong { border-color: #d2603f; color: #d2603f; }
 .sl-quiz-opt.dim { opacity: 0.5; }
-/* Cloze: roomier card, clearer sentence + visible blank, more air before options */
-.sl-quiz.cloze { padding: 22px 18px 20px; }
-.sl-quiz.cloze .sl-quiz-q { font-size: 17px; line-height: 1.6; margin-bottom: 6px; }
-.sl-quiz.cloze .sl-quiz-opts { margin-top: 18px; gap: 10px; }
+/* Cloze: three clearly separated zones — sentence card · translate · options */
+.cloze-card { padding: 20px 18px; border-radius: 18px; background: var(--ll-accent-soft); margin-bottom: 16px; }
+.cloze-q { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.6; }
+.cloze-xlate { margin: 0 0 18px; }
+.cloze-xlate .sl-xlate { margin: 0; text-align: right; } /* button right-aligned in the gap */
+.cloze-xlate .sl-xlate-txt { text-align: left; margin-top: 4px; } /* revealed text full-width */
+.cloze-opts { gap: 10px; }
+.cloze-next { margin-top: 18px; }
 .cloze-blank {
   display: inline-block; min-width: 58px; vertical-align: baseline;
   border-bottom: 3px solid var(--ll-accent); border-radius: 3px; margin: 0 4px;

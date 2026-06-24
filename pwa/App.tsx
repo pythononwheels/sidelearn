@@ -1110,26 +1110,29 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       ) : q ? (
         <>
           <p class="sl-progress">Lücke {pos + 1} / {questions.length} · {title}</p>
-          <div class="sl-quiz cloze">
-            <p class="sl-quiz-q">{renderCloze(q.prompt)}</p>
-            <TranslateReveal text={q.prompt} settings={settings} />
-            <div class="sl-quiz-opts">
-              {q.options.map((opt) => {
-                let cls = '';
-                if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
-                return (
-                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-            {picked !== null && (
-              <button class="sl-read" onClick={next}>
-                {pos + 1 >= questions.length ? 'Fertig ✓' : 'Weiter →'}
-              </button>
-            )}
+          {/* Three zones: sentence card · translate · options */}
+          <div class="cloze-card">
+            <p class="sl-quiz-q cloze-q">{renderCloze(q.prompt)}</p>
           </div>
+          <div class="cloze-xlate">
+            <TranslateReveal text={q.prompt} settings={settings} />
+          </div>
+          <div class="sl-quiz-opts cloze-opts">
+            {q.options.map((opt) => {
+              let cls = '';
+              if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
+              return (
+                <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+          {picked !== null && (
+            <button class="sl-read cloze-next" onClick={next}>
+              {pos + 1 >= questions.length ? 'Fertig ✓' : 'Weiter →'}
+            </button>
+          )}
         </>
       ) : null}
     </main>
