@@ -897,6 +897,12 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
   if (mode === 'full') {
     return (
       <>
+        {sentences.length > 1 && (
+          <div class="sr-bar">
+            <span class="sr-progress">Ganzer Text</span>
+            <button class="sr-skip" onClick={() => { setI(0); setMode('step'); }}>Satz für Satz →</button>
+          </div>
+        )}
         <div class="sl-para current"><p class="sl-text">{tap(text)}</p></div>
         <button class="sl-read mc-btn" onClick={onFinish}>{finishLabel}</button>
       </>

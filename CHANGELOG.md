@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.116] — 2026-06-25 — Satz-für-Satz: Rückweg + nl-Label zurück
+
+- Satz-für-Satz: im Voll-Modus jetzt **„Satz für Satz →"** zum Zurückschalten (Zwei-Wege-Umschalter
+  in beiden Modi).
+- `LANG_LABELS.nl` zurück auf **„Nederlands"** (Endonym, war korrekt).
+
 ## [0.6.115] — 2026-06-25 — Satz-für-Satz-Lesen + nl-Label + Digest-Spacing
 
 - **Satz für Satz** (Kurzfassung): für A1/A2 standardmäßig ein Satz nach dem anderen, je mit
