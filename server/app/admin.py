@@ -27,7 +27,7 @@ CSS = """
 }}
 *{box-sizing:border-box}
 body{font:15px/1.5 system-ui,-apple-system,sans-serif;margin:0;background:var(--bg);color:var(--text)}
-.wrap{max-width:900px;margin:0 auto;padding:20px}
+.wrap{max-width:900px;margin:0 auto;padding:20px 20px 56px}
 a{color:var(--accent);text-decoration:none}
 h1{font-size:20px}h3{margin-top:22px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
@@ -85,9 +85,9 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;position:sticky;top:16px}
+.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;align-self:stretch}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
