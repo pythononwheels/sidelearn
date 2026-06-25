@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.118] — 2026-06-25 — Satz-für-Satz: Sätze bauen sich auf
+
+- Im Satz-für-Satz-Modus bleibt der vorherige Satz jetzt **erhalten** — jeder „Weiter"-Schritt
+  **hängt den nächsten Satz an**, sodass am Ende der ganze Text dasteht. Der **aktuelle Satz** ist
+  leicht hervorgehoben (darauf bezieht sich der Übersetzen-Button).
+
 ## [0.6.117] — 2026-06-25 — Landingpage + App-Umzug nach /app/
 
 - **Landingpage** (Mock A „Jelly") unter `learny.pyrates.io/` — Hero/Slogan, So-funktioniert's,

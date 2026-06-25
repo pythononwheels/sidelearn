@@ -474,7 +474,8 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .sr-bar { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 8px; }
 .sr-progress { font-size: 12px; font-weight: 700; color: var(--ll-text-soft); }
 .sr-skip { font: inherit; font-weight: 700; font-size: 12.5px; background: none; border: none; color: var(--ll-accent-strong); cursor: pointer; padding: 2px 4px; }
-.sr-text { font-size: 18px; line-height: 1.6; } /* a single sentence reads a touch bigger */
+.sr-text { font-size: 16.5px; line-height: 1.7; } /* accumulating text reads like a paragraph */
+.sr-cur { background: rgba(255, 107, 157, .15); border-radius: 4px; box-shadow: 0 0 0 2px rgba(255, 107, 157, .15); } /* highlight the current sentence */
 
 /* Update banner --------------------------------------------------------- */
 .sl-update {
