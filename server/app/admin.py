@@ -87,8 +87,8 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .err{color:var(--err)}
 .cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;display:flex;flex-direction:column}
-.side-foot{margin-top:auto;padding-top:18px}
+.side{border-left:1px solid var(--border);padding-left:26px}
+.side-foot{padding-top:18px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
