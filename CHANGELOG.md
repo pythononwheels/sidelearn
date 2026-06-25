@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.125] — 2026-06-25 — Stream: tieferer Pool
+
+- **Rollender Pool 80 → 120 pro Rubrik/Sprache** → Ziel ~2000 Toots gesamt (mehr zum Durchscrollen;
+  füllt sich über die nächsten 15-Min-Läufe auf, Ältestes rollt weiterhin raus).
+
 ## [0.6.124] — 2026-06-25 — Stream: Niederländisch, Spanisch, Italienisch
 
 - **Drei neue Stream-Sprachen**: **nl** (`mastodon.nl`), **es** (`masto.es`), **it** (`mastodon.uno`)
