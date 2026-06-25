@@ -85,7 +85,7 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:stretch}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:56px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
 .side{display:flex;flex-direction:column}
 .side-foot{margin-top:auto;padding-top:18px}
