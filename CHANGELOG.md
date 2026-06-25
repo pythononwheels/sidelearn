@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.117] — 2026-06-25 — Landingpage + App-Umzug nach /app/
+
+- **Landingpage** (Mock A „Jelly") unter `learny.pyrates.io/` — Hero/Slogan, So-funktioniert's,
+  Lernpfad, 6 Features (inkl. Lückentexte & Quiz), Install-Anleitung (iOS + Android, Auto-Erkennung),
+  Privacy-Band. **DE/EN-Umschalter** (Browser-Sprache als Default). Statisch, kein Build (`pwa/landing/`).
+- **App zieht nach `learny.pyrates.io/app/`** um: Vite `base:/app/`, Manifest-Scope `/app/`,
+  `dataUrl()` + Daten-Cache base-aware (`/app/data/…`).
+- **Kill-Switch-`sw.js`** an der Wurzel: deregistriert den alten Root-Service-Worker (die App lag
+  früher unter `/`), damit `/` die Landing zeigt statt der gecachten App.
+- `pwa/deploy.sh` deployt jetzt beides: Landing → `/opt/learny/`, App → `/opt/learny/app/`.
+
 ## [0.6.116] — 2026-06-25 — Satz-für-Satz: Rückweg + nl-Label zurück
 
 - Satz-für-Satz: im Voll-Modus jetzt **„Satz für Satz →"** zum Zurückschalten (Zwei-Wege-Umschalter

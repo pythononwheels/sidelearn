@@ -15,5 +15,8 @@ export function dataUrl(path: string): string {
   } catch {
     // fall through to the plain path
   }
-  return path;
+  // PWA / web: prefix with the app's base (e.g. "/app/") so data files resolve
+  // when the app is served from a subpath, not just the site root.
+  const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+  return base.replace(/\/$/, '') + path;
 }
