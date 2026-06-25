@@ -276,7 +276,7 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 
 /* Quiz ------------------------------------------------------------------ */
 .sl-qlabel {
-  display: inline-block; margin: 0 0 -4px; padding: 3px 10px; border-radius: 99px;
+  display: inline-block; margin: 12px 0 8px; padding: 3px 10px; border-radius: 99px;
   background: var(--ll-accent); color: var(--ll-accent-ink);
   font-size: 11px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
 }
@@ -469,6 +469,12 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .mc-result.dunno { background: var(--ll-accent-soft); }
 .mc-result.dunno .mc-result-txt { color: var(--ll-accent-strong); }
 @keyframes mc-pop-in { 0% { opacity: 0; transform: translateY(8px) scale(.96); } 100% { opacity: 1; transform: none; } }
+
+/* Sentence-by-sentence reader (beginners) */
+.sr-bar { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 8px; }
+.sr-progress { font-size: 12px; font-weight: 700; color: var(--ll-text-soft); }
+.sr-skip { font: inherit; font-weight: 700; font-size: 12.5px; background: none; border: none; color: var(--ll-accent-strong); cursor: pointer; padding: 2px 4px; }
+.sr-text { font-size: 18px; line-height: 1.6; } /* a single sentence reads a touch bigger */
 
 /* Update banner --------------------------------------------------------- */
 .sl-update {

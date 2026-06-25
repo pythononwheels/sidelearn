@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.115] — 2026-06-25 — Satz-für-Satz-Lesen + nl-Label + Digest-Spacing
+
+- **Satz für Satz** (Kurzfassung): für A1/A2 standardmäßig ein Satz nach dem anderen, je mit
+  (server-gecachtem) Übersetzen-Button; am Ende der ganze Text. B1+ direkt der ganze Text; jederzeit
+  „Ganzer Text →" umschaltbar. Nimmt Anfängern die „Wall of Text".
+- **Niederländisch** statt „Nederlands" im Sprach-Label (`LANG_LABELS.nl`) — eindeutiger.
+- Kurzfassungs-Kopf **entzerrt** (mehr Luft zwischen Header, Badge und Hinweis).
+
 ## [0.6.114] — 2026-06-25 — Vokabeltest: Antwort-Look + stabile Buttons
 
 - **Buttons springen nicht mehr**: „Weiß nicht" und „Weiter" sind beide volle Breite (vorher

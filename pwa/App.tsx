@@ -871,6 +871,55 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
 
 // Short-read mode for area articles (A2+): read a compact summary, then answer
 // 2-3 comprehension questions. Falls back to the full article if no digest.
+/** Split a paragraph into sentences (keeps terminators). Good enough for the
+ * sentence-by-sentence reader; the odd abbreviation may over-split. */
+function splitSentences(text: string): string[] {
+  return text.match(/[^.!?]+(?:[.!?]+|$)/g)?.map((s) => s.trim()).filter(Boolean) ?? [text.trim()];
+}
+
+/** Reading helper for beginners: step through one sentence at a time, each with a
+ * (server-cached) sentence-translation button, then read the whole text. B1+ get
+ * the full text right away; everyone can toggle. */
+function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel }: {
+  text: string;
+  settings: PwaSettings;
+  isHard: (w: string) => boolean;
+  onWord: (word: string, sentence: string, x: number, y: number) => void;
+  onFinish: () => void;
+  finishLabel: string;
+}) {
+  const sentences = splitSentences(text);
+  const beginner = settings.level === 'A1' || settings.level === 'A2';
+  const [mode, setMode] = useState<'step' | 'full'>(beginner && sentences.length > 1 ? 'step' : 'full');
+  const [i, setI] = useState(0);
+  const tap = (s: string) => <TapText text={s} isHard={isHard} onWord={(w, x, y) => onWord(w, s, x, y)} />;
+
+  if (mode === 'full') {
+    return (
+      <>
+        <div class="sl-para current"><p class="sl-text">{tap(text)}</p></div>
+        <button class="sl-read mc-btn" onClick={onFinish}>{finishLabel}</button>
+      </>
+    );
+  }
+
+  const cur = sentences[i] ?? text;
+  const last = i >= sentences.length - 1;
+  return (
+    <>
+      <div class="sr-bar">
+        <span class="sr-progress">Satz {i + 1} / {sentences.length}</span>
+        <button class="sr-skip" onClick={() => setMode('full')}>Ganzer Text →</button>
+      </div>
+      <div class="sl-para current"><p class="sl-text sr-text">{tap(cur)}</p></div>
+      <div class="cloze-xlate"><TranslateReveal text={cur} settings={settings} /></div>
+      <button class="sl-read mc-btn" onClick={() => { if (last) setMode('full'); else setI((n) => n + 1); }}>
+        {last ? 'Ganzen Text lesen →' : 'Weiter →'}
+      </button>
+    </>
+  );
+}
+
 function DigestView({ article, settings, onOpen, onBack, onHome }: {
   article: ArticleRef;
   settings: PwaSettings;
@@ -964,15 +1013,15 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
       {phase === 'read' && (
         <>
           <p class="sl-qlabel">Kurzfassung</p>
-          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
-          <div class="sl-para current">
-            <p class="sl-text">
-              <TapText text={digest} isHard={isHard} onWord={(word, x, y) => setPop({ word, sentence: digest, x, y })} />
-            </p>
-          </div>
-          <button class="sl-read" onClick={() => { if (questions.length) setPhase('quiz'); else { creditOnce(); setPhase('done'); } }}>
-            {questions.length ? 'Fragen starten' : 'Fertig ✓'}
-          </button>
+          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort an — oder hol dir Satz für Satz die Übersetzung.</p>
+          <SentenceReader
+            text={digest}
+            settings={settings}
+            isHard={isHard}
+            onWord={(word, sentence, x, y) => setPop({ word, sentence, x, y })}
+            onFinish={() => { if (questions.length) setPhase('quiz'); else { creditOnce(); setPhase('done'); } }}
+            finishLabel={questions.length ? 'Fragen starten' : 'Fertig ✓'}
+          />
         </>
       )}
 
