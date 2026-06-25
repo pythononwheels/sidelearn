@@ -23,8 +23,15 @@ Kerncode: `server/app/social.py` (Harvester + Quellen), `server/app/db.py`
 | Sprache | Instanz | Status |
 |---|---|---|
 | **en** | `mastodon.social` | aktiv |
-| **fr** | `piaille.fr` (große allgemeine FR-Instanz) | aktiv |
-| de, it, nl, es | — | **noch nicht** (keine Quelle definiert) |
+| **fr** | `piaille.fr` | aktiv |
+| **nl** | `mastodon.nl` | aktiv |
+| **es** | `masto.es` | aktiv |
+| **it** | `mastodon.uno` | aktiv |
+| de | — | n/a (Muttersprache, nicht lernbar) |
+
+> Lernsprachen sind fr/en/nl/es/it (Muttersprache = Deutsch). `it` hat keine
+> vorgebauten Artikel, aber Toot-Pool + Offline-Wörterbuch — die On-Tap-Helfer
+> (`/translate`, `/sentence`, `/stream`) akzeptieren daher `LANGS ∪ SOCIAL_LANGS`.
 
 > Mastodon normalisiert Hashtags (lowercase, **ohne Akzente**) → französische Tags
 > werden ASCII geschrieben: `cinema`, `litterature`, `archeologie`, `numerique`.
@@ -51,6 +58,33 @@ dieselben Farben/Chips nutzt.
 | kultur | `art` `musique` `cinema` `litterature` `photographie` `culture` |
 | technik | `technologie` `informatique` `numerique` `jeuxvideo` |
 | sport | `sport` `football` `cyclisme` `rugby` |
+
+### 🇳🇱 Nederlands — `mastodon.nl`
+| Rubrik | Hashtags |
+|---|---|
+| natur | `wetenschap` `natuur` `dieren` `ruimte` |
+| geschichte | `geschiedenis` `archeologie` |
+| kultur | `kunst` `muziek` `film` `literatuur` `fotografie` |
+| technik | `technologie` `informatica` `gamen` |
+| sport | `sport` `voetbal` `wielrennen` |
+
+### 🇪🇸 Español — `masto.es`
+| Rubrik | Hashtags |
+|---|---|
+| natur | `ciencia` `naturaleza` `animales` `astronomia` |
+| geschichte | `historia` `arqueologia` |
+| kultur | `arte` `musica` `cine` `literatura` `fotografia` |
+| technik | `tecnologia` `informatica` `videojuegos` |
+| sport | `deporte` `futbol` `ciclismo` |
+
+### 🇮🇹 Italiano — `mastodon.uno`
+| Rubrik | Hashtags |
+|---|---|
+| natur | `scienza` `natura` `animali` `astronomia` |
+| geschichte | `storia` `archeologia` |
+| kultur | `arte` `musica` `cinema` `letteratura` `fotografia` |
+| technik | `tecnologia` `informatica` `videogiochi` |
+| sport | `sport` `calcio` `ciclismo` |
 
 Quelle der Wahrheit: `SOURCES` in `server/app/social.py`.
 

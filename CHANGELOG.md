@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.124] — 2026-06-25 — Stream: Niederländisch, Spanisch, Italienisch
+
+- **Drei neue Stream-Sprachen**: **nl** (`mastodon.nl`), **es** (`masto.es`), **it** (`mastodon.uno`)
+  — je ~17 Hashtags pro Rubrik. Damit deckt der Stream alle Lernsprachen ab (fr/en/nl/es/it).
+- `it` hat keine vorgebauten Artikel, aber Toot-Pool + Offline-Wörterbuch: die On-Tap-Helfer
+  (`/translate`, `/sentence`, `/stream`) akzeptieren jetzt `LANGS ∪ SOCIAL_LANGS`.
+- Doku `doc/tech/social-stream.md` + `scripts/stream-report.py` um die neuen Sprachen erweitert.
+
 ## [0.6.123] — 2026-06-25 — Stream: mehr Input + Längen-Cap
 
 - **Längen-Cap**: Toots über 500 Zeichen werden nicht mehr aufgenommen (und vorhandene Romane gepruned)

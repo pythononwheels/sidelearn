@@ -121,7 +121,7 @@ SOCIAL_MIN_LEN = int(os.getenv("SL_SOCIAL_MIN_LEN", "60"))  # min letters of rea
 SOCIAL_MAX_LEN = int(os.getenv("SL_SOCIAL_MAX_LEN", "500"))  # max chars (no essays; tweet-ish)
 SOCIAL_MAX_PER_AUTHOR = int(os.getenv("SL_SOCIAL_MAX_PER_AUTHOR", "3"))  # per tag/run anti-flood
 # Which learn-languages to harvest (subset of the SOURCES map in social.py).
-SOCIAL_LANGS = [s.strip() for s in os.getenv("SL_SOCIAL_LANGS", "en,fr").split(",") if s.strip()]
+SOCIAL_LANGS = [s.strip() for s in os.getenv("SL_SOCIAL_LANGS", "en,fr,nl,es,it").split(",") if s.strip()]
 # NSFW/spam word blocklist (substring match on cleaned text) — first safety layer.
 SOCIAL_BLOCKLIST = {
     w.strip().lower()

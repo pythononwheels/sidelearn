@@ -135,6 +135,14 @@ def _check_lang(lang: str) -> None:
         raise HTTPException(400, f"unknown lang {lang!r}; allowed: {config.LANGS}")
 
 
+def _check_learn_lang(lang: str) -> None:
+    """Looser check for the on-tap helpers (translate/sentence/stream): any article
+    language OR any social-stream language (e.g. Italian, which has no prebaked
+    articles but does have a toot pool + offline dictionary)."""
+    if lang not in config.LANGS and lang not in config.SOCIAL_LANGS:
+        raise HTTPException(400, f"unknown lang {lang!r}")
+
+
 @app.get("/daily")
 def daily(
     lang: str = Query(...),
@@ -286,7 +294,7 @@ def translate(
 ) -> dict:
     """Context-aware word translation (+ alternatives), cached. Falls back to a
     capped daily budget for fresh LLM calls."""
-    _check_lang(lang)
+    _check_learn_lang(lang)
     if native not in config.LANGS:
         raise HTTPException(400, f"unknown native {native!r}")
     word = word.strip()
@@ -333,7 +341,7 @@ def sentence(
 ) -> dict:
     """Translate a whole sentence/question into the native language (for the
     'Übersetzung' button on quizzes & cloze). Cached; capped per day."""
-    _check_lang(lang)
+    _check_learn_lang(lang)
     if native not in config.LANGS:
         raise HTTPException(400, f"unknown native {native!r}")
     text = text.strip()
@@ -409,7 +417,8 @@ def stream(
     created_at) is a paging cursor for the time-block infinite scroll. Instant, no
     LLM (difficulty/translation happen client-side / on-tap), but a per-IP rate
     limit guards the DB."""
-    _check_lang(lang)
+    if lang not in config.SOCIAL_LANGS:
+        raise HTTPException(400, f"no stream for {lang!r}")
     rubriks = [t.strip() for t in tags.split(",") if t.strip()] or None
     return {"lang": lang, "toots": db.stream_toots(lang, rubriks, before, limit)}
 

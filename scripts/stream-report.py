@@ -53,7 +53,7 @@ def fetch_all(lang):
     return out
 
 
-for lang in ["fr", "en"]:
+for lang in ["fr", "en", "nl", "es", "it"]:
     ranks = json.load(open(f"src/public/data/freq-{lang}.json"))
     toots = fetch_all(lang)
     maxlen = max((len(t["content"]) for t in toots), default=0)

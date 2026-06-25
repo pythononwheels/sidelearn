@@ -932,7 +932,7 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
 
 // Rubriks the social pool is harvested for (mirrors server SOURCES map).
 const STREAM_RUBRIKS = ['natur', 'geschichte', 'kultur', 'technik', 'sport'];
-const STREAM_LANGS = ['en', 'fr'];
+const STREAM_LANGS = ['en', 'fr', 'nl', 'es', 'it'];
 
 /** Rough CEFR difficulty of a toot, client-side & free: the band at which ~85% of
  * its known words are already familiar. null if too few known words to judge. */

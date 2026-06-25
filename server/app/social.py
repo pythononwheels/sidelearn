@@ -72,6 +72,39 @@ SOURCES: dict[str, dict[str, Any]] = {
             "sport": "sport", "football": "sport", "cyclisme": "sport", "rugby": "sport",
         },
     },
+    "nl": {
+        "instance": "mastodon.nl",
+        "tags": {
+            "wetenschap": "natur", "natuur": "natur", "dieren": "natur", "ruimte": "natur",
+            "geschiedenis": "geschichte", "archeologie": "geschichte",
+            "kunst": "kultur", "muziek": "kultur", "film": "kultur",
+            "literatuur": "kultur", "fotografie": "kultur",
+            "technologie": "technik", "informatica": "technik", "gamen": "technik",
+            "sport": "sport", "voetbal": "sport", "wielrennen": "sport",
+        },
+    },
+    "es": {
+        "instance": "masto.es",
+        "tags": {
+            "ciencia": "natur", "naturaleza": "natur", "animales": "natur", "astronomia": "natur",
+            "historia": "geschichte", "arqueologia": "geschichte",
+            "arte": "kultur", "musica": "kultur", "cine": "kultur",
+            "literatura": "kultur", "fotografia": "kultur",
+            "tecnologia": "technik", "informatica": "technik", "videojuegos": "technik",
+            "deporte": "sport", "futbol": "sport", "ciclismo": "sport",
+        },
+    },
+    "it": {
+        "instance": "mastodon.uno",
+        "tags": {
+            "scienza": "natur", "natura": "natur", "animali": "natur", "astronomia": "natur",
+            "storia": "geschichte", "archeologia": "geschichte",
+            "arte": "kultur", "musica": "kultur", "cinema": "kultur",
+            "letteratura": "kultur", "fotografia": "kultur",
+            "tecnologia": "technik", "informatica": "technik", "videogiochi": "technik",
+            "sport": "sport", "calcio": "sport", "ciclismo": "sport",
+        },
+    },
 }
 
 _ANCHOR = re.compile(r"<a\b[^>]*>.*?</a>", re.IGNORECASE | re.DOTALL)
