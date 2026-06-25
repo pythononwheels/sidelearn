@@ -3,20 +3,21 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [unreleased] — Social Stream (Server, MVP) — Mastodon-Toot-Pool
+## [0.6.120] — 2026-06-25 — Social Stream: Mastodon-Toots zum Lesen & Lernen
 
-- **Neuer Server-Teil für den geplanten „Stream"-Tab**: ein bounded Pool kurzer, echter
-  Mastodon-Toots aus **kuratierten Themen-Hashtags** — **ohne LLM** (Schwierigkeit & Übersetzung
-  laufen client-seitig / on-tap).
+- **Neuer „Stream"-Tab**: echte, kurze Mastodon-Posts in der Lernsprache — mit Bild, antippbaren
+  Wörtern (Übersetzung), Ganz-Toot-Übersetzung, CEFR-Badge, Rubrik-Filter. Original einen Tap entfernt.
+  Schwierigkeit & Wort-Markierung **client-seitig** (Frequenzränge), Übersetzung **on-tap & gecacht**.
+- **Server** (bounded Pool, **ohne LLM**):
   - `server/app/social.py`: Harvester. Pro Lernsprache eigene Instanz + Hashtags
     (`en`→mastodon.social, `fr`→piaille.fr), `GET /timelines/tag/{tag}` (public, kein Auth).
-    Filtert `sensitive`/CW + Blocklist, säubert Text (Links/Mentions/HTML raus, Emojis bleiben),
-    Mindest-Realtextlänge, **`langdetect`-Sprachgegencheck** (Toot-`language`-Feld ist unzuverlässig).
+    Filtert `sensitive`/CW + Blocklist, säubert Text (Links/Mentions/Hashtags raus, Emojis bleiben),
+    Mindest-Realtextlänge, **`langdetect`-Sprachgegencheck**, Per-Author-Cap gegen Bot-Floods.
+    Bild pro Toot (Media-Attachment oder Link-Preview-Karte).
   - `toot`-Tabelle (`db.py`) + `upsert_toot`/`stream_toots`/`prune_toots`/`toot_overview`.
   - `GET /stream?lang=&tags=&days=&limit=` (origin-gated + rate-limited `RL_STREAM`), neueste zuerst.
   - Light-Cron: Harvest beim Start + alle `SL_SOCIAL_EVERY_H` (Default 6) Stunden; Pruning nach
-    `SL_SOCIAL_KEEP_DAYS` (21). Opt-in via `SL_SOCIAL_ENABLE` (Default an).
-  - `langdetect` als neue Server-Abhängigkeit.
+    `SL_SOCIAL_KEEP_DAYS` (21). Opt-in via `SL_SOCIAL_ENABLE` (Default an). `langdetect` als neue Abhängigkeit.
 
 ## [0.6.119] — 2026-06-25 — Mehr Abwechslung: Lückentext, Vokabeltest, Rubriken
 
