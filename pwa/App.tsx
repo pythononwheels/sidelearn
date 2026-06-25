@@ -917,7 +917,10 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
         <span class="sr-progress">Satz {i + 1} / {sentences.length}</span>
         <button class="sr-skip" onClick={() => setMode('full')}>Ganzer Text →</button>
       </div>
-      <div class="sl-para current"><p class="sl-text sr-text">{tap(cur)}</p></div>
+      <div class="sl-para current"><p class="sl-text sr-text">
+        {sentences.slice(0, i).map((s, k) => <span key={k}>{tap(s)}{' '}</span>)}
+        <span class="sr-cur">{tap(cur)}</span>
+      </p></div>
       <div class="cloze-xlate"><TranslateReveal text={cur} settings={settings} /></div>
       <button class="sl-read mc-btn" onClick={() => { if (last) setMode('full'); else setI((n) => n + 1); }}>
         {last ? 'Ganzen Text lesen →' : 'Weiter →'}
