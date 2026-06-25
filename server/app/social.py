@@ -160,6 +160,8 @@ async def harvest() -> dict[str, Any]:
                         continue
                     if _real_len(text) < config.SOCIAL_MIN_LEN:
                         continue
+                    if len(text) > config.SOCIAL_MAX_LEN:
+                        continue  # essays aren't toots — keep it short/medium
                     if _HAVE_LANGDETECT and detect_lang(text) != lang:
                         continue
                     acct = s.get("account", {}) or {}
@@ -186,7 +188,8 @@ async def harvest() -> dict[str, Any]:
                     if db.upsert_toot(row):
                         added += 1
                 stats[key] = {"seen": seen, "added": added}
-    # Rolling pool first (keep newest N per rubrik), then an age backstop.
+    # Drop any oversized toots (e.g. from before the cap), then roll the pool.
+    db.prune_long_toots(config.SOCIAL_MAX_LEN)
     rolled = db.prune_toots_per_rubrik(config.SOCIAL_KEEP_PER_RUBRIK)
     aged = db.prune_toots(config.SOCIAL_KEEP_DAYS)
     stats["_pruned"] = {"rolled": rolled, "aged": aged}

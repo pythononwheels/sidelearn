@@ -289,6 +289,14 @@ def prune_toots(keep_days: int) -> int:
         return cur.rowcount
 
 
+def prune_long_toots(max_len: int) -> int:
+    """Delete toots whose content exceeds `max_len` chars (essays slipped in before
+    the cap, or instances with raised limits). Returns rows removed."""
+    with conn() as c:
+        cur = c.execute("DELETE FROM toot WHERE length(content) > ?", (max_len,))
+        return cur.rowcount
+
+
 def prune_toots_per_rubrik(keep: int) -> int:
     """Rolling pool: within each (lang, rubrik) keep only the newest `keep` toots,
     delete the rest. Keeps the pool bounded and balanced across topics. Returns

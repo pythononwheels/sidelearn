@@ -118,6 +118,7 @@ SOCIAL_PER_TAG = int(os.getenv("SL_SOCIAL_PER_TAG", "40"))  # toots fetched per 
 SOCIAL_KEEP_PER_RUBRIK = int(os.getenv("SL_SOCIAL_KEEP_PER_RUBRIK", "60"))
 SOCIAL_KEEP_DAYS = int(os.getenv("SL_SOCIAL_KEEP_DAYS", "30"))  # age backstop prune
 SOCIAL_MIN_LEN = int(os.getenv("SL_SOCIAL_MIN_LEN", "60"))  # min letters of real text
+SOCIAL_MAX_LEN = int(os.getenv("SL_SOCIAL_MAX_LEN", "500"))  # max chars (no essays; tweet-ish)
 SOCIAL_MAX_PER_AUTHOR = int(os.getenv("SL_SOCIAL_MAX_PER_AUTHOR", "3"))  # per tag/run anti-flood
 # Which learn-languages to harvest (subset of the SOURCES map in social.py).
 SOCIAL_LANGS = [s.strip() for s in os.getenv("SL_SOCIAL_LANGS", "en,fr").split(",") if s.strip()]
