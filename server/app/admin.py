@@ -38,7 +38,8 @@ h1{font-size:20px}h3{margin-top:22px}
 .btn{font:inherit;font-weight:600;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--accent);cursor:pointer}
 .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
 .btn:disabled{opacity:.5;cursor:default}
-.card{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:14px;margin:12px 0;display:flex;gap:14px}
+.card{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;margin:14px 0;display:flex;gap:14px;line-height:1.5}
+.card .lvl{margin-top:2px}
 .card img,.card .ph{width:64px;height:64px;border-radius:10px;flex:0 0 auto}
 .card img{object-fit:cover}
 .card .ph{background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted)}
@@ -51,7 +52,7 @@ h1{font-size:20px}h3{margin-top:22px}
 .daysv .day{margin:0}
 .cal-nav{display:flex;align-items:center;gap:12px;margin:6px 0 8px}
 .cal-nav b{font-size:14px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:300px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 0 8px}
 .cal-h{text-align:center;font-size:11px;color:var(--muted);padding:2px 0}
 .cal-d{display:flex;align-items:center;justify-content:center;height:34px;border-radius:9px;border:1px solid transparent;color:var(--muted);font-size:13px}
 .cal-d.has{color:var(--text);border-color:var(--border);background:var(--surface);font-weight:700}
@@ -203,7 +204,7 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     left = (
         f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
-        f"<h3 style='margin-top:18px'>{date_key}</h3>{_day_bar(lang, date_key)}{cards_html}"
+        f"<h3 style='margin-top:32px'>{date_key}</h3>{_day_bar(lang, date_key)}{cards_html}"
     )
     body = f"<div class=cols><div>{left}</div>{side}</div>"
     return page("Sidelearn Admin", body, refresh=5 if busy else 0)
@@ -427,15 +428,22 @@ def _day_cards(lang: str, date_key: str) -> tuple[str, bool]:
 
 
 def _day_bar(lang: str, date_key: str) -> str:
-    return (
-        "<div class=bar>"
-        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class='btn primary'>Artikel holen · {date_key}</button></form>"
-        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class=btn>Alle aufbereiten (KI)</button></form>"
-        "</div>"
-        "<p class=muted style='margin:-4px 0 10px'>"
-        "„Artikel holen“ = meistgelesene Wikipedia-Artikel des Tages laden (ohne KI). "
-        "„Alle aufbereiten“ = daraus per KI alle Niveau-Versionen + Quiz erzeugen."
+    auto = (
+        "<p class=muted style='margin:2px 0 10px'>"
+        "Inhalte werden <b>automatisch</b> gebaut (täglich 04:00 UTC + bei Container-Start). "
+        "Die Buttons sind nur ein manueller Notnagel — bei einer Kalender-Lücke oder einem "
+        "halben Build: „Artikel holen“ lädt die Wikipedia-Artikel des Tages (ohne KI), "
+        "„Aufbereiten“ erzeugt per KI die Niveau-Versionen + Quiz."
         "</p>"
+        if config.AUTO_BUILD
+        else "<p class=muted style='margin:2px 0 10px'>Auto-Build ist <b>aus</b> — Inhalte hier manuell bauen:</p>"
+    )
+    return (
+        auto
+        + "<div class=bar>"
+        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class=btn>Artikel holen</button></form>"
+        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class=btn>Aufbereiten (KI)</button></form>"
+        "</div>"
     )
 
 
