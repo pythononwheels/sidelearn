@@ -16,7 +16,7 @@ export const LANG_LABELS: Record<Language, string> = {
   fr: 'Français',
   de: 'Deutsch',
   en: 'English',
-  nl: 'Niederländisch', // German name — "Nederlands" reads like "Netherlands" to non-Dutch users
+  nl: 'Nederlands',
   es: 'Español',
   it: 'Italiano',
 };
