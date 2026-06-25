@@ -102,6 +102,19 @@ def detect_lang(text: str) -> Optional[str]:
         return None
 
 
+def pick_media(status: dict[str, Any]) -> str:
+    """Best image for the card: a photo/video-thumbnail attachment if present,
+    else the link-preview card image (what makes news posts look rich). ''
+    if none."""
+    for m in status.get("media_attachments") or []:
+        if m.get("type") in ("image", "gifv", "video"):
+            url = m.get("preview_url") or m.get("url")
+            if url:
+                return url
+    card = status.get("card") or {}
+    return card.get("image") or ""
+
+
 def is_safe(status: dict[str, Any], text: str) -> bool:
     """Kid-friendly first-pass filter: drop content-warned / sensitive posts and
     anything hitting the NSFW/spam blocklist."""
@@ -164,6 +177,7 @@ async def harvest() -> dict[str, Any]:
                         "author": acct.get("display_name") or acct.get("username") or "",
                         "author_handle": acct.get("acct") or "",
                         "content": text,
+                        "media_url": pick_media(s),
                         "tags": ",".join(t.get("name", "").lower() for t in s.get("tags", []))[:300],
                         "rubrik": rubrik,
                         "created_at": s.get("created_at") or now,

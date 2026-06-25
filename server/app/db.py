@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS toot (
   author TEXT,
   author_handle TEXT,
   content TEXT NOT NULL,          -- cleaned plain text (links/mentions stripped)
+  media_url TEXT,                 -- image: media attachment or link-preview card
   tags TEXT,                      -- comma-sep hashtags of the post (lowercased)
   rubrik TEXT,                    -- our topic the query-tag maps to (sport, natur…)
   created_at TEXT,
@@ -115,6 +116,12 @@ def conn() -> Iterator[sqlite3.Connection]:
 def init() -> None:
     with conn() as c:
         c.executescript(SCHEMA)
+        # Idempotent column migrations for tables that shipped before a column existed.
+        for table, col, decl in [("toot", "media_url", "TEXT")]:
+            try:
+                c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+            except sqlite3.OperationalError:
+                pass  # already there
 
 
 def upsert_article(art: dict[str, Any], now: str) -> None:
@@ -238,9 +245,10 @@ def upsert_toot(t: dict[str, Any]) -> bool:
     with conn() as c:
         cur = c.execute(
             """INSERT INTO toot
-               (id, lang, instance, url, author, author_handle, content, tags, rubrik, created_at, fetched_at)
-               VALUES (:id,:lang,:instance,:url,:author,:author_handle,:content,:tags,:rubrik,:created_at,:fetched_at)
-               ON CONFLICT(id) DO NOTHING""",
+               (id, lang, instance, url, author, author_handle, content, media_url, tags, rubrik, created_at, fetched_at)
+               VALUES (:id,:lang,:instance,:url,:author,:author_handle,:content,:media_url,:tags,:rubrik,:created_at,:fetched_at)
+               ON CONFLICT(id) DO UPDATE SET media_url=excluded.media_url
+                 WHERE COALESCE(toot.media_url,'')='' AND COALESCE(excluded.media_url,'')!=''""",
             t,
         )
         return cur.rowcount > 0
@@ -252,7 +260,7 @@ def stream_toots(
     """Pooled toots for `lang`, newest first. `rubriks` filters by topic;
     `since` (ISO) keeps only newer toots."""
     sql = (
-        "SELECT id, lang, instance, url, author, author_handle, content, tags, rubrik, created_at "
+        "SELECT id, lang, instance, url, author, author_handle, content, media_url, tags, rubrik, created_at "
         "FROM toot WHERE lang=? "
     )
     params: list[Any] = [lang]
