@@ -89,6 +89,7 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
 .side{position:relative}
 .side-inner{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-right:2px}
+.side-inner>h3:first-child{margin-top:0}
 .costlist{flex:1 1 0;min-height:0;overflow-y:auto;margin:2px 0 6px}
 .side-foot{padding-top:14px}
 .side h3{margin-top:0}
@@ -209,11 +210,12 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     cards_html, busy, state = _day_cards(lang, date_key)
     left = (
         "<div>"
-        f"<h3 style='margin-top:0'>Tage ({lang.upper()})</h3>{day_links}"
+        f"<h1 style='margin-top:0'>Sidelearn — Admin</h1>{lang_tabs(lang)}"
+        f"<h3>Tage ({lang.upper()})</h3>{day_links}"
         f"<div class=dayhead><span class=dh>{date_key}</span>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
         "</div>"
     )
-    body = f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}<div class=cols>{left}{side}</div>"
+    body = f"<div class=cols>{left}{side}</div>"
     return page("Sidelearn Admin", body, refresh=5 if busy else 0)
 
 
