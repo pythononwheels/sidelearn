@@ -115,7 +115,7 @@ SOCIAL_EVERY_MIN = int(os.getenv("SL_SOCIAL_EVERY_MIN", "15"))  # harvest cadenc
 SOCIAL_PER_TAG = int(os.getenv("SL_SOCIAL_PER_TAG", "40"))  # toots fetched per tag/run
 # Rolling pool: keep the newest N per (lang, rubrik); older toots roll out. With
 # 6 rubriks × 2 langs and N=60 that's ~720 toots to scroll through, balanced by topic.
-SOCIAL_KEEP_PER_RUBRIK = int(os.getenv("SL_SOCIAL_KEEP_PER_RUBRIK", "60"))
+SOCIAL_KEEP_PER_RUBRIK = int(os.getenv("SL_SOCIAL_KEEP_PER_RUBRIK", "80"))
 SOCIAL_KEEP_DAYS = int(os.getenv("SL_SOCIAL_KEEP_DAYS", "30"))  # age backstop prune
 SOCIAL_MIN_LEN = int(os.getenv("SL_SOCIAL_MIN_LEN", "60"))  # min letters of real text
 SOCIAL_MAX_LEN = int(os.getenv("SL_SOCIAL_MAX_LEN", "500"))  # max chars (no essays; tweet-ish)

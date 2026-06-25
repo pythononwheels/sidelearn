@@ -38,23 +38,38 @@ SOURCES: dict[str, dict[str, Any]] = {
     "en": {
         "instance": "mastodon.social",
         "tags": {
-            "science": "natur",
-            "history": "geschichte",
-            "art": "kultur",
-            "music": "kultur",
-            "technology": "technik",
-            "sport": "sport",
+            # natur / science
+            "science": "natur", "nature": "natur", "wildlife": "natur",
+            "space": "natur", "astronomy": "natur",
+            # geschichte
+            "history": "geschichte", "archaeology": "geschichte", "heritage": "geschichte",
+            # kultur
+            "art": "kultur", "music": "kultur", "film": "kultur",
+            "books": "kultur", "photography": "kultur",
+            # technik
+            "technology": "technik", "programming": "technik", "ai": "technik", "gaming": "technik",
+            # sport
+            "sport": "sport", "football": "sport", "cycling": "sport", "running": "sport",
         },
     },
     "fr": {
+        # piaille.fr is a large general French instance; hashtags are ASCII
+        # (Mastodon strips accents): cinema, litterature, archeologie, numerique…
         "instance": "piaille.fr",
         "tags": {
-            "sciences": "natur",
-            "histoire": "geschichte",
-            "art": "kultur",
-            "musique": "kultur",
-            "technologie": "technik",
-            "sport": "sport",
+            # natur / sciences
+            "sciences": "natur", "nature": "natur", "animaux": "natur",
+            "astronomie": "natur", "espace": "natur",
+            # geschichte
+            "histoire": "geschichte", "archeologie": "geschichte", "patrimoine": "geschichte",
+            # kultur
+            "art": "kultur", "musique": "kultur", "cinema": "kultur",
+            "litterature": "kultur", "photographie": "kultur", "culture": "kultur",
+            # technik
+            "technologie": "technik", "informatique": "technik",
+            "numerique": "technik", "jeuxvideo": "technik",
+            # sport
+            "sport": "sport", "football": "sport", "cyclisme": "sport", "rugby": "sport",
         },
     },
 }

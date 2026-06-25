@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.123] — 2026-06-25 — Stream: mehr Input + Längen-Cap
+
+- **Längen-Cap**: Toots über 500 Zeichen werden nicht mehr aufgenommen (und vorhandene Romane gepruned)
+  — mittellang ok, Essays raus.
+- **Viel mehr Quellen** pro Sprache (6 → ~21 Hashtags je Rubrik), v. a. Französisch, damit der Pool
+  Richtung ~200/Sprache füllt. Rollender Pool 60 → **80 pro Rubrik/Sprache**.
+- **Default-Niveaufilter auf +2** (z. B. A2 → A1–B2): echtes Social-Media-FR/EN ist überwiegend B2+,
+  +2 gibt Anfängern genug zum Scrollen (höhere Stufen jederzeit zuschaltbar).
+- Analyse-Skript `scripts/stream-report.py` (Verteilung Pool: gesamt / Rubrik / Niveau).
+
 ## [0.6.122] — 2026-06-25 — Stream: Zeit-Blöcke, Niveau-Filter, Infinite-Scroll
 
 - **Drei Filter im Stream**: **Thema** (Rubrik-Chips) · **Zeit** (chronologische Blöcke) · **Niveau**

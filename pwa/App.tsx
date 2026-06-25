@@ -990,9 +990,9 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
   const [names, setNames] = useState<Set<string>>(new Set());
   const [rubrik, setRubrik] = useState<string | null>(null); // topic filter
   const [bands, setBands] = useState<Set<string>>(
-    // level filter: default to the user's level + 1 and below, so beginners get an
-    // accessible feed out of the box (they can toggle harder levels back on).
-    () => new Set(ALL_BANDS.filter((b) => CEFR_LEVELS.indexOf(b) <= CEFR_LEVELS.indexOf(settings.level) + 1)),
+    // level filter: default to the user's level + 2 and below — real social-media
+    // content skews B2+, so +2 gives beginners enough to scroll (toggle the rest on).
+    () => new Set(ALL_BANDS.filter((b) => CEFR_LEVELS.indexOf(b) <= CEFR_LEVELS.indexOf(settings.level) + 2)),
   );
   const [sortEasy, setSortEasy] = useState(true); // sort within each block
   // Time-block paging: each page is a chronological block (newest first); within a
