@@ -4,7 +4,7 @@ import asyncio
 from datetime import date
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import re
 from urllib.parse import urlparse
@@ -366,14 +366,18 @@ def areas_list(
     lang: str = Query(...),
     level: str = Query("A2"),
     date_: str | None = Query(None, alias="date"),
+    days: int | None = Query(None, ge=1, le=90),
 ) -> dict:
     """Already-prepared area-pool articles for (lang, level) — instant, no LLM.
-    Optionally restricted to those added on `date` (YYYY-MM-DD). For the Challenges
-    library list. No cost guard (cached content), but a generous per-IP rate limit
-    as defense-in-depth (it's a 3-table join, heavier than the other cheap reads)."""
+    `date` (YYYY-MM-DD) → only that day; `days` → only the last N days. For the
+    Challenges library + the Artikelrubriken "recent" list. No cost guard (cached
+    content), but a generous per-IP rate limit as defense-in-depth."""
     _check_lang(lang)
     _check_level(level)
-    return {"lang": lang, "level": level, "articles": db.area_pool_prepared(lang, level, date_)}
+    since = None
+    if days:
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    return {"lang": lang, "level": level, "articles": db.area_pool_prepared(lang, level, date_, since)}
 
 
 @app.get("/surprise", dependencies=[Depends(require_origin)])

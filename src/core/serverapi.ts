@@ -142,11 +142,12 @@ export async function fetchAreaList(
   serverUrl: string,
   lang: Language,
   level: CefrLevel,
-  date?: string,
+  opts?: { date?: string; days?: number },
 ): Promise<AreaArticle[]> {
   try {
     const q = new URLSearchParams({ lang, level });
-    if (date) q.set('date', date);
+    if (opts?.date) q.set('date', opts.date);
+    if (opts?.days) q.set('days', String(opts.days));
     const res = await fetch(`${base(serverUrl)}/areas/list?${q}`, {
       headers: { accept: 'application/json' },
     });

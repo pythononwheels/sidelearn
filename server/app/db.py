@@ -192,9 +192,12 @@ def random_area_prepared(area: str, lang: str, level: str) -> Optional[str]:
     return row["article_id"] if row else None
 
 
-def area_pool_prepared(lang: str, level: str, date: Optional[str] = None) -> list[dict[str, Any]]:
+def area_pool_prepared(
+    lang: str, level: str, date: Optional[str] = None, since: Optional[str] = None
+) -> list[dict[str, Any]]:
     """All pooled area articles for (lang) that already have `level` prepared —
-    instant to serve. If `date` (YYYY-MM-DD) is given, only those added that day."""
+    instant to serve. If `date` (YYYY-MM-DD) is given, only those added that day;
+    else if `since` (YYYY-MM-DD) is given, only those added on/after that date."""
     sql = (
         "SELECT ap.area AS area, a.id AS id, a.title AS title, a.url AS url, a.thumbnail AS thumbnail "
         "FROM area_pool ap "
@@ -206,6 +209,9 @@ def area_pool_prepared(lang: str, level: str, date: Optional[str] = None) -> lis
     if date:
         sql += "AND substr(ap.added_at, 1, 10) = ? "
         params.append(date)
+    elif since:
+        sql += "AND substr(ap.added_at, 1, 10) >= ? "
+        params.append(since)
     sql += "ORDER BY ap.area, ap.added_at DESC"
     with conn() as c:
         rows = c.execute(sql, params).fetchall()

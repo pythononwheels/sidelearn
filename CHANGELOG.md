@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.119] — 2026-06-25 — Mehr Abwechslung: Lückentext, Vokabeltest, Rubriken
+
+- **Lückentext** baut jetzt aus **allen** Tages-Artikeln (statt nur dem ersten) → viel mehr
+  unterschiedliche Sätze.
+- **Vokabeltest** füllt die Session immer mit **frischen, noch nie gesehenen Level-Wörtern** auf
+  (≥ ~5 neue pro Runde, wenn vorhanden) und mischt sie mit fälligen Wiederholungen — frische Wörter
+  werden in den SRS aufgenommen, damit sie rotieren statt sich zu wiederholen.
+- **Artikelrubriken**: nach Rubrik-Wahl jetzt eine **Liste der letzten 14 Tage** mit **„gelesen ✓"**
+  (ungelesene zuerst) plus jederzeit eine **„Überraschung"** (neuer/zufälliger Artikel) — statt immer
+  desselben Zufallsartikels. Server: `/areas/list` um einen `days`-Range erweitert.
+
 ## [0.6.118] — 2026-06-25 — Satz-für-Satz: Sätze bauen sich auf
 
 - Im Satz-für-Satz-Modus bleibt der vorherige Satz jetzt **erhalten** — jeder „Weiter"-Schritt

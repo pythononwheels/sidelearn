@@ -653,13 +653,24 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
       // Seed this Etappe's next-level target words into the SRS deck (idempotent).
       if (!prog.atAufstieg) await etappeBatch(settings, prog.etappe);
       const seed = await seedVocab(settings.learn, settings.native, settings.level, 80);
-      const due = dueEntries(settings.learn, SESSION); // reviews + freshly-due new targets
+      const dueList = dueEntries(settings.learn, SESSION); // reviews + due new targets + previously-wrong
+      // Reserve room for fresh, never-seen level words so every round has new ones
+      // (not just repeats). Fresh words get added to the deck so the SRS tracks them.
+      const deckSet = new Set(getDeck().filter((d) => d.lang === settings.learn).map((d) => d.word.toLowerCase()));
+      const fresh = shuffleInPlace(seed.filter((s) => s.word && s.translation && !deckSet.has(s.word.toLowerCase())));
+      const keepDue = Math.min(dueList.length, SESSION - Math.min(fresh.length, 5));
+      const chosenFresh = fresh.slice(0, SESSION - keepDue);
+      chosenFresh.forEach((f) => addToDeck({ word: f.word, translation: f.translation, lang: settings.learn, band: f.band, ts: Date.now() }));
+      const session = shuffleInPlace([
+        ...dueList.slice(0, keepDue).map((d) => ({ word: d.word, translation: d.translation })),
+        ...chosenFresh.map((f) => ({ word: f.word, translation: f.translation })),
+      ]);
       const pool = [...new Set([
         ...getDeck().filter((d) => d.lang === settings.learn).map((d) => d.translation),
         ...seed.map((s) => s.translation),
       ].filter(Boolean))];
       const cards: MCCard[] = [];
-      for (const d of due) {
+      for (const d of session) {
         const correct = d.translation;
         if (!correct) continue;
         const rich = await richLookup(d.word, settings.learn, settings.native);
@@ -796,30 +807,39 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
   onDigest: (a: ArticleRef) => void;
   onBack: () => void;
 }) {
-  const [loading, setLoading] = useState<string | null>(null);
+  const [area, setArea] = useState<string | null>(null); // chosen rubrik
+  const [list, setList] = useState<AreaArticle[] | null>(null); // its last-14-days articles
+  const [loading, setLoading] = useState<string | null>(null); // live "surprise" build spinner
   const [error, setError] = useState(false);
   // From A2 the user can choose how to read a fetched article (full vs digest).
   const [choice, setChoice] = useState<ArticleRef | null>(null);
 
-  async function pick(area: string) {
-    setError(false);
-    setLoading(area);
-    const l = await fetchSurprise(SERVER, settings.learn, settings.level, area);
-    if (l) {
-      const a: ArticleRef = { id: l.id, title: l.title, url: l.url, thumb: l.thumbnail };
-      if (settings.level === 'A1') onOpen(a, false); // digest mode is A2+; free read → no route
-      else { setLoading(null); setChoice(a); }
-    } else {
-      setLoading(null);
-      setError(true);
-    }
+  async function openArea(a: string) {
+    setArea(a); setList(null); setError(false);
+    const arts = await fetchAreaList(SERVER, settings.learn, settings.level, { days: 14 });
+    setList(arts.filter((x) => x.area === a));
   }
+
+  function read(a: ArticleRef) {
+    if (settings.level === 'A1') onOpen(a, false); // digest is A2+; A1 reads directly
+    else setChoice(a);
+  }
+
+  // "Überraschung": a fresh random article from the pool (or built live).
+  async function surprise(a: string) {
+    setError(false); setLoading(a);
+    const l = await fetchSurprise(SERVER, settings.learn, settings.level, a);
+    setLoading(null);
+    if (l) read({ id: l.id, title: l.title, url: l.url, thumb: l.thumbnail });
+    else setError(true);
+  }
+  const meta = AREAS.find((a) => a.id === area);
 
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Zufallsartikel</span>
+        <button class="sl-back" onClick={() => (choice ? setChoice(null) : area ? setArea(null) : onBack())} aria-label="Zurück">←</button>
+        <span class="sl-lessontitle">Artikelrubriken</span>
       </header>
 
       {choice ? (
@@ -834,7 +854,7 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
             <span class="dg-opt-ico digest"><IconBolt /></span>
             <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
           </button>
-          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Anderen Bereich wählen</button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Zurück zur Liste</button>
         </section>
       ) : loading ? (
         <section class="sl-done">
@@ -844,13 +864,48 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
             vereinfachen ihn auf {settings.level} … einen Moment.
           </p>
         </section>
+      ) : area ? (
+        <>
+          <div class="ch-rubrik-head" style={{ marginTop: '4px' }}>
+            <span class={`lr-tile-ico ${meta?.color ?? ''}`}>{meta?.icon}</span>
+            <span class="ch-rubrik-label">{meta?.label}</span>
+          </div>
+          <button class="sl-read" style={{ width: '100%', marginTop: '12px' }} onClick={() => surprise(area)}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><IconDice /> Überraschung — neuer Artikel</span>
+          </button>
+          {error && <p class="sl-muted" style={{ marginTop: '12px' }}>Das hat nicht geklappt. Bitte nochmal versuchen.</p>}
+          {list === null ? (
+            <div style={{ marginTop: '18px' }}><Dots /></div>
+          ) : list.length === 0 ? (
+            <p class="sl-muted" style={{ marginTop: '18px' }}>Hier ist noch nichts vorbereitet — hol dir oben eine Überraschung.</p>
+          ) : (
+            <>
+              <p class="lr-section" style={{ marginTop: '20px' }}>Aus den letzten 14 Tagen</p>
+              <ul class="lr-list">
+                {[...list].sort((a, b) => Number(isCompleted(a.url)) - Number(isCompleted(b.url))).map((a) => {
+                  const done = isCompleted(a.url);
+                  return (
+                    <li key={a.id}>
+                      <button class={`lr-item ${done ? 'done' : ''}`} onClick={() => read({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail })}>
+                        {a.thumbnail
+                          ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
+                          : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
+                        <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
+                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? 'gelesen ✓' : 'lesen ›'}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </>
       ) : (
         <>
-          <p class="lr-section" style={{ marginTop: '4px' }}>Wähle einen Bereich — wir suchen dir einen frischen Artikel.</p>
-          {error && <p class="sl-muted">Das hat nicht geklappt. Bitte nochmal versuchen.</p>}
+          <p class="lr-section" style={{ marginTop: '4px' }}>Wähle einen Bereich.</p>
           <div class="lr-tiles" style={{ marginTop: '10px' }}>
             {AREAS.map((a) => (
-              <button class="lr-tile" onClick={() => pick(a.id)}>
+              <button class="lr-tile" onClick={() => openArea(a.id)}>
                 <span class={`lr-tile-ico ${a.color}`}>{a.icon}</span>
                 <span class="lr-tile-t">{a.label}</span>
                 <span class="lr-tile-s">{a.sub}</span>
@@ -858,8 +913,8 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
             ))}
           </div>
           <p class="sl-muted" style={{ marginTop: '18px' }}>
-            Frisch aus Wikipedia, auf dein Sprachniveau gebracht. Ist ein Bereich
-            neu, dauert das erste Mal ein paar Sekunden — danach ist er sofort da.
+            Frisch aus Wikipedia, auf dein Sprachniveau gebracht — die zuletzt vorbereiteten Artikel
+            der Rubrik plus jederzeit eine neue Überraschung.
           </p>
         </>
       )}
@@ -1100,14 +1155,16 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
     let alive = true;
     void (async () => {
       const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
-      const art = daily?.articles[0];
-      if (!art) { if (alive) setQuestions([]); return; }
-      const lesson = await fetchServerLesson(SERVER, art.id, settings.level);
+      const arts = daily?.articles ?? [];
+      if (!arts.length) { if (alive) setQuestions([]); return; }
+      // Build from ALL of today's articles (not just the first) for more variety.
+      const lessons = (await Promise.all(arts.map((a) => fetchServerLesson(SERVER, a.id, settings.level))))
+        .filter((l): l is ServerLesson => !!l);
       if (!alive) return;
-      if (!lesson) { setQuestions([]); return; }
-      const text = lesson.paragraphs.map((p) => p.simplified).join(' ');
+      if (!lessons.length) { setQuestions([]); return; }
+      const text = lessons.flatMap((l) => l.paragraphs.map((p) => p.simplified)).join(' ');
       clozeText.current = text;
-      const vocab = lesson.vocab.map((v) => v.word);
+      const vocab = [...new Set(lessons.flatMap((l) => l.vocab.map((v) => v.word)))];
       const deckWords = getDeck().filter((d) => d.lang === settings.learn).map((d) => d.word);
       const pool = [...new Set([...vocab, ...deckWords])];
       // ~half consolidation (from the article), ~half i+1 drill of this Etappe's
@@ -1126,7 +1183,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
         clozeText.current += ' ' + exText; // so the completion scan credits these targets
       }
       const qs = shuffleInPlace([...articleQs, ...iqs]).slice(0, 8);
-      setTitle(lesson.title);
+      setTitle(lessons.length > 1 ? 'Tageslektion' : lessons[0]!.title);
       setQuestions(qs.length ? qs : buildClozeQuestions(text, vocab, pool, Math.random, 8));
     })();
     return () => { alive = false; };
@@ -1735,7 +1792,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
     if (!dateForArea) return;
     let alive = true;
     setArea(null);
-    void fetchAreaList(SERVER, settings.learn, settings.level, dateForArea).then((a) => alive && setArea(a));
+    void fetchAreaList(SERVER, settings.learn, settings.level, { date: dateForArea }).then((a) => alive && setArea(a));
     return () => { alive = false; };
   }, [settings.learn, settings.level, dateForArea]);
 
