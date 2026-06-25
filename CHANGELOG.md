@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [unreleased] — Social Stream (Server, MVP) — Mastodon-Toot-Pool
+
+- **Neuer Server-Teil für den geplanten „Stream"-Tab**: ein bounded Pool kurzer, echter
+  Mastodon-Toots aus **kuratierten Themen-Hashtags** — **ohne LLM** (Schwierigkeit & Übersetzung
+  laufen client-seitig / on-tap).
+  - `server/app/social.py`: Harvester. Pro Lernsprache eigene Instanz + Hashtags
+    (`en`→mastodon.social, `fr`→piaille.fr), `GET /timelines/tag/{tag}` (public, kein Auth).
+    Filtert `sensitive`/CW + Blocklist, säubert Text (Links/Mentions/HTML raus, Emojis bleiben),
+    Mindest-Realtextlänge, **`langdetect`-Sprachgegencheck** (Toot-`language`-Feld ist unzuverlässig).
+  - `toot`-Tabelle (`db.py`) + `upsert_toot`/`stream_toots`/`prune_toots`/`toot_overview`.
+  - `GET /stream?lang=&tags=&days=&limit=` (origin-gated + rate-limited `RL_STREAM`), neueste zuerst.
+  - Light-Cron: Harvest beim Start + alle `SL_SOCIAL_EVERY_H` (Default 6) Stunden; Pruning nach
+    `SL_SOCIAL_KEEP_DAYS` (21). Opt-in via `SL_SOCIAL_ENABLE` (Default an).
+  - `langdetect` als neue Server-Abhängigkeit.
+
 ## [0.6.119] — 2026-06-25 — Mehr Abwechslung: Lückentext, Vokabeltest, Rubriken
 
 - **Lückentext** baut jetzt aus **allen** Tages-Artikeln (statt nur dem ersten) → viel mehr

@@ -17,7 +17,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from . import admin, config, db, llm, pipeline, wiki
+from . import admin, config, db, llm, pipeline, social, wiki
 
 app = FastAPI(title="Sidelearn Content Server", version="0.1")
 
@@ -86,16 +86,31 @@ def _run_build() -> None:
     asyncio.run(pipeline.build_day(date.today()))
 
 
+def _run_harvest() -> None:
+    try:
+        stats = asyncio.run(social.harvest())
+        print("[social] harvest:", stats)
+    except Exception as e:  # noqa: BLE001 — a failed harvest must not crash the worker
+        print("[social] harvest failed:", e)
+
+
 @app.on_event("startup")
 def _startup() -> None:
     db.init()
+    import threading
+
     # By default the container just serves; content is prepared via the admin
     # dashboard. Auto-build (startup + daily cron) is opt-in via SL_AUTO_BUILD=1.
     if config.AUTO_BUILD:
-        import threading
-
         threading.Thread(target=_run_build, daemon=True).start()
         scheduler.add_job(_run_build, "cron", hour=config.BUILD_HOUR, id="daily", replace_existing=True)
+    # Social stream: harvest curated hashtag toots now + every N hours (no LLM).
+    if config.SOCIAL_ENABLE:
+        threading.Thread(target=_run_harvest, daemon=True).start()
+        scheduler.add_job(
+            _run_harvest, "interval", hours=config.SOCIAL_EVERY_H, id="social", replace_existing=True
+        )
+    if (config.AUTO_BUILD or config.SOCIAL_ENABLE) and not scheduler.running:
         scheduler.start()
 
 
@@ -378,6 +393,27 @@ def areas_list(
     if days:
         since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
     return {"lang": lang, "level": level, "articles": db.area_pool_prepared(lang, level, date_, since)}
+
+
+@app.get("/stream", dependencies=[Depends(require_origin)])
+@limiter.limit(config.RL_STREAM)
+def stream(
+    request: Request,
+    lang: str = Query(...),
+    tags: str = Query(""),
+    days: int | None = Query(None, ge=1, le=30),
+    limit: int = Query(50, ge=1, le=100),
+) -> dict:
+    """Pooled Mastodon toots for `lang`, newest first — for the Social-Stream tab.
+    `tags` = comma-sep rubriks (sport, natur, …) to filter; `days` limits age.
+    Instant, no LLM (difficulty/translation happen client-side / on-tap), but a
+    per-IP rate limit guards the DB."""
+    _check_lang(lang)
+    rubriks = [t.strip() for t in tags.split(",") if t.strip()] or None
+    since = None
+    if days:
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    return {"lang": lang, "toots": db.stream_toots(lang, rubriks, since, limit)}
 
 
 @app.get("/surprise", dependencies=[Depends(require_origin)])
