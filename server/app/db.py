@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS toot (
   fetched_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_toot_stream ON toot (lang, created_at);
+CREATE INDEX IF NOT EXISTS idx_toot_url ON toot (url);
 CREATE TABLE IF NOT EXISTS telemetry (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT NOT NULL,
@@ -252,6 +253,14 @@ def upsert_toot(t: dict[str, Any]) -> bool:
             t,
         )
         return cur.rowcount > 0
+
+
+def toot_id_for_url(url: str) -> Optional[str]:
+    """The id of a pooled toot with this canonical URL, if any — for cross-instance
+    dedup of federated duplicates."""
+    with conn() as c:
+        row = c.execute("SELECT id FROM toot WHERE url=? LIMIT 1", (url,)).fetchone()
+    return row["id"] if row else None
 
 
 def stream_toots(

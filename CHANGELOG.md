@@ -10,6 +10,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `it` hat keine vorgebauten Artikel, aber Toot-Pool + Offline-Wörterbuch: die On-Tap-Helfer
   (`/translate`, `/sentence`, `/stream`) akzeptieren jetzt `LANGS ∪ SOCIAL_LANGS`.
 - Doku `doc/tech/social-stream.md` + `scripts/stream-report.py` um die neuen Sprachen erweitert.
+- **Mehrere Instanzen pro Sprache** möglich (`SOURCES` = Liste): 2. Quelle für nl (`nerdculture.de`),
+  es (`mas.to`), it (`livellosegreto.it`) — verifiziert per Live-Probe. Föderierte Doppel-Toots werden
+  über die kanonische URL dedupliziert (`toot_id_for_url`, Index auf `toot.url`).
 
 ## [0.6.123] — 2026-06-25 — Stream: mehr Input + Längen-Cap
 
