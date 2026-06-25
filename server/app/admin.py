@@ -88,8 +88,9 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .cols{display:grid;grid-template-columns:1fr 340px;gap:56px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
 .side{position:relative}
-.side-inner{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;padding-right:6px}
-.side-foot{margin-top:auto;padding-top:18px}
+.side-inner{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-right:2px}
+.costlist{flex:1 1 0;min-height:0;overflow-y:auto;margin:2px 0 6px}
+.side-foot{padding-top:14px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
@@ -198,7 +199,7 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
         f"{kpis}"
         "<div class=legend><i style='background:var(--accent)'></i>In "
         "<i style='background:var(--accent2)'></i>Out</div>"
-        + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>")
+        + "<div class=costlist>" + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>") + "</div>"
         + ("<h3>Tokens pro Sprache</h3>" + vchart if vchart else "")
         + "<div class=side-foot><p><a class=btn href='/admin/stats'>Details →</a></p>"
         + f"<p class=muted style='margin-top:10px'>Provider: {config.PROVIDER} · {config.GEMINI_MODEL}<br>"
