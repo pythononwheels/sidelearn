@@ -89,6 +89,8 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
 .side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;display:flex;flex-direction:column}
 .side-foot{margin-top:auto;padding-top:18px}
+.lpanel{border:1px solid var(--border);border-radius:14px;padding:14px 18px 18px}
+.lpanel>h3:first-child{margin-top:2px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
@@ -206,11 +208,12 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
 
     cards_html, busy, state = _day_cards(lang, date_key)
     left = (
-        f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
+        "<div class=lpanel>"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
         f"<div class=dayhead><span class=dh>{date_key}</span>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
+        "</div>"
     )
-    body = f"<div class=cols><div>{left}</div>{side}</div>"
+    body = f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}<div class=cols>{left}{side}</div>"
     return page("Sidelearn Admin", body, refresh=5 if busy else 0)
 
 
