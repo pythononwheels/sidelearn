@@ -27,7 +27,7 @@ CSS = """
 }}
 *{box-sizing:border-box}
 body{font:15px/1.5 system-ui,-apple-system,sans-serif;margin:0;background:var(--bg);color:var(--text)}
-.wrap{max-width:900px;margin:0 auto;padding:20px}
+.wrap{max-width:900px;margin:0 auto;padding:20px 20px 56px}
 a{color:var(--accent);text-decoration:none}
 h1{font-size:20px}h3{margin-top:22px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
@@ -37,8 +37,12 @@ h1{font-size:20px}h3{margin-top:22px}
 .lvlbtn.todo{opacity:.45}
 .btn{font:inherit;font-weight:600;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--accent);cursor:pointer}
 .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn.small{padding:3px 9px;font-size:12px}
+.dayhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:30px 0 8px}
+.dayhead .dh{font-size:18px;font-weight:700}
 .btn:disabled{opacity:.5;cursor:default}
-.card{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:14px;margin:12px 0;display:flex;gap:14px}
+.card{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;margin:14px 0;display:flex;gap:14px;line-height:1.5}
+.card .lvl{margin-top:2px}
 .card img,.card .ph{width:64px;height:64px;border-radius:10px;flex:0 0 auto}
 .card img{object-fit:cover}
 .card .ph{background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted)}
@@ -46,6 +50,17 @@ h1{font-size:20px}h3{margin-top:22px}
 .lvl.done{background:var(--soft);color:var(--ok);border-color:transparent}
 .muted{color:var(--muted);font-size:13px}
 .day{display:inline-block;margin:3px 6px 3px 0;padding:4px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.day.on{background:var(--accent);color:#fff;border-color:transparent}
+.daysv{display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:6px 0 4px}
+.daysv .day{margin:0}
+.cal-nav{display:flex;align-items:center;gap:12px;margin:6px 0 8px}
+.cal-nav b{font-size:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 0 8px}
+.cal-h{text-align:center;font-size:11px;color:var(--muted);padding:2px 0}
+.cal-d{display:flex;align-items:center;justify-content:center;height:34px;border-radius:9px;border:1px solid transparent;color:var(--muted);font-size:13px}
+.cal-d.has{color:var(--text);border-color:var(--border);background:var(--surface);font-weight:700}
+.cal-d.today{outline:2px solid var(--accent2);outline-offset:-2px}
+.cal-d.on{background:var(--accent);color:#fff;border-color:transparent}
 form{display:inline}
 .run{color:var(--warn);font-weight:700}
 .summary{background:var(--soft);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:16px;line-height:1.55}
@@ -70,9 +85,13 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:56px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;position:sticky;top:16px}
+.side{position:relative}
+.side-inner{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-right:2px}
+.side-inner>h3:first-child{margin-top:0}
+.costlist{flex:1 1 0;min-height:0;overflow-y:auto;margin:2px 0 6px}
+.side-foot{padding-top:14px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
@@ -130,15 +149,14 @@ def lang_tabs(active: str, date_key: str | None = None) -> str:
 
 
 @router.get("/admin", response_class=HTMLResponse)
-def admin_home(lang: str = "fr") -> HTMLResponse:
+def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLResponse:
     if lang not in config.LANGS:
         lang = config.LANGS[0]
     today = pipeline.today_key()
-    dates = db.daily_dates(lang, 60)
-    day_links = (
-        "".join(f"<a class=day href='/admin/day?lang={lang}&date={d}'>{d}</a>" for d in dates)
-        or "<span class=muted>noch keine Tage entdeckt</span>"
-    )
+    date_key = date or today
+    month = month or date_key[:7]
+    have = set(db.daily_dates(lang, 366))
+    day_links = _month_calendar(lang, date_key, month, have)
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
     maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
@@ -178,25 +196,27 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
     vchart = f"<div class=vchart>{''.join(vcols)}</div>" if vcols else ""
 
     side = (
-        "<aside class=side><h3>Telemetrie</h3>"
+        "<aside class=side><div class=side-inner><h3>Telemetrie</h3>"
         f"{kpis}"
         "<div class=legend><i style='background:var(--accent)'></i>In "
         "<i style='background:var(--accent2)'></i>Out</div>"
-        + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>")
+        + "<div class=costlist>" + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>") + "</div>"
         + ("<h3>Tokens pro Sprache</h3>" + vchart if vchart else "")
-        + "<p style='margin-top:12px'><a class=btn href='/admin/stats'>Details →</a></p></aside>"
+        + "<div class=side-foot><p><a class=btn href='/admin/stats'>Details →</a></p>"
+        + f"<p class=muted style='margin-top:10px'>Provider: {config.PROVIDER} · {config.GEMINI_MODEL}<br>"
+        + f"Level: {', '.join(config.LEVELS)}</p></div></div></aside>"
     )
 
+    cards_html, busy, state = _day_cards(lang, date_key)
     left = (
-        f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
-        f"<form method=post action='/admin/discover?lang={lang}&date={today}'>"
-        f"<button class='btn primary'>Heute entdecken ({lang.upper()} · {today})</button></form>"
+        "<div>"
+        f"<h1 style='margin-top:0'>Sidelearn — Admin</h1>{lang_tabs(lang)}"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
-        f"<p class=muted>Provider: {config.PROVIDER} · Modell: {config.GEMINI_MODEL} · "
-        f"Level: {', '.join(config.LEVELS)}</p>"
+        f"<div class=dayhead><span class=dh>{date_key}</span>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
+        "</div>"
     )
-    body = f"<div class=cols><div>{left}</div>{side}</div>"
-    return page("Sidelearn Admin", body)
+    body = f"<div class=cols>{left}{side}</div>"
+    return page("Sidelearn Admin", body, refresh=5 if busy else 0)
 
 
 @router.get("/admin/stats", response_class=HTMLResponse)
@@ -340,16 +360,48 @@ def admin_stats() -> HTMLResponse:
     return page("Telemetrie", body)
 
 
-@router.get("/admin/day", response_class=HTMLResponse)
-def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
-    date_key = date or pipeline.today_key()
+def _month_calendar(lang: str, date_key: str, month: str, have: set[str]) -> str:
+    """Month grid for the day picker. Days with a built pool are highlighted;
+    today is outlined; the selected day is filled. Any cell links to that day."""
+    import calendar as _calmod
+    from datetime import date as _date, timedelta as _td
+
+    y, mo = int(month[:4]), int(month[5:7])
+    prev_m = (_date(y, mo, 1) - _td(days=1)).strftime("%Y-%m")
+    next_m = (_date(y, mo, 28) + _td(days=10)).replace(day=1).strftime("%Y-%m")
+    today = pipeline.today_key()
+    head = "".join(f"<span class=cal-h>{d}</span>" for d in ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"))
+    cells = ["<span></span>"] * _date(y, mo, 1).weekday()
+    for d in range(1, _calmod.monthrange(y, mo)[1] + 1):
+        ds = f"{y:04d}-{mo:02d}-{d:02d}"
+        cls = "cal-d" + (" has" if ds in have else "") + (" on" if ds == date_key else "") + (" today" if ds == today else "")
+        cells.append(f"<a class='{cls}' href='/admin?lang={lang}&date={ds}&month={month}'>{d}</a>")
+    nav = (
+        "<div class=cal-nav>"
+        f"<a class=btn href='/admin?lang={lang}&date={date_key}&month={prev_m}'>‹</a>"
+        f"<b>{y}-{mo:02d}</b>"
+        f"<a class=btn href='/admin?lang={lang}&date={date_key}&month={next_m}'>›</a>"
+        "</div>"
+    )
+    return nav + f"<div class=cal>{head}{''.join(cells)}</div>"
+
+
+def _day_cards(lang: str, date_key: str) -> tuple[str, bool, str]:
+    """Article cards for one day's pool (thumbnail, level badges, per-article
+    actions). Returns (html, busy, state) where state is empty|partial|complete.
+    Shared by the day page and the admin home."""
     ids = db.daily_article_ids(date_key, lang)
     cards = []
+    nlev = len(config.LEVELS)
+    n_art = n_done = 0
     for aid in ids:
         art = db.get_article(aid)
         if not art:
             continue
+        n_art += 1
         done = set(db.prepared_levels(aid))
+        if len(done) >= nlev:
+            n_done += 1
         running = aid in pipeline.PROCESSING
         badges = "".join(
             f"<span class='lvl {'done' if lv in done else ''}'>{lv}</span>" for lv in config.LEVELS
@@ -385,15 +437,47 @@ def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
             f"<a class=btn href='/admin/article?id={aid}&lang={lang}&date={date_key}'>Ansehen</a>"
             f"</div></div>"
         )
-    cards_html = "".join(cards) or "<p class=muted>Kein Pool — oben entdecken.</p>"
+    cards_html = "".join(cards) or "<p class=muted>Für diesen Tag liegt noch nichts vor.</p>"
+    busy = any(db.get_article(a) and a in pipeline.PROCESSING for a in ids)
+    state = "empty" if n_art == 0 else ("complete" if n_done >= n_art else "partial")
+    return cards_html, busy, state
+
+
+def _day_bar(lang: str, date_key: str, state: str, busy: bool) -> str:
+    """One context action for the day (or none): build an empty day, finish a
+    partial one, or — when complete — a small force-reprocess. Auto-build (cron)
+    handles the normal case, so nothing shows when there's nothing to do."""
+
+    def form(action: str, label: str, primary: bool = False, extra: str = "", title: str = "") -> str:
+        cls = "btn primary" if primary else "btn small"
+        ttl = f" title='{escape(title)}'" if title else ""
+        return (
+            f"<form method=post action='/admin/{action}?lang={lang}&date={date_key}{extra}'>"
+            f"<button class='{cls}'{ttl}>{label}</button></form>"
+        )
+
+    if busy:
+        return "<span class=muted>⏳ läuft … (Auto-Refresh)</span>"
+    if state == "empty":
+        note = "Noch nichts gebaut." if config.AUTO_BUILD else "Auto-Build ist aus."
+        return form("build-day", "Tag bauen", True) + f"<span class=muted>{note}</span>"
+    if state == "partial":
+        return form("process-day", "Fehlende aufbereiten", True) + "<span class=muted>teilweise</span>"
+    return (
+        "<span class=muted>✓ vollständig</span>"
+        + form("process-day", "↻ neu aufbereiten", False, "&force=1",
+               "Erzeugt alle Niveau-Versionen des Tages neu per KI (kostet Tokens).")
+    )
+
+
+@router.get("/admin/day", response_class=HTMLResponse)
+def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
+    date_key = date or pipeline.today_key()
+    cards_html, busy, state = _day_cards(lang, date_key)
     body = (
         f"<h1><a href='/admin?lang={lang}'>← Admin</a> · {date_key}</h1>{lang_tabs(lang, date_key)}"
-        f"<div class=bar>"
-        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class=btn>Pool neu entdecken</button></form>"
-        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class='btn primary'>Alle verarbeiten</button></form>"
-        f"</div>{cards_html}"
+        f"<div class=dayhead>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
     )
-    busy = any(db.get_article(a) and a in pipeline.PROCESSING for a in ids)
     if busy:
         body += "<p class=muted>Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
     return page(f"Admin {date_key} {lang}", body, refresh=5 if busy else 0)
@@ -465,7 +549,16 @@ def admin_article(id: str, lang: str = "fr", date: str = "", level: str = "") ->
 @router.post("/admin/discover")
 async def admin_discover(lang: str, date: str) -> RedirectResponse:
     await pipeline.discover(lang, _parse(date))
-    return RedirectResponse(f"/admin/day?lang={lang}&date={date}", status_code=303)
+    return RedirectResponse(f"/admin?lang={lang}&date={date}", status_code=303)
+
+
+@router.post("/admin/build-day")
+async def admin_build_day(background: BackgroundTasks, lang: str, date: str) -> RedirectResponse:
+    """Build a whole day from scratch: discover the article pool (no LLM), then
+    process every level in the background. The one-click action for an empty day."""
+    await pipeline.discover(lang, _parse(date))
+    background.add_task(pipeline.process_day, date, lang, False)
+    return RedirectResponse(f"/admin?lang={lang}&date={date}", status_code=303)
 
 
 @router.post("/admin/process")
@@ -487,9 +580,9 @@ def admin_process(
 
 
 @router.post("/admin/process-day")
-def admin_process_day(background: BackgroundTasks, lang: str, date: str) -> RedirectResponse:
-    background.add_task(pipeline.process_day, date, lang)
-    return RedirectResponse(f"/admin/day?lang={lang}&date={date}", status_code=303)
+def admin_process_day(background: BackgroundTasks, lang: str, date: str, force: bool = False) -> RedirectResponse:
+    background.add_task(pipeline.process_day, date, lang, force)
+    return RedirectResponse(f"/admin?lang={lang}&date={date}", status_code=303)
 
 
 @router.get("/admin/abuse", response_class=HTMLResponse)
