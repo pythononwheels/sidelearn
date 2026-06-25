@@ -156,10 +156,9 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     day_links = _month_calendar(lang, date_key, month, have)
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
-    top = by[:6]  # keep the panel compact — full breakdown lives on /admin/stats
-    maxtok = max([r["tin"] + r["tout"] for r in top] + [1])
+    maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
     sbars = []
-    for r in top:
+    for r in by:
         total = r["tin"] + r["tout"]
         w = total / maxtok * 100
         inpct = (r["tin"] / total * 100) if total else 0
@@ -168,11 +167,6 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
             f"<div class=bar2 style='width:{w:.0f}%'>"
             f"<span class=in style='width:{inpct:.0f}%'></span><span class=out style='flex:1'></span></div>"
             f"<span class=c>${r['cost']:.4f}</span></div>"
-        )
-    if len(by) > len(top):
-        sbars.append(
-            f"<p class=muted style='margin:8px 0 0'>+{len(by) - len(top)} weitere · "
-            "<a href='/admin/stats'>alle anzeigen</a></p>"
         )
 
     kpis = (
