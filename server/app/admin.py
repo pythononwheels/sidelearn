@@ -37,6 +37,9 @@ h1{font-size:20px}h3{margin-top:22px}
 .lvlbtn.todo{opacity:.45}
 .btn{font:inherit;font-weight:600;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--accent);cursor:pointer}
 .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn.small{padding:3px 9px;font-size:12px}
+.dayhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:30px 0 8px}
+.dayhead .dh{font-size:18px;font-weight:700}
 .btn:disabled{opacity:.5;cursor:default}
 .card{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;margin:14px 0;display:flex;gap:14px;line-height:1.5}
 .card .lvl{margin-top:2px}
@@ -204,7 +207,7 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     left = (
         f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
-        f"<h3 style='margin-top:32px'>{date_key}</h3>{_day_bar(lang, date_key, state, busy)}{cards_html}"
+        f"<div class=dayhead><span class=dh>{date_key}</span>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
     )
     body = f"<div class=cols><div>{left}</div>{side}</div>"
     return page("Sidelearn Admin", body, refresh=5 if busy else 0)
@@ -439,21 +442,26 @@ def _day_bar(lang: str, date_key: str, state: str, busy: bool) -> str:
     partial one, or — when complete — a small force-reprocess. Auto-build (cron)
     handles the normal case, so nothing shows when there's nothing to do."""
 
-    def form(action: str, label: str, primary: bool = False, extra: str = "") -> str:
-        cls = "btn primary" if primary else "btn"
+    def form(action: str, label: str, primary: bool = False, extra: str = "", title: str = "") -> str:
+        cls = "btn primary" if primary else "btn small"
+        ttl = f" title='{escape(title)}'" if title else ""
         return (
             f"<form method=post action='/admin/{action}?lang={lang}&date={date_key}{extra}'>"
-            f"<button class='{cls}'>{label}</button></form>"
+            f"<button class='{cls}'{ttl}>{label}</button></form>"
         )
 
     if busy:
-        return "<p class=muted style='margin:4px 0 14px'>⏳ Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
+        return "<span class=muted>⏳ läuft … (Auto-Refresh)</span>"
     if state == "empty":
         note = "Noch nichts gebaut." if config.AUTO_BUILD else "Auto-Build ist aus."
-        return f"<div class=bar>{form('build-day', 'Tag bauen', True)}<span class=muted>{note}</span></div>"
+        return form("build-day", "Tag bauen", True) + f"<span class=muted>{note}</span>"
     if state == "partial":
-        return f"<div class=bar>{form('process-day', 'Fehlende aufbereiten', True)}<span class=muted>Teilweise aufbereitet.</span></div>"
-    return f"<div class=bar><span class=muted>✓ Vollständig aufbereitet.</span>{form('process-day', '↻ neu aufbereiten', False, '&force=1')}</div>"
+        return form("process-day", "Fehlende aufbereiten", True) + "<span class=muted>teilweise</span>"
+    return (
+        "<span class=muted>✓ vollständig</span>"
+        + form("process-day", "↻ neu aufbereiten", False, "&force=1",
+               "Erzeugt alle Niveau-Versionen des Tages neu per KI (kostet Tokens).")
+    )
 
 
 @router.get("/admin/day", response_class=HTMLResponse)
@@ -462,7 +470,7 @@ def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
     cards_html, busy, state = _day_cards(lang, date_key)
     body = (
         f"<h1><a href='/admin?lang={lang}'>← Admin</a> · {date_key}</h1>{lang_tabs(lang, date_key)}"
-        f"{_day_bar(lang, date_key, state, busy)}{cards_html}"
+        f"<div class=dayhead>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
     )
     if busy:
         body += "<p class=muted>Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
