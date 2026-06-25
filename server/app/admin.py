@@ -87,7 +87,8 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .err{color:var(--err)}
 .cols{display:grid;grid-template-columns:1fr 340px;gap:56px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{display:flex;flex-direction:column}
+.side{position:relative}
+.side-inner{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;padding-right:6px}
 .side-foot{margin-top:auto;padding-top:18px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
@@ -193,7 +194,7 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     vchart = f"<div class=vchart>{''.join(vcols)}</div>" if vcols else ""
 
     side = (
-        "<aside class=side><h3>Telemetrie</h3>"
+        "<aside class=side><div class=side-inner><h3>Telemetrie</h3>"
         f"{kpis}"
         "<div class=legend><i style='background:var(--accent)'></i>In "
         "<i style='background:var(--accent2)'></i>Out</div>"
@@ -201,7 +202,7 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
         + ("<h3>Tokens pro Sprache</h3>" + vchart if vchart else "")
         + "<div class=side-foot><p><a class=btn href='/admin/stats'>Details →</a></p>"
         + f"<p class=muted style='margin-top:10px'>Provider: {config.PROVIDER} · {config.GEMINI_MODEL}<br>"
-        + f"Level: {', '.join(config.LEVELS)}</p></div></aside>"
+        + f"Level: {', '.join(config.LEVELS)}</p></div></div></aside>"
     )
 
     cards_html, busy, state = _day_cards(lang, date_key)
