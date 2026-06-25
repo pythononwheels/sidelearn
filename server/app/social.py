@@ -59,24 +59,31 @@ SOURCES: dict[str, dict[str, Any]] = {
     },
 }
 
+_ANCHOR = re.compile(r"<a\b[^>]*>.*?</a>", re.IGNORECASE | re.DOTALL)
 _TAG_HTML = re.compile(r"<[^>]+>")
 _BLOCK_BREAK = re.compile(r"</p>|<br\s*/?>", re.IGNORECASE)
 _URL = re.compile(r"https?://\S+")
 _MENTION = re.compile(r"@[\w.\-]+(@[\w.\-]+)?")
+_HASHTAG = re.compile(r"#\w+")
 _WS = re.compile(r"\s+")
 _LETTERS = re.compile(r"[^A-Za-zÀ-ÿ]")
 
 
 def clean(content_html: str) -> str:
-    """HTML toot body → readable plain text: strip tags, unescape entities, drop
-    links/mentions, turn '#science' into the bare word, collapse whitespace.
-    Emojis are kept (they give the social flavour and don't hurt reading)."""
-    text = _BLOCK_BREAK.sub(" ", content_html)
+    """HTML toot body → readable plain text. Emojis are kept (social flavour, no
+    harm); links, @mentions and #hashtags are removed.
+
+    Mastodon wraps links/hashtags/mentions in <a>…</a> (URLs split across <span>s),
+    so we drop whole anchors FIRST — otherwise stripping tags leaves fragments like
+    'https:// buff.ly/…' and a trailing hashtag word-salad, which wreck readability
+    AND mislead the language detector."""
+    text = _ANCHOR.sub(" ", content_html)
+    text = _BLOCK_BREAK.sub(" ", text)
     text = _TAG_HTML.sub(" ", text)
     text = html.unescape(text)
-    text = _URL.sub("", text)
-    text = _MENTION.sub("", text)
-    text = text.replace("#", "")  # keep the hashtag word, drop the '#'
+    text = _URL.sub(" ", text)      # bare URLs (rare — most are anchored)
+    text = _MENTION.sub(" ", text)  # bare @mentions
+    text = _HASHTAG.sub(" ", text)  # bare #hashtags
     return _WS.sub(" ", text).strip()
 
 
@@ -132,6 +139,7 @@ async def harvest() -> dict[str, Any]:
                     stats[key] = f"err: {e}"
                     continue
                 added, seen = 0, 0
+                by_author: dict[str, int] = {}
                 for s in statuses:
                     seen += 1
                     text = clean(s.get("content", ""))
@@ -142,6 +150,12 @@ async def harvest() -> dict[str, Any]:
                     if _HAVE_LANGDETECT and detect_lang(text) != lang:
                         continue
                     acct = s.get("account", {}) or {}
+                    handle = acct.get("acct") or ""
+                    # Cap one author's share of a tag so bot/feed accounts (e.g.
+                    # auto-posted video titles) can't flood the pool.
+                    if by_author.get(handle, 0) >= config.SOCIAL_MAX_PER_AUTHOR:
+                        continue
+                    by_author[handle] = by_author.get(handle, 0) + 1
                     row = {
                         "id": f"{instance}:{s['id']}",
                         "lang": lang,
