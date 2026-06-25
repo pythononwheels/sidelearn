@@ -137,7 +137,8 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text-soft); cursor: pointer;
 }
 .st-chip.on { background: var(--ll-accent-soft); color: var(--ll-accent-strong); border-color: var(--ll-accent); }
-.st-mine { display: flex; align-items: center; gap: 8px; margin: 10px 2px 2px; font-size: 13px; color: var(--ll-text-soft); }
+.st-opts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 10px 2px 2px; }
+.st-mine { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ll-text-soft); cursor: pointer; }
 .st-mine input { width: 16px; height: 16px; accent-color: var(--ll-accent); }
 .st-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .st-card {

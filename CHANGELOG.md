@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.121] — 2026-06-25 — Stream: einfachste Toots zuerst
+
+- **Niveau-Sortierung im Stream**: neue Toggle **„Einfachste zuerst"** (Default an) holt die
+  zugänglichsten Toots nach oben — Anfänger sehen nicht mehr nur C1. CEFR-Badge fairer kalibriert
+  (80. statt 85. Perzentil), **„ungefähr mein Niveau"**-Filter auf Niveau+1 gelockert.
+
 ## [0.6.120] — 2026-06-25 — Social Stream: Mastodon-Toots zum Lesen & Lernen
 
 - **Neuer „Stream"-Tab**: echte, kurze Mastodon-Posts in der Lernsprache — mit Bild, antippbaren

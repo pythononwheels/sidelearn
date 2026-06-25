@@ -946,7 +946,9 @@ function tootBand(content: string, ranks: Record<string, number>): CefrLevel | n
   }
   if (rs.length < 4) return null;
   rs.sort((a, b) => a - b);
-  const r = rs[Math.floor(rs.length * 0.85)];
+  // 80th percentile: with on-tap translation the bulk of the text matters more
+  // than the single hardest word, but not so low it under-rates real B1/B2 toots.
+  const r = rs[Math.floor(rs.length * 0.8)];
   return r === undefined ? null : rankToBand(r);
 }
 
@@ -975,6 +977,7 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
   const [toots, setToots] = useState<ServerToot[] | null>(null);
   const [filter, setFilter] = useState<string | null>(null); // chosen rubrik
   const [onlyMine, setOnlyMine] = useState(false);
+  const [sortEasy, setSortEasy] = useState(true); // easiest toots first (beginner-friendly)
   const [pop, setPop] = useState<{ word: string; sentence: string; x: number; y: number } | null>(null);
 
   const supported = STREAM_LANGS.includes(settings.learn);
@@ -999,11 +1002,13 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
     return r !== undefined && isAboveLevel(rankToBand(r), settings.level);
   };
 
-  const shown = (toots ?? []).filter((t) => {
-    if (!onlyMine || !ranks) return true;
-    const b = tootBand(t.content, ranks);
-    return !b || !isAboveLevel(b, settings.level);
-  });
+  // Tag each toot with its (client-side) band, optionally keep only what's at/near
+  // the user's level, and surface the easiest first so beginners aren't buried in C1.
+  const myIdx = CEFR_LEVELS.indexOf(settings.level);
+  const bandIdx = (b: CefrLevel | null) => (b ? CEFR_LEVELS.indexOf(b) : 99);
+  const ranked = (toots ?? []).map((t) => ({ t, band: ranks ? tootBand(t.content, ranks) : null }));
+  const filtered = ranked.filter(({ band }) => !onlyMine || band === null || bandIdx(band) <= myIdx + 1);
+  const shown = sortEasy ? [...filtered].sort((a, b) => bandIdx(a.band) - bandIdx(b.band)) : filtered;
 
   return (
     <main class="sl-main with-nav">
@@ -1030,10 +1035,16 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
               );
             })}
           </div>
-          <label class="st-mine">
-            <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine((e.target as HTMLInputElement).checked)} />
-            <span>nur was zu meinem Niveau passt</span>
-          </label>
+          <div class="st-opts">
+            <label class="st-mine">
+              <input type="checkbox" checked={sortEasy} onChange={(e) => setSortEasy((e.target as HTMLInputElement).checked)} />
+              <span>Einfachste zuerst</span>
+            </label>
+            <label class="st-mine">
+              <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine((e.target as HTMLInputElement).checked)} />
+              <span>ungefähr mein Niveau</span>
+            </label>
+          </div>
 
           {toots === null ? (
             <div style={{ marginTop: '24px' }}><Dots /></div>
@@ -1045,9 +1056,8 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
             </p>
           ) : (
             <ul class="st-list">
-              {shown.map((t) => {
+              {shown.map(({ t, band }) => {
                 const a = AREAS.find((x) => x.id === t.rubrik);
-                const band = ranks ? tootBand(t.content, ranks) : null;
                 return (
                   <li key={t.id} class="st-card">
                     <div class="st-card-head">
