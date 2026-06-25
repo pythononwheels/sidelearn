@@ -20,13 +20,16 @@ Kerncode: `server/app/social.py` (Harvester + Quellen), `server/app/db.py`
 öffentliche Hashtag-Timeline — `GET https://{instanz}/api/v1/timelines/tag/{tag}?limit=40`
 — **ohne Auth**.
 
-| Sprache | Instanz | Status |
+Pro Sprache **eine oder mehrere** Instanzen (`SOURCES` = Liste). Föderierte
+Doppel-Toots werden über die kanonische `url` dedupliziert.
+
+| Sprache | Instanz(en) | Status |
 |---|---|---|
 | **en** | `mastodon.social` | aktiv |
 | **fr** | `piaille.fr` | aktiv |
-| **nl** | `mastodon.nl` | aktiv |
-| **es** | `masto.es` | aktiv |
-| **it** | `mastodon.uno` | aktiv |
+| **nl** | `mastodon.nl`, `nerdculture.de` | aktiv |
+| **es** | `masto.es`, `mas.to` | aktiv |
+| **it** | `mastodon.uno`, `livellosegreto.it` | aktiv |
 | de | — | n/a (Muttersprache, nicht lernbar) |
 
 > Lernsprachen sind fr/en/nl/es/it (Muttersprache = Deutsch). `it` hat keine
