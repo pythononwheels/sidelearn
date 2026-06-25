@@ -85,12 +85,10 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:stretch}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
 .side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;display:flex;flex-direction:column}
 .side-foot{margin-top:auto;padding-top:18px}
-.lpanel{border:1px solid var(--border);border-radius:14px;padding:14px 18px 18px}
-.lpanel>h3:first-child{margin-top:2px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
@@ -158,9 +156,10 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     day_links = _month_calendar(lang, date_key, month, have)
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
-    maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
+    top = by[:6]  # keep the panel compact — full breakdown lives on /admin/stats
+    maxtok = max([r["tin"] + r["tout"] for r in top] + [1])
     sbars = []
-    for r in by:
+    for r in top:
         total = r["tin"] + r["tout"]
         w = total / maxtok * 100
         inpct = (r["tin"] / total * 100) if total else 0
@@ -169,6 +168,11 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
             f"<div class=bar2 style='width:{w:.0f}%'>"
             f"<span class=in style='width:{inpct:.0f}%'></span><span class=out style='flex:1'></span></div>"
             f"<span class=c>${r['cost']:.4f}</span></div>"
+        )
+    if len(by) > len(top):
+        sbars.append(
+            f"<p class=muted style='margin:8px 0 0'>+{len(by) - len(top)} weitere · "
+            "<a href='/admin/stats'>alle anzeigen</a></p>"
         )
 
     kpis = (
@@ -208,8 +212,8 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
 
     cards_html, busy, state = _day_cards(lang, date_key)
     left = (
-        "<div class=lpanel>"
-        f"<h3>Tage ({lang.upper()})</h3>{day_links}"
+        "<div>"
+        f"<h3 style='margin-top:0'>Tage ({lang.upper()})</h3>{day_links}"
         f"<div class=dayhead><span class=dh>{date_key}</span>{_day_bar(lang, date_key, state, busy)}</div>{cards_html}"
         "</div>"
     )
