@@ -46,6 +46,9 @@ h1{font-size:20px}h3{margin-top:22px}
 .lvl.done{background:var(--soft);color:var(--ok);border-color:transparent}
 .muted{color:var(--muted);font-size:13px}
 .day{display:inline-block;margin:3px 6px 3px 0;padding:4px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.day.on{background:var(--accent);color:#fff;border-color:transparent}
+.daysv{display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:6px 0 4px}
+.daysv .day{margin:0}
 form{display:inline}
 .run{color:var(--warn);font-weight:700}
 .summary{background:var(--soft);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:16px;line-height:1.55}
@@ -130,15 +133,19 @@ def lang_tabs(active: str, date_key: str | None = None) -> str:
 
 
 @router.get("/admin", response_class=HTMLResponse)
-def admin_home(lang: str = "fr") -> HTMLResponse:
+def admin_home(lang: str = "fr", date: str = "") -> HTMLResponse:
     if lang not in config.LANGS:
         lang = config.LANGS[0]
     today = pipeline.today_key()
+    date_key = date or today
     dates = db.daily_dates(lang, 60)
-    day_links = (
-        "".join(f"<a class=day href='/admin/day?lang={lang}&date={d}'>{d}</a>" for d in dates)
-        or "<span class=muted>noch keine Tage entdeckt</span>"
-    )
+    if dates:
+        day_links = "<div class=daysv>" + "".join(
+            f"<a class='day{' on' if d == date_key else ''}' href='/admin?lang={lang}&date={d}'>{d}</a>"
+            for d in dates
+        ) + "</div>"
+    else:
+        day_links = "<p class=muted>Noch keine Tage entdeckt — unten „Pool entdecken“.</p>"
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
     maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
@@ -184,19 +191,19 @@ def admin_home(lang: str = "fr") -> HTMLResponse:
         "<i style='background:var(--accent2)'></i>Out</div>"
         + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>")
         + ("<h3>Tokens pro Sprache</h3>" + vchart if vchart else "")
-        + "<p style='margin-top:12px'><a class=btn href='/admin/stats'>Details →</a></p></aside>"
+        + "<p style='margin-top:12px'><a class=btn href='/admin/stats'>Details →</a></p>"
+        + f"<p class=muted style='margin-top:10px'>Provider: {config.PROVIDER} · {config.GEMINI_MODEL}<br>"
+        + f"Level: {', '.join(config.LEVELS)}</p></aside>"
     )
 
+    cards_html, busy = _day_cards(lang, date_key)
     left = (
         f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
-        f"<form method=post action='/admin/discover?lang={lang}&date={today}'>"
-        f"<button class='btn primary'>Heute entdecken ({lang.upper()} · {today})</button></form>"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
-        f"<p class=muted>Provider: {config.PROVIDER} · Modell: {config.GEMINI_MODEL} · "
-        f"Level: {', '.join(config.LEVELS)}</p>"
+        f"<h3 style='margin-top:18px'>{date_key}</h3>{_day_bar(lang, date_key)}{cards_html}"
     )
     body = f"<div class=cols><div>{left}</div>{side}</div>"
-    return page("Sidelearn Admin", body)
+    return page("Sidelearn Admin", body, refresh=5 if busy else 0)
 
 
 @router.get("/admin/stats", response_class=HTMLResponse)
@@ -340,9 +347,9 @@ def admin_stats() -> HTMLResponse:
     return page("Telemetrie", body)
 
 
-@router.get("/admin/day", response_class=HTMLResponse)
-def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
-    date_key = date or pipeline.today_key()
+def _day_cards(lang: str, date_key: str) -> tuple[str, bool]:
+    """Article cards for one day's pool (thumbnail, level badges, per-article
+    actions). Returns (html, busy). Shared by the day page and the admin home."""
     ids = db.daily_article_ids(date_key, lang)
     cards = []
     for aid in ids:
@@ -385,15 +392,28 @@ def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
             f"<a class=btn href='/admin/article?id={aid}&lang={lang}&date={date_key}'>Ansehen</a>"
             f"</div></div>"
         )
-    cards_html = "".join(cards) or "<p class=muted>Kein Pool — oben entdecken.</p>"
+    cards_html = "".join(cards) or "<p class=muted>Kein Pool für diesen Tag — oben „Pool entdecken“.</p>"
+    busy = any(db.get_article(a) and a in pipeline.PROCESSING for a in ids)
+    return cards_html, busy
+
+
+def _day_bar(lang: str, date_key: str) -> str:
+    return (
+        "<div class=bar>"
+        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class='btn primary'>Pool entdecken ({date_key})</button></form>"
+        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class=btn>Alle verarbeiten</button></form>"
+        "</div>"
+    )
+
+
+@router.get("/admin/day", response_class=HTMLResponse)
+def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
+    date_key = date or pipeline.today_key()
+    cards_html, busy = _day_cards(lang, date_key)
     body = (
         f"<h1><a href='/admin?lang={lang}'>← Admin</a> · {date_key}</h1>{lang_tabs(lang, date_key)}"
-        f"<div class=bar>"
-        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class=btn>Pool neu entdecken</button></form>"
-        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class='btn primary'>Alle verarbeiten</button></form>"
-        f"</div>{cards_html}"
+        f"{_day_bar(lang, date_key)}{cards_html}"
     )
-    busy = any(db.get_article(a) and a in pipeline.PROCESSING for a in ids)
     if busy:
         body += "<p class=muted>Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
     return page(f"Admin {date_key} {lang}", body, refresh=5 if busy else 0)
