@@ -950,6 +950,14 @@ function tootBand(content: string, ranks: Record<string, number>): CefrLevel | n
   return r === undefined ? null : rankToBand(r);
 }
 
+// The sentence containing `word`, capped to the server's sentence limit — so the
+// word popover gets useful context without sending the whole (often long) toot.
+function sentenceFor(text: string, word: string): string {
+  const lw = word.toLowerCase();
+  const hit = splitSentences(text).find((s) => s.toLowerCase().includes(lw));
+  return (hit ?? text).slice(0, 280);
+}
+
 // Toot image (media attachment or link-preview card). Hides itself if the remote
 // image fails to load, so a broken URL never leaves an empty grey box.
 function TootImage({ src }: { src: string }) {
@@ -1049,7 +1057,7 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
                       <a class="st-src" href={t.url} target="_blank" rel="noreferrer noopener">Original ↗</a>
                     </div>
                     <p class="st-text">
-                      <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: t.content, x, y })} />
+                      <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(t.content, w), x, y })} />
                     </p>
                     {t.media_url && <TootImage src={t.media_url} />}
                     {settings.learn !== settings.native && t.content.length <= 400 && (
