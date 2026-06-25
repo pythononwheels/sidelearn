@@ -85,9 +85,10 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;position:sticky;top:16px}
+.side{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:16px;display:flex;flex-direction:column}
+.side-foot{margin-top:auto;padding-top:18px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
@@ -198,9 +199,9 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
         "<i style='background:var(--accent2)'></i>Out</div>"
         + ("".join(sbars) or "<p class=muted>Noch keine Calls.</p>")
         + ("<h3>Tokens pro Sprache</h3>" + vchart if vchart else "")
-        + "<p style='margin-top:12px'><a class=btn href='/admin/stats'>Details →</a></p>"
+        + "<div class=side-foot><p><a class=btn href='/admin/stats'>Details →</a></p>"
         + f"<p class=muted style='margin-top:10px'>Provider: {config.PROVIDER} · {config.GEMINI_MODEL}<br>"
-        + f"Level: {', '.join(config.LEVELS)}</p></aside>"
+        + f"Level: {', '.join(config.LEVELS)}</p></div></aside>"
     )
 
     cards_html, busy, state = _day_cards(lang, date_key)
