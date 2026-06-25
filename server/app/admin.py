@@ -85,10 +85,10 @@ form{display:inline}
 table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
 td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
 .err{color:var(--err)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{border-left:1px solid var(--border);padding-left:26px}
-.side-foot{padding-top:18px}
+.side{border-left:1px solid var(--border);padding-left:26px;display:flex;flex-direction:column}
+.side-foot{margin-top:auto;padding-top:18px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
 .side .kpi{flex:1 1 44%;min-width:0;padding:8px 12px}
