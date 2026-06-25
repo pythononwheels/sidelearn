@@ -43,6 +43,21 @@ CREATE TABLE IF NOT EXISTS area_pool (
   PRIMARY KEY (area, lang, article_id)
 );
 CREATE INDEX IF NOT EXISTS idx_area_pool ON area_pool (area, lang);
+CREATE TABLE IF NOT EXISTS toot (
+  id TEXT PRIMARY KEY,            -- "{instance}:{status_id}" (globally unique)
+  lang TEXT NOT NULL,             -- detector-confirmed learn language
+  instance TEXT NOT NULL,
+  url TEXT NOT NULL,              -- link to the original toot
+  author TEXT,
+  author_handle TEXT,
+  content TEXT NOT NULL,          -- cleaned plain text (links/mentions stripped)
+  media_url TEXT,                 -- image: media attachment or link-preview card
+  tags TEXT,                      -- comma-sep hashtags of the post (lowercased)
+  rubrik TEXT,                    -- our topic the query-tag maps to (sport, natur…)
+  created_at TEXT,
+  fetched_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_toot_stream ON toot (lang, created_at);
 CREATE TABLE IF NOT EXISTS telemetry (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT NOT NULL,
@@ -101,6 +116,12 @@ def conn() -> Iterator[sqlite3.Connection]:
 def init() -> None:
     with conn() as c:
         c.executescript(SCHEMA)
+        # Idempotent column migrations for tables that shipped before a column existed.
+        for table, col, decl in [("toot", "media_url", "TEXT")]:
+            try:
+                c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+            except sqlite3.OperationalError:
+                pass  # already there
 
 
 def upsert_article(art: dict[str, Any], now: str) -> None:
@@ -216,6 +237,63 @@ def area_pool_prepared(
     with conn() as c:
         rows = c.execute(sql, params).fetchall()
     return [{"area": r["area"], "id": r["id"], "title": r["title"], "url": r["url"], "thumbnail": r["thumbnail"]} for r in rows]
+
+
+def upsert_toot(t: dict[str, Any]) -> bool:
+    """Insert a harvested toot; ignore if its id is already pooled. Returns True
+    if a NEW row was added (so the harvester can count fresh toots)."""
+    with conn() as c:
+        cur = c.execute(
+            """INSERT INTO toot
+               (id, lang, instance, url, author, author_handle, content, media_url, tags, rubrik, created_at, fetched_at)
+               VALUES (:id,:lang,:instance,:url,:author,:author_handle,:content,:media_url,:tags,:rubrik,:created_at,:fetched_at)
+               ON CONFLICT(id) DO UPDATE SET media_url=excluded.media_url
+                 WHERE COALESCE(toot.media_url,'')='' AND COALESCE(excluded.media_url,'')!=''""",
+            t,
+        )
+        return cur.rowcount > 0
+
+
+def stream_toots(
+    lang: str, rubriks: Optional[list[str]] = None, since: Optional[str] = None, limit: int = 50
+) -> list[dict[str, Any]]:
+    """Pooled toots for `lang`, newest first. `rubriks` filters by topic;
+    `since` (ISO) keeps only newer toots."""
+    sql = (
+        "SELECT id, lang, instance, url, author, author_handle, content, media_url, tags, rubrik, created_at "
+        "FROM toot WHERE lang=? "
+    )
+    params: list[Any] = [lang]
+    if since:
+        sql += "AND created_at >= ? "
+        params.append(since)
+    if rubriks:
+        sql += "AND rubrik IN (%s) " % ",".join("?" * len(rubriks))
+        params.extend(rubriks)
+    sql += "ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    with conn() as c:
+        rows = c.execute(sql, params).fetchall()
+    return [dict(r) for r in rows]
+
+
+def prune_toots(keep_days: int) -> int:
+    """Delete toots older than `keep_days` (by created_at). Returns rows removed."""
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=keep_days)).isoformat()
+    with conn() as c:
+        cur = c.execute("DELETE FROM toot WHERE created_at < ?", (cutoff,))
+        return cur.rowcount
+
+
+def toot_overview() -> list[dict[str, Any]]:
+    """Counts per (lang, rubrik) — for admin/verification."""
+    with conn() as c:
+        rows = c.execute(
+            "SELECT lang, rubrik, count(*) n FROM toot GROUP BY lang, rubrik ORDER BY lang, rubrik"
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def random_article(lang: str) -> Optional[dict[str, Any]]:

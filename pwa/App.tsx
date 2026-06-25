@@ -23,9 +23,11 @@ import {
   fetchAreaList,
   fetchWordTranslation,
   fetchDigest,
+  fetchStream,
   type ServerDaily,
   type ServerLesson,
   type AreaArticle,
+  type ServerToot,
 } from '@/core/serverapi';
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
@@ -54,7 +56,7 @@ import { getActivity, logActivity, type Activity } from './activity';
 import { getTodayQuest, type QuestTask } from './quest';
 import { pop, celebrate } from './confetti';
 
-type Tab = 'home' | 'challenges' | 'report' | 'settings';
+type Tab = 'home' | 'challenges' | 'stream' | 'report' | 'settings';
 type ArticleRef = { id: string; title: string; url: string; thumb?: string };
 
 declare const __APP_VERSION__: string;
@@ -243,6 +245,8 @@ export function App() {
     );
   } else if (tab === 'challenges') {
     content = <ChallengesTab settings={settings} onOpen={openLesson} onDigest={(a) => setOverlay({ kind: 'digest', article: a })} />;
+  } else if (tab === 'stream') {
+    content = <StreamTab settings={settings} />;
   } else if (tab === 'report') {
     content = (
       <ReportTab
@@ -271,6 +275,7 @@ function TabBar({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab) => void }) {
   const items: { id: Tab; label: string; icon: ComponentChildren }[] = [
     { id: 'home', label: 'Home', icon: <IconHome /> },
     { id: 'challenges', label: 'Challenges', icon: <IconTarget /> },
+    { id: 'stream', label: 'Stream', icon: <IconStream /> },
     { id: 'report', label: 'Report', icon: <IconChart /> },
     { id: 'settings', label: 'Mehr', icon: <IconGear /> },
   ];
@@ -291,6 +296,7 @@ const svg = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke:
 const IconHome = () => (<svg {...svg}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></svg>);
 const IconTarget = () => (<svg {...svg}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>);
 const IconChart = () => (<svg {...svg}><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="12" y="8" width="3" height="10" /><rect x="17" y="5" width="3" height="13" /></svg>);
+const IconStream = () => (<svg {...svg}><path d="M7.9 20A5 5 0 0 1 4 11.9 6 6 0 0 1 15.4 9 4.5 4.5 0 0 1 17 18H8" /></svg>);
 const IconGear = () => (<svg {...svg}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>);
 
 // Tile / area icons (same line-icon language as the nav above).
@@ -918,6 +924,163 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
           </p>
         </>
       )}
+    </main>
+  );
+}
+
+/* --------------------------------------------------------------- Stream --- */
+
+// Rubriks the social pool is harvested for (mirrors server SOURCES map).
+const STREAM_RUBRIKS = ['natur', 'geschichte', 'kultur', 'technik', 'sport'];
+const STREAM_LANGS = ['en', 'fr'];
+
+/** Rough CEFR difficulty of a toot, client-side & free: the band at which ~85% of
+ * its known words are already familiar. null if too few known words to judge. */
+function tootBand(content: string, ranks: Record<string, number>): CefrLevel | null {
+  const words = content.toLowerCase().match(/\p{L}[\p{L}'’-]*/gu) ?? [];
+  const rs: number[] = [];
+  for (const w of words) {
+    if (w.length < 3) continue;
+    const r = rankOf(ranks, w);
+    if (r !== undefined) rs.push(r);
+  }
+  if (rs.length < 4) return null;
+  rs.sort((a, b) => a - b);
+  // 80th percentile: with on-tap translation the bulk of the text matters more
+  // than the single hardest word, but not so low it under-rates real B1/B2 toots.
+  const r = rs[Math.floor(rs.length * 0.8)];
+  return r === undefined ? null : rankToBand(r);
+}
+
+// The sentence containing `word`, capped to the server's sentence limit — so the
+// word popover gets useful context without sending the whole (often long) toot.
+function sentenceFor(text: string, word: string): string {
+  const lw = word.toLowerCase();
+  const hit = splitSentences(text).find((s) => s.toLowerCase().includes(lw));
+  return (hit ?? text).slice(0, 280);
+}
+
+// Toot image (media attachment or link-preview card). Hides itself if the remote
+// image fails to load, so a broken URL never leaves an empty grey box.
+function TootImage({ src }: { src: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img class="st-img" src={src} alt="" loading="lazy" onError={() => setOk(false)} />;
+}
+
+// Social-stream tab: short, real Mastodon toots in the learn language. Tap a word
+// to translate (reuses WordPopover), translate the whole toot (TranslateReveal),
+// filter by rubrik. Difficulty is judged client-side; the original is one tap away.
+function StreamTab({ settings }: { settings: PwaSettings }) {
+  const [ranks, setRanks] = useState<Record<string, number> | null>(null);
+  const [names, setNames] = useState<Set<string>>(new Set());
+  const [toots, setToots] = useState<ServerToot[] | null>(null);
+  const [filter, setFilter] = useState<string | null>(null); // chosen rubrik
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [sortEasy, setSortEasy] = useState(true); // easiest toots first (beginner-friendly)
+  const [pop, setPop] = useState<{ word: string; sentence: string; x: number; y: number } | null>(null);
+
+  const supported = STREAM_LANGS.includes(settings.learn);
+
+  useEffect(() => {
+    void loadRanks(settings.learn).then(setRanks);
+    void loadNames().then(setNames);
+  }, [settings.learn]);
+
+  useEffect(() => {
+    if (!supported) { setToots([]); return; }
+    let alive = true;
+    setToots(null);
+    void fetchStream(SERVER, settings.learn, { rubriks: filter ? [filter] : undefined, days: 14, limit: 60 })
+      .then((t) => { if (alive) setToots(t); });
+    return () => { alive = false; };
+  }, [settings.learn, filter, supported]);
+
+  const isHard = (w: string): boolean => {
+    if (!ranks || w.length < 3 || names.has(w.toLowerCase())) return false;
+    const r = rankOf(ranks, w);
+    return r !== undefined && isAboveLevel(rankToBand(r), settings.level);
+  };
+
+  // Tag each toot with its (client-side) band, optionally keep only what's at/near
+  // the user's level, and surface the easiest first so beginners aren't buried in C1.
+  const myIdx = CEFR_LEVELS.indexOf(settings.level);
+  const bandIdx = (b: CefrLevel | null) => (b ? CEFR_LEVELS.indexOf(b) : 99);
+  const ranked = (toots ?? []).map((t) => ({ t, band: ranks ? tootBand(t.content, ranks) : null }));
+  const filtered = ranked.filter(({ band }) => !onlyMine || band === null || bandIdx(band) <= myIdx + 1);
+  const shown = sortEasy ? [...filtered].sort((a, b) => bandIdx(a.band) - bandIdx(b.band)) : filtered;
+
+  return (
+    <main class="sl-main with-nav">
+      <header class="sl-lessonhead">
+        <span class="sl-lessontitle">Stream</span>
+        <span class="st-sub">echte Posts · zum Lesen & Lernen</span>
+      </header>
+
+      {!supported ? (
+        <p class="sl-muted" style={{ marginTop: '18px' }}>
+          Den Stream gibt's bisher nur für <b>Englisch</b> und <b>Französisch</b>. Stell deine
+          Lernsprache in „Mehr" um, um ihn auszuprobieren.
+        </p>
+      ) : (
+        <>
+          <div class="st-filter">
+            <button class={`st-chip ${filter === null ? 'on' : ''}`} onClick={() => setFilter(null)}>Alle</button>
+            {STREAM_RUBRIKS.map((id) => {
+              const a = AREAS.find((x) => x.id === id);
+              return (
+                <button key={id} class={`st-chip ${filter === id ? 'on' : ''}`} onClick={() => setFilter(filter === id ? null : id)}>
+                  <span class={`st-dot ${a?.color ?? ''}`} />{a?.label ?? id}
+                </button>
+              );
+            })}
+          </div>
+          <div class="st-opts">
+            <label class="st-mine">
+              <input type="checkbox" checked={sortEasy} onChange={(e) => setSortEasy((e.target as HTMLInputElement).checked)} />
+              <span>Einfachste zuerst</span>
+            </label>
+            <label class="st-mine">
+              <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine((e.target as HTMLInputElement).checked)} />
+              <span>ungefähr mein Niveau</span>
+            </label>
+          </div>
+
+          {toots === null ? (
+            <div style={{ marginTop: '24px' }}><Dots /></div>
+          ) : shown.length === 0 ? (
+            <p class="sl-muted" style={{ marginTop: '18px' }}>
+              {toots.length === 0
+                ? 'Hier ist gerade nichts — schau später nochmal vorbei.'
+                : 'Nichts auf deinem Niveau in dieser Rubrik — weite den Filter.'}
+            </p>
+          ) : (
+            <ul class="st-list">
+              {shown.map(({ t, band }) => {
+                const a = AREAS.find((x) => x.id === t.rubrik);
+                return (
+                  <li key={t.id} class="st-card">
+                    <div class="st-card-head">
+                      <span class={`st-dot ${a?.color ?? ''}`} />
+                      <span class="st-author">{t.author || t.author_handle}</span>
+                      {band && <span class="sl-pop-band">{band}</span>}
+                      <a class="st-src" href={t.url} target="_blank" rel="noreferrer noopener">Original ↗</a>
+                    </div>
+                    <p class="st-text">
+                      <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(t.content, w), x, y })} />
+                    </p>
+                    {t.media_url && <TootImage src={t.media_url} />}
+                    {settings.learn !== settings.native && t.content.length <= 400 && (
+                      <TranslateReveal text={t.content} settings={settings} />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
+      )}
+      {pop && <WordPopover pop={pop} settings={settings} onClose={() => setPop(null)} />}
     </main>
   );
 }

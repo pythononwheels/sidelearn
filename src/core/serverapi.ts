@@ -159,6 +159,43 @@ export async function fetchAreaList(
   }
 }
 
+export interface ServerToot {
+  id: string;
+  lang: Language;
+  instance: string;
+  url: string;
+  author: string;
+  author_handle: string;
+  content: string;
+  media_url?: string;
+  tags: string;
+  rubrik: string;
+  created_at: string;
+}
+
+/** Pooled Mastodon toots for the Social-Stream tab (instant, no LLM). `rubriks`
+ * filters by topic; `days` limits age. Returns [] on failure (fail-soft). */
+export async function fetchStream(
+  serverUrl: string,
+  lang: Language,
+  opts?: { rubriks?: string[]; days?: number; limit?: number },
+): Promise<ServerToot[]> {
+  try {
+    const q = new URLSearchParams({ lang });
+    if (opts?.rubriks?.length) q.set('tags', opts.rubriks.join(','));
+    if (opts?.days) q.set('days', String(opts.days));
+    if (opts?.limit) q.set('limit', String(opts.limit));
+    const res = await fetch(`${base(serverUrl)}/stream?${q}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const d = (await res.json()) as { toots?: ServerToot[] };
+    return d.toots ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Translate a whole sentence/question into the native language. Null on failure. */
 export async function fetchSentenceTranslation(
   serverUrl: string,

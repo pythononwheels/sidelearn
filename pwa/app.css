@@ -126,6 +126,43 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 [data-theme='jelly'] .lr-tile-ico.a-natur { background: linear-gradient(#8fe388, #57c84d); }
 [data-theme='jelly'] .lr-tile-ico.a-kultur { background: linear-gradient(#caa9ff, #9b6bff); }
 [data-theme='jelly'] .lr-tile-ico.a-wissenschaft { background: linear-gradient(#6fe0d0, #2fc5b0); }
+
+/* Stream tab ------------------------------------------------------------ */
+.st-sub { font-size: 12px; color: var(--ll-text-soft); margin-left: 2px; }
+.st-filter { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.st-filter::-webkit-scrollbar { display: none; }
+.st-chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; font: inherit;
+  font-size: 13px; font-weight: 700; white-space: nowrap; padding: 6px 13px; border-radius: 999px;
+  border: 1px solid var(--ll-border); background: var(--ll-surface); color: var(--ll-text-soft); cursor: pointer;
+}
+.st-chip.on { background: var(--ll-accent-soft); color: var(--ll-accent-strong); border-color: var(--ll-accent); }
+.st-opts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 10px 2px 2px; }
+.st-mine { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ll-text-soft); cursor: pointer; }
+.st-mine input { width: 16px; height: 16px; accent-color: var(--ll-accent); }
+.st-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.st-card {
+  padding: 14px 16px; border-radius: 16px; background: var(--ll-surface);
+  border: 1px solid var(--ll-border); box-shadow: var(--card3d, none);
+}
+.st-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.st-dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; background: var(--ll-border); }
+.st-author { font-size: 13px; font-weight: 800; color: var(--ll-text-soft); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-src { font-size: 12px; font-weight: 700; color: var(--ll-accent); text-decoration: none; flex: 0 0 auto; }
+.st-text { margin: 0; font-size: 16px; line-height: 1.55; }
+.st-img {
+  display: block; width: 100%; max-height: 240px; object-fit: cover;
+  margin-top: 12px; border-radius: 12px; border: 1px solid var(--ll-border); background: var(--ll-bg);
+}
+.st-card .sl-xlate { margin-top: 10px; }
+/* rubrik dot colours (unscoped so they show in every theme) */
+.st-dot.a-technik { background: linear-gradient(#8fb6ff, #5a7fff); }
+.st-dot.a-sport { background: linear-gradient(#b6f06a, #8fd84a); }
+.st-dot.a-geschichte { background: linear-gradient(#ffc777, #ff9f5a); }
+.st-dot.a-gesellschaft { background: linear-gradient(#ff9ecb, #ff6fae); }
+.st-dot.a-natur { background: linear-gradient(#8fe388, #57c84d); }
+.st-dot.a-kultur { background: linear-gradient(#caa9ff, #9b6bff); }
+
 @media (min-width: 520px) {
   body { background: color-mix(in srgb, var(--ll-bg) 78%, #777 10%); }
   .app-col { box-shadow: 0 0 0 1px var(--ll-border), 0 30px 80px rgba(0,0,0,.18); }

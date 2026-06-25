@@ -107,6 +107,27 @@ RL_DIGEST = os.getenv("SL_RL_DIGEST", "20/minute")
 RL_LESSON = os.getenv("SL_RL_LESSON", "60/minute")
 RL_AREAS = os.getenv("SL_RL_AREAS", "60/minute")  # /areas/list — cheap DB join, but guard the DB
 
+# --- Social stream (Mastodon) -----------------------------------------------
+# A bounded pool of short public toots from curated topical hashtags, fetched on
+# a light cron (no LLM). See server/app/social.py for the per-language source map.
+SOCIAL_ENABLE = os.getenv("SL_SOCIAL_ENABLE", "1") == "1"
+SOCIAL_EVERY_H = int(os.getenv("SL_SOCIAL_EVERY_H", "6"))  # harvest cadence (hours)
+SOCIAL_PER_TAG = int(os.getenv("SL_SOCIAL_PER_TAG", "40"))  # toots fetched per tag/run
+SOCIAL_KEEP_DAYS = int(os.getenv("SL_SOCIAL_KEEP_DAYS", "21"))  # prune older than this
+SOCIAL_MIN_LEN = int(os.getenv("SL_SOCIAL_MIN_LEN", "60"))  # min letters of real text
+SOCIAL_MAX_PER_AUTHOR = int(os.getenv("SL_SOCIAL_MAX_PER_AUTHOR", "3"))  # per tag/run anti-flood
+# Which learn-languages to harvest (subset of the SOURCES map in social.py).
+SOCIAL_LANGS = [s.strip() for s in os.getenv("SL_SOCIAL_LANGS", "en,fr").split(",") if s.strip()]
+# NSFW/spam word blocklist (substring match on cleaned text) — first safety layer.
+SOCIAL_BLOCKLIST = {
+    w.strip().lower()
+    for w in os.getenv(
+        "SL_SOCIAL_BLOCKLIST", "porn,nsfw,sex,xxx,onlyfans,casino,nude,escort,gambling"
+    ).split(",")
+    if w.strip()
+}
+RL_STREAM = os.getenv("SL_RL_STREAM", "60/minute")  # /stream — cheap DB read
+
 LANG_NAMES = {
     "fr": "French",
     "de": "German",
