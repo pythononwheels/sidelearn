@@ -12,6 +12,8 @@ const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', imp
 // files; app updates are surfaced with a friendly banner (see useUpdate()).
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
+  // Served from a subpath: learny.pyrates.io/app/ (the landing page lives at /).
+  base: '/app/',
   publicDir: fileURLToPath(new URL('../src/public', import.meta.url)),
   resolve: {
     alias: { '@': fileURLToPath(new URL('../src', import.meta.url)) },
@@ -32,8 +34,8 @@ export default defineConfig({
         name: 'Learny',
         short_name: 'Learny',
         description: 'Language learning on the side — lies echte Texte auf deinem Sprachniveau.',
-        start_url: '.',
-        scope: '.',
+        start_url: '/app/',
+        scope: '/app/',
         display: 'standalone',
         background_color: '#f3f1fb',
         theme_color: '#ff6b9d',
@@ -49,7 +51,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 6_000_000,
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.pathname.startsWith('/data/'),
+            urlPattern: ({ url }) => url.pathname.includes('/data/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'sidelearn-data',
