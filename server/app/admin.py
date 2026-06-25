@@ -49,6 +49,14 @@ h1{font-size:20px}h3{margin-top:22px}
 .day.on{background:var(--accent);color:#fff;border-color:transparent}
 .daysv{display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:6px 0 4px}
 .daysv .day{margin:0}
+.cal-nav{display:flex;align-items:center;gap:12px;margin:6px 0 8px}
+.cal-nav b{font-size:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:300px}
+.cal-h{text-align:center;font-size:11px;color:var(--muted);padding:2px 0}
+.cal-d{display:flex;align-items:center;justify-content:center;height:34px;border-radius:9px;border:1px solid transparent;color:var(--muted);font-size:13px}
+.cal-d.has{color:var(--text);border-color:var(--border);background:var(--surface);font-weight:700}
+.cal-d.today{outline:2px solid var(--accent2);outline-offset:-2px}
+.cal-d.on{background:var(--accent);color:#fff;border-color:transparent}
 form{display:inline}
 .run{color:var(--warn);font-weight:700}
 .summary{background:var(--soft);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:16px;line-height:1.55}
@@ -133,19 +141,14 @@ def lang_tabs(active: str, date_key: str | None = None) -> str:
 
 
 @router.get("/admin", response_class=HTMLResponse)
-def admin_home(lang: str = "fr", date: str = "") -> HTMLResponse:
+def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLResponse:
     if lang not in config.LANGS:
         lang = config.LANGS[0]
     today = pipeline.today_key()
     date_key = date or today
-    dates = db.daily_dates(lang, 60)
-    if dates:
-        day_links = "<div class=daysv>" + "".join(
-            f"<a class='day{' on' if d == date_key else ''}' href='/admin?lang={lang}&date={d}'>{d}</a>"
-            for d in dates
-        ) + "</div>"
-    else:
-        day_links = "<p class=muted>Noch keine Tage entdeckt — unten „Pool entdecken“.</p>"
+    month = month or date_key[:7]
+    have = set(db.daily_dates(lang, 366))
+    day_links = _month_calendar(lang, date_key, month, have)
     t = db.telemetry_totals()
     by = db.telemetry_by_fn()
     maxtok = max([r["tin"] + r["tout"] for r in by] + [1])
@@ -347,6 +350,32 @@ def admin_stats() -> HTMLResponse:
     return page("Telemetrie", body)
 
 
+def _month_calendar(lang: str, date_key: str, month: str, have: set[str]) -> str:
+    """Month grid for the day picker. Days with a built pool are highlighted;
+    today is outlined; the selected day is filled. Any cell links to that day."""
+    import calendar as _calmod
+    from datetime import date as _date, timedelta as _td
+
+    y, mo = int(month[:4]), int(month[5:7])
+    prev_m = (_date(y, mo, 1) - _td(days=1)).strftime("%Y-%m")
+    next_m = (_date(y, mo, 28) + _td(days=10)).replace(day=1).strftime("%Y-%m")
+    today = pipeline.today_key()
+    head = "".join(f"<span class=cal-h>{d}</span>" for d in ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"))
+    cells = ["<span></span>"] * _date(y, mo, 1).weekday()
+    for d in range(1, _calmod.monthrange(y, mo)[1] + 1):
+        ds = f"{y:04d}-{mo:02d}-{d:02d}"
+        cls = "cal-d" + (" has" if ds in have else "") + (" on" if ds == date_key else "") + (" today" if ds == today else "")
+        cells.append(f"<a class='{cls}' href='/admin?lang={lang}&date={ds}&month={month}'>{d}</a>")
+    nav = (
+        "<div class=cal-nav>"
+        f"<a class=btn href='/admin?lang={lang}&date={date_key}&month={prev_m}'>‹</a>"
+        f"<b>{y}-{mo:02d}</b>"
+        f"<a class=btn href='/admin?lang={lang}&date={date_key}&month={next_m}'>›</a>"
+        "</div>"
+    )
+    return nav + f"<div class=cal>{head}{''.join(cells)}</div>"
+
+
 def _day_cards(lang: str, date_key: str) -> tuple[str, bool]:
     """Article cards for one day's pool (thumbnail, level badges, per-article
     actions). Returns (html, busy). Shared by the day page and the admin home."""
@@ -400,9 +429,13 @@ def _day_cards(lang: str, date_key: str) -> tuple[str, bool]:
 def _day_bar(lang: str, date_key: str) -> str:
     return (
         "<div class=bar>"
-        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class='btn primary'>Pool entdecken ({date_key})</button></form>"
-        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class=btn>Alle verarbeiten</button></form>"
+        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class='btn primary'>Artikel holen · {date_key}</button></form>"
+        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class=btn>Alle aufbereiten (KI)</button></form>"
         "</div>"
+        "<p class=muted style='margin:-4px 0 10px'>"
+        "„Artikel holen“ = meistgelesene Wikipedia-Artikel des Tages laden (ohne KI). "
+        "„Alle aufbereiten“ = daraus per KI alle Niveau-Versionen + Quiz erzeugen."
+        "</p>"
     )
 
 
