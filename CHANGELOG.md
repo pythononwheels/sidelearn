@@ -3,6 +3,43 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.125] — 2026-06-25 — Stream: tieferer Pool
+
+- **Rollender Pool 80 → 120 pro Rubrik/Sprache** → Ziel ~2000 Toots gesamt (mehr zum Durchscrollen;
+  füllt sich über die nächsten 15-Min-Läufe auf, Ältestes rollt weiterhin raus).
+
+## [0.6.124] — 2026-06-25 — Stream: Niederländisch, Spanisch, Italienisch
+
+- **Drei neue Stream-Sprachen**: **nl** (`mastodon.nl`), **es** (`masto.es`), **it** (`mastodon.uno`)
+  — je ~17 Hashtags pro Rubrik. Damit deckt der Stream alle Lernsprachen ab (fr/en/nl/es/it).
+- `it` hat keine vorgebauten Artikel, aber Toot-Pool + Offline-Wörterbuch: die On-Tap-Helfer
+  (`/translate`, `/sentence`, `/stream`) akzeptieren jetzt `LANGS ∪ SOCIAL_LANGS`.
+- Doku `doc/tech/social-stream.md` + `scripts/stream-report.py` um die neuen Sprachen erweitert.
+- **Mehrere Instanzen pro Sprache** möglich (`SOURCES` = Liste): 2. Quelle für nl (`nerdculture.de`),
+  es (`mas.to`), it (`livellosegreto.it`) — verifiziert per Live-Probe. Föderierte Doppel-Toots werden
+  über die kanonische URL dedupliziert (`toot_id_for_url`, Index auf `toot.url`).
+
+## [0.6.123] — 2026-06-25 — Stream: mehr Input + Längen-Cap
+
+- **Längen-Cap**: Toots über 500 Zeichen werden nicht mehr aufgenommen (und vorhandene Romane gepruned)
+  — mittellang ok, Essays raus.
+- **Viel mehr Quellen** pro Sprache (6 → ~21 Hashtags je Rubrik), v. a. Französisch, damit der Pool
+  Richtung ~200/Sprache füllt. Rollender Pool 60 → **80 pro Rubrik/Sprache**.
+- **Default-Niveaufilter auf +2** (z. B. A2 → A1–B2): echtes Social-Media-FR/EN ist überwiegend B2+,
+  +2 gibt Anfängern genug zum Scrollen (höhere Stufen jederzeit zuschaltbar).
+- Analyse-Skript `scripts/stream-report.py` (Verteilung Pool: gesamt / Rubrik / Niveau).
+
+## [0.6.122] — 2026-06-25 — Stream: Zeit-Blöcke, Niveau-Filter, Infinite-Scroll
+
+- **Drei Filter im Stream**: **Thema** (Rubrik-Chips) · **Zeit** (chronologische Blöcke) · **Niveau**
+  (A1–C2 An/Aus-Buttons, Default = Userniveau+1 und drunter).
+- **Zeit-Blöcke mit Niveau-Sortierung**: lädt die neuesten ~40 Toots als Block (zeitlich), sortiert
+  *innerhalb* des Blocks nach Niveau (leicht→schwer). Weiterscrollen lädt den nächsten, älteren Block
+  (Infinite-Scroll, Cursor-Paging). Block-Trenner zeigt die Relativzeit.
+- **Server**: Harvest jetzt **alle 15 Min** (statt 6 h), **rollierender Pool** (neueste ~60 pro
+  Rubrik/Sprache, ~720 gesamt) statt reiner Alters-Prune; `/stream` mit `before`-Cursor fürs Paging.
+  Weiterhin **kein LLM** — nur Fetch, Filter, DB.
+
 ## [0.6.121] — 2026-06-25 — Stream: einfachste Toots zuerst
 
 - **Niveau-Sortierung im Stream**: neue Toggle **„Einfachste zuerst"** (Default an) holt die

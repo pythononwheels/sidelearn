@@ -108,7 +108,7 @@ def _startup() -> None:
     if config.SOCIAL_ENABLE:
         threading.Thread(target=_run_harvest, daemon=True).start()
         scheduler.add_job(
-            _run_harvest, "interval", hours=config.SOCIAL_EVERY_H, id="social", replace_existing=True
+            _run_harvest, "interval", minutes=config.SOCIAL_EVERY_MIN, id="social", replace_existing=True
         )
     if (config.AUTO_BUILD or config.SOCIAL_ENABLE) and not scheduler.running:
         scheduler.start()
@@ -133,6 +133,14 @@ def _check_level(level: str) -> None:
 def _check_lang(lang: str) -> None:
     if lang not in config.LANGS:
         raise HTTPException(400, f"unknown lang {lang!r}; allowed: {config.LANGS}")
+
+
+def _check_learn_lang(lang: str) -> None:
+    """Looser check for the on-tap helpers (translate/sentence/stream): any article
+    language OR any social-stream language (e.g. Italian, which has no prebaked
+    articles but does have a toot pool + offline dictionary)."""
+    if lang not in config.LANGS and lang not in config.SOCIAL_LANGS:
+        raise HTTPException(400, f"unknown lang {lang!r}")
 
 
 @app.get("/daily")
@@ -286,7 +294,7 @@ def translate(
 ) -> dict:
     """Context-aware word translation (+ alternatives), cached. Falls back to a
     capped daily budget for fresh LLM calls."""
-    _check_lang(lang)
+    _check_learn_lang(lang)
     if native not in config.LANGS:
         raise HTTPException(400, f"unknown native {native!r}")
     word = word.strip()
@@ -333,7 +341,7 @@ def sentence(
 ) -> dict:
     """Translate a whole sentence/question into the native language (for the
     'Übersetzung' button on quizzes & cloze). Cached; capped per day."""
-    _check_lang(lang)
+    _check_learn_lang(lang)
     if native not in config.LANGS:
         raise HTTPException(400, f"unknown native {native!r}")
     text = text.strip()
@@ -401,19 +409,18 @@ def stream(
     request: Request,
     lang: str = Query(...),
     tags: str = Query(""),
-    days: int | None = Query(None, ge=1, le=30),
-    limit: int = Query(50, ge=1, le=100),
+    before: str | None = Query(None, max_length=40),
+    limit: int = Query(40, ge=1, le=100),
 ) -> dict:
     """Pooled Mastodon toots for `lang`, newest first — for the Social-Stream tab.
-    `tags` = comma-sep rubriks (sport, natur, …) to filter; `days` limits age.
-    Instant, no LLM (difficulty/translation happen client-side / on-tap), but a
-    per-IP rate limit guards the DB."""
-    _check_lang(lang)
+    `tags` = comma-sep rubriks (sport, natur, …) to filter; `before` (ISO
+    created_at) is a paging cursor for the time-block infinite scroll. Instant, no
+    LLM (difficulty/translation happen client-side / on-tap), but a per-IP rate
+    limit guards the DB."""
+    if lang not in config.SOCIAL_LANGS:
+        raise HTTPException(400, f"no stream for {lang!r}")
     rubriks = [t.strip() for t in tags.split(",") if t.strip()] or None
-    since = None
-    if days:
-        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
-    return {"lang": lang, "toots": db.stream_toots(lang, rubriks, since, limit)}
+    return {"lang": lang, "toots": db.stream_toots(lang, rubriks, before, limit)}
 
 
 @app.get("/surprise", dependencies=[Depends(require_origin)])

@@ -30,33 +30,64 @@ try:
 except Exception:  # noqa: BLE001
     _HAVE_LANGDETECT = False
 
-# Per learn-language: which instance to pull from and which hashtags map to which
-# Learny rubrik (rubrik keys mirror wiki.AREAS so the client reuses its colors).
-# mastodon.social is EN-dominant; piaille.fr gives strong French (verified on real
-# data, 2026-06-25). De/es/it/nl can get their own instances later.
-SOURCES: dict[str, dict[str, Any]] = {
-    "en": {
-        "instance": "mastodon.social",
-        "tags": {
-            "science": "natur",
-            "history": "geschichte",
-            "art": "kultur",
-            "music": "kultur",
-            "technology": "technik",
-            "sport": "sport",
-        },
-    },
-    "fr": {
-        "instance": "piaille.fr",
-        "tags": {
-            "sciences": "natur",
-            "histoire": "geschichte",
-            "art": "kultur",
-            "musique": "kultur",
-            "technologie": "technik",
-            "sport": "sport",
-        },
-    },
+# Tag → rubrik maps per language (rubrik keys mirror wiki.AREAS so the client
+# reuses its colors). Hashtags are ASCII — Mastodon strips accents.
+_EN_TAGS = {
+    "science": "natur", "nature": "natur", "wildlife": "natur", "space": "natur", "astronomy": "natur",
+    "history": "geschichte", "archaeology": "geschichte", "heritage": "geschichte",
+    "art": "kultur", "music": "kultur", "film": "kultur", "books": "kultur", "photography": "kultur",
+    "technology": "technik", "programming": "technik", "ai": "technik", "gaming": "technik",
+    "sport": "sport", "football": "sport", "cycling": "sport", "running": "sport",
+}
+_FR_TAGS = {
+    "sciences": "natur", "nature": "natur", "animaux": "natur", "astronomie": "natur", "espace": "natur",
+    "histoire": "geschichte", "archeologie": "geschichte", "patrimoine": "geschichte",
+    "art": "kultur", "musique": "kultur", "cinema": "kultur", "litterature": "kultur",
+    "photographie": "kultur", "culture": "kultur",
+    "technologie": "technik", "informatique": "technik", "numerique": "technik", "jeuxvideo": "technik",
+    "sport": "sport", "football": "sport", "cyclisme": "sport", "rugby": "sport",
+}
+_NL_TAGS = {
+    "wetenschap": "natur", "natuur": "natur", "dieren": "natur", "ruimte": "natur",
+    "geschiedenis": "geschichte", "archeologie": "geschichte",
+    "kunst": "kultur", "muziek": "kultur", "film": "kultur", "literatuur": "kultur", "fotografie": "kultur",
+    "technologie": "technik", "informatica": "technik", "gamen": "technik",
+    "sport": "sport", "voetbal": "sport", "wielrennen": "sport",
+}
+_ES_TAGS = {
+    "ciencia": "natur", "naturaleza": "natur", "animales": "natur", "astronomia": "natur",
+    "historia": "geschichte", "arqueologia": "geschichte",
+    "arte": "kultur", "musica": "kultur", "cine": "kultur", "literatura": "kultur", "fotografia": "kultur",
+    "tecnologia": "technik", "informatica": "technik", "videojuegos": "technik",
+    "deporte": "sport", "futbol": "sport", "ciclismo": "sport",
+}
+_IT_TAGS = {
+    "scienza": "natur", "natura": "natur", "animali": "natur", "astronomia": "natur",
+    "storia": "geschichte", "archeologia": "geschichte",
+    "arte": "kultur", "musica": "kultur", "cinema": "kultur", "letteratura": "kultur", "fotografia": "kultur",
+    "tecnologia": "technik", "informatica": "technik", "videogiochi": "technik",
+    "sport": "sport", "calcio": "sport", "ciclismo": "sport",
+}
+
+# Per learn-language: one or more public Mastodon instances + their tag map. More
+# instances widen the pool; federated duplicates are deduped by canonical URL at
+# harvest. All instances verified to serve unauth tag timelines (2026-06-25).
+# Lernsprachen = fr/en/nl/es/it (Muttersprache Deutsch).
+SOURCES: dict[str, list[dict[str, Any]]] = {
+    "en": [{"instance": "mastodon.social", "tags": _EN_TAGS}],
+    "fr": [{"instance": "piaille.fr", "tags": _FR_TAGS}],
+    "nl": [
+        {"instance": "mastodon.nl", "tags": _NL_TAGS},
+        {"instance": "nerdculture.de", "tags": _NL_TAGS},
+    ],
+    "es": [
+        {"instance": "masto.es", "tags": _ES_TAGS},
+        {"instance": "mas.to", "tags": _ES_TAGS},
+    ],
+    "it": [
+        {"instance": "mastodon.uno", "tags": _IT_TAGS},
+        {"instance": "livellosegreto.it", "tags": _IT_TAGS},
+    ],
 }
 
 _ANCHOR = re.compile(r"<a\b[^>]*>.*?</a>", re.IGNORECASE | re.DOTALL)
@@ -140,12 +171,13 @@ async def harvest() -> dict[str, Any]:
     now = datetime.now(timezone.utc).isoformat()
     stats: dict[str, Any] = {}
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        for lang, src in SOURCES.items():
+        for lang, sources in SOURCES.items():
             if lang not in config.SOCIAL_LANGS:
                 continue
-            instance = src["instance"]
-            for tag, rubrik in src["tags"].items():
-                key = f"{lang}/#{tag}"
+            for src in sources:
+              instance = src["instance"]
+              for tag, rubrik in src["tags"].items():
+                key = f"{lang}@{instance}/#{tag}"
                 try:
                     statuses = await fetch_tag(client, instance, tag, config.SOCIAL_PER_TAG)
                 except Exception as e:  # noqa: BLE001 — one bad tag/instance must not abort the run
@@ -160,6 +192,8 @@ async def harvest() -> dict[str, Any]:
                         continue
                     if _real_len(text) < config.SOCIAL_MIN_LEN:
                         continue
+                    if len(text) > config.SOCIAL_MAX_LEN:
+                        continue  # essays aren't toots — keep it short/medium
                     if _HAVE_LANGDETECT and detect_lang(text) != lang:
                         continue
                     acct = s.get("account", {}) or {}
@@ -183,9 +217,17 @@ async def harvest() -> dict[str, Any]:
                         "created_at": s.get("created_at") or now,
                         "fetched_at": now,
                     }
+                    # Skip federated duplicates already pooled via another instance
+                    # (same canonical URL, different local id).
+                    dup = db.toot_id_for_url(row["url"]) if row["url"] else None
+                    if dup is not None and dup != row["id"]:
+                        continue
                     if db.upsert_toot(row):
                         added += 1
                 stats[key] = {"seen": seen, "added": added}
-    removed = db.prune_toots(config.SOCIAL_KEEP_DAYS)
-    stats["_pruned"] = removed
+    # Drop any oversized toots (e.g. from before the cap), then roll the pool.
+    db.prune_long_toots(config.SOCIAL_MAX_LEN)
+    rolled = db.prune_toots_per_rubrik(config.SOCIAL_KEEP_PER_RUBRIK)
+    aged = db.prune_toots(config.SOCIAL_KEEP_DAYS)
+    stats["_pruned"] = {"rolled": rolled, "aged": aged}
     return stats
