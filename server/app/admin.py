@@ -87,7 +87,7 @@ td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);whit
 .err{color:var(--err)}
 .cols{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:stretch}
 @media(max-width:820px){.cols{grid-template-columns:1fr}}
-.side{border-left:1px solid var(--border);padding-left:26px;display:flex;flex-direction:column}
+.side{display:flex;flex-direction:column}
 .side-foot{margin-top:auto;padding-top:18px}
 .side h3{margin-top:0}
 .side .cards{gap:8px}
