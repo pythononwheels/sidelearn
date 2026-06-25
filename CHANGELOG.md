@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.122] — 2026-06-25 — Stream: Zeit-Blöcke, Niveau-Filter, Infinite-Scroll
+
+- **Drei Filter im Stream**: **Thema** (Rubrik-Chips) · **Zeit** (chronologische Blöcke) · **Niveau**
+  (A1–C2 An/Aus-Buttons, Default = Userniveau+1 und drunter).
+- **Zeit-Blöcke mit Niveau-Sortierung**: lädt die neuesten ~40 Toots als Block (zeitlich), sortiert
+  *innerhalb* des Blocks nach Niveau (leicht→schwer). Weiterscrollen lädt den nächsten, älteren Block
+  (Infinite-Scroll, Cursor-Paging). Block-Trenner zeigt die Relativzeit.
+- **Server**: Harvest jetzt **alle 15 Min** (statt 6 h), **rollierender Pool** (neueste ~60 pro
+  Rubrik/Sprache, ~720 gesamt) statt reiner Alters-Prune; `/stream` mit `before`-Cursor fürs Paging.
+  Weiterhin **kein LLM** — nur Fetch, Filter, DB.
+
 ## [0.6.121] — 2026-06-25 — Stream: einfachste Toots zuerst
 
 - **Niveau-Sortierung im Stream**: neue Toggle **„Einfachste zuerst"** (Default an) holt die

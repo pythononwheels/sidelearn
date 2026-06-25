@@ -186,6 +186,8 @@ async def harvest() -> dict[str, Any]:
                     if db.upsert_toot(row):
                         added += 1
                 stats[key] = {"seen": seen, "added": added}
-    removed = db.prune_toots(config.SOCIAL_KEEP_DAYS)
-    stats["_pruned"] = removed
+    # Rolling pool first (keep newest N per rubrik), then an age backstop.
+    rolled = db.prune_toots_per_rubrik(config.SOCIAL_KEEP_PER_RUBRIK)
+    aged = db.prune_toots(config.SOCIAL_KEEP_DAYS)
+    stats["_pruned"] = {"rolled": rolled, "aged": aged}
     return stats

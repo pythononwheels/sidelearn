@@ -111,9 +111,12 @@ RL_AREAS = os.getenv("SL_RL_AREAS", "60/minute")  # /areas/list — cheap DB joi
 # A bounded pool of short public toots from curated topical hashtags, fetched on
 # a light cron (no LLM). See server/app/social.py for the per-language source map.
 SOCIAL_ENABLE = os.getenv("SL_SOCIAL_ENABLE", "1") == "1"
-SOCIAL_EVERY_H = int(os.getenv("SL_SOCIAL_EVERY_H", "6"))  # harvest cadence (hours)
+SOCIAL_EVERY_MIN = int(os.getenv("SL_SOCIAL_EVERY_MIN", "15"))  # harvest cadence (minutes)
 SOCIAL_PER_TAG = int(os.getenv("SL_SOCIAL_PER_TAG", "40"))  # toots fetched per tag/run
-SOCIAL_KEEP_DAYS = int(os.getenv("SL_SOCIAL_KEEP_DAYS", "21"))  # prune older than this
+# Rolling pool: keep the newest N per (lang, rubrik); older toots roll out. With
+# 6 rubriks × 2 langs and N=60 that's ~720 toots to scroll through, balanced by topic.
+SOCIAL_KEEP_PER_RUBRIK = int(os.getenv("SL_SOCIAL_KEEP_PER_RUBRIK", "60"))
+SOCIAL_KEEP_DAYS = int(os.getenv("SL_SOCIAL_KEEP_DAYS", "30"))  # age backstop prune
 SOCIAL_MIN_LEN = int(os.getenv("SL_SOCIAL_MIN_LEN", "60"))  # min letters of real text
 SOCIAL_MAX_PER_AUTHOR = int(os.getenv("SL_SOCIAL_MAX_PER_AUTHOR", "3"))  # per tag/run anti-flood
 # Which learn-languages to harvest (subset of the SOURCES map in social.py).

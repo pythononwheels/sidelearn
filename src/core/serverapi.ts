@@ -178,12 +178,12 @@ export interface ServerToot {
 export async function fetchStream(
   serverUrl: string,
   lang: Language,
-  opts?: { rubriks?: string[]; days?: number; limit?: number },
+  opts?: { rubriks?: string[]; before?: string; limit?: number },
 ): Promise<ServerToot[]> {
   try {
     const q = new URLSearchParams({ lang });
     if (opts?.rubriks?.length) q.set('tags', opts.rubriks.join(','));
-    if (opts?.days) q.set('days', String(opts.days));
+    if (opts?.before) q.set('before', opts.before);
     if (opts?.limit) q.set('limit', String(opts.limit));
     const res = await fetch(`${base(serverUrl)}/stream?${q}`, {
       headers: { accept: 'application/json' },

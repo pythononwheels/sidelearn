@@ -6,7 +6,7 @@
  */
 
 import { type ComponentChildren } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { LANGUAGES, LANG_LABELS, type Language } from '@/core/config';
 import { CEFR_LEVELS, isAboveLevel, rankToBand, type CefrLevel } from '@/core/difficulty/banding';
 import { loadRanks, rankOf, normalize } from '@/core/difficulty/frequency';
@@ -971,14 +971,38 @@ function TootImage({ src }: { src: string }) {
 // Social-stream tab: short, real Mastodon toots in the learn language. Tap a word
 // to translate (reuses WordPopover), translate the whole toot (TranslateReveal),
 // filter by rubrik. Difficulty is judged client-side; the original is one tap away.
+const STREAM_PAGE = 40;
+const ALL_BANDS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+// "vor X Min/Std/Tg" for the time-block dividers.
+function relTime(iso?: string): string {
+  if (!iso) return '';
+  const min = (Date.now() - new Date(iso).getTime()) / 60000;
+  if (min < 1.5) return 'gerade eben';
+  if (min < 60) return `vor ${Math.round(min)} Min`;
+  const h = min / 60;
+  if (h < 24) return `vor ${Math.round(h)} Std`;
+  return `vor ${Math.round(h / 24)} Tg`;
+}
+
 function StreamTab({ settings }: { settings: PwaSettings }) {
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
   const [names, setNames] = useState<Set<string>>(new Set());
-  const [toots, setToots] = useState<ServerToot[] | null>(null);
-  const [filter, setFilter] = useState<string | null>(null); // chosen rubrik
-  const [onlyMine, setOnlyMine] = useState(false);
-  const [sortEasy, setSortEasy] = useState(true); // easiest toots first (beginner-friendly)
+  const [rubrik, setRubrik] = useState<string | null>(null); // topic filter
+  const [bands, setBands] = useState<Set<string>>(
+    // level filter: default to the user's level + 1 and below, so beginners get an
+    // accessible feed out of the box (they can toggle harder levels back on).
+    () => new Set(ALL_BANDS.filter((b) => CEFR_LEVELS.indexOf(b) <= CEFR_LEVELS.indexOf(settings.level) + 1)),
+  );
+  const [sortEasy, setSortEasy] = useState(true); // sort within each block
+  // Time-block paging: each page is a chronological block (newest first); within a
+  // block we sort by level. Infinite scroll appends older blocks.
+  const [pages, setPages] = useState<ServerToot[][] | null>(null);
+  const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [pop, setPop] = useState<{ word: string; sentence: string; x: number; y: number } | null>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const busy = useRef(false);
 
   const supported = STREAM_LANGS.includes(settings.learn);
 
@@ -987,14 +1011,47 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
     void loadNames().then(setNames);
   }, [settings.learn]);
 
+  // Paging cursor = created_at of the oldest toot loaded (→ the next, older block).
+  const last = pages && pages.length ? pages[pages.length - 1] : null;
+  const cursor = last && last.length ? last[last.length - 1]?.created_at : undefined;
+
+  // Reset + load the first block when language or topic changes.
   useEffect(() => {
-    if (!supported) { setToots([]); return; }
+    busy.current = false;
+    if (!supported) { setPages([]); setDone(true); return; }
     let alive = true;
-    setToots(null);
-    void fetchStream(SERVER, settings.learn, { rubriks: filter ? [filter] : undefined, days: 14, limit: 60 })
-      .then((t) => { if (alive) setToots(t); });
+    setPages(null); setDone(false); setLoading(true);
+    void fetchStream(SERVER, settings.learn, { rubriks: rubrik ? [rubrik] : undefined, limit: STREAM_PAGE })
+      .then((t) => {
+        if (!alive) return;
+        setPages([t]);
+        setDone(t.length < STREAM_PAGE);
+        setLoading(false);
+      });
     return () => { alive = false; };
-  }, [settings.learn, filter, supported]);
+  }, [settings.learn, rubrik, supported]);
+
+  const loadMore = useCallback(() => {
+    if (busy.current || done || !supported || !cursor) return;
+    busy.current = true;
+    setLoading(true);
+    void fetchStream(SERVER, settings.learn, { rubriks: rubrik ? [rubrik] : undefined, before: cursor, limit: STREAM_PAGE })
+      .then((t) => {
+        setPages((ps) => [...(ps ?? []), t]);
+        setDone(t.length < STREAM_PAGE);
+        setLoading(false);
+        busy.current = false;
+      });
+  }, [done, supported, cursor, settings.learn, rubrik]);
+
+  // Infinite scroll: load the next block as the sentinel nears the viewport.
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver((es) => { if (es[0]?.isIntersecting) loadMore(); }, { rootMargin: '500px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [loadMore]);
 
   const isHard = (w: string): boolean => {
     if (!ranks || w.length < 3 || names.has(w.toLowerCase())) return false;
@@ -1002,13 +1059,25 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
     return r !== undefined && isAboveLevel(rankToBand(r), settings.level);
   };
 
-  // Tag each toot with its (client-side) band, optionally keep only what's at/near
-  // the user's level, and surface the easiest first so beginners aren't buried in C1.
-  const myIdx = CEFR_LEVELS.indexOf(settings.level);
   const bandIdx = (b: CefrLevel | null) => (b ? CEFR_LEVELS.indexOf(b) : 99);
-  const ranked = (toots ?? []).map((t) => ({ t, band: ranks ? tootBand(t.content, ranks) : null }));
-  const filtered = ranked.filter(({ band }) => !onlyMine || band === null || bandIdx(band) <= myIdx + 1);
-  const shown = sortEasy ? [...filtered].sort((a, b) => bandIdx(a.band) - bandIdx(b.band)) : filtered;
+  const toggleBand = (b: CefrLevel) =>
+    setBands((s) => {
+      const n = new Set(s);
+      if (n.has(b)) n.delete(b);
+      else n.add(b);
+      return n;
+    });
+
+  // Per block: tag each toot with its band, keep the selected levels (empty set =
+  // show all), and sort easiest-first when the toggle is on.
+  const renderBlock = (page: ServerToot[]) => {
+    const ranked = page.map((t) => ({ t, band: ranks ? tootBand(t.content, ranks) : null }));
+    const keep = ranked.filter(({ band }) => bands.size === 0 || band === null || bands.has(band));
+    return sortEasy ? keep.sort((a, b) => bandIdx(a.band) - bandIdx(b.band)) : keep;
+  };
+
+  const blocks = (pages ?? []).map((p) => ({ page: p, items: renderBlock(p) }));
+  const totalShown = blocks.reduce((n, b) => n + b.items.length, 0);
 
   return (
     <main class="sl-main with-nav">
@@ -1024,59 +1093,70 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
         </p>
       ) : (
         <>
+          {/* Thema */}
           <div class="st-filter">
-            <button class={`st-chip ${filter === null ? 'on' : ''}`} onClick={() => setFilter(null)}>Alle</button>
+            <button class={`st-chip ${rubrik === null ? 'on' : ''}`} onClick={() => setRubrik(null)}>Alle</button>
             {STREAM_RUBRIKS.map((id) => {
               const a = AREAS.find((x) => x.id === id);
               return (
-                <button key={id} class={`st-chip ${filter === id ? 'on' : ''}`} onClick={() => setFilter(filter === id ? null : id)}>
+                <button key={id} class={`st-chip ${rubrik === id ? 'on' : ''}`} onClick={() => setRubrik(rubrik === id ? null : id)}>
                   <span class={`st-dot ${a?.color ?? ''}`} />{a?.label ?? id}
                 </button>
               );
             })}
           </div>
-          <div class="st-opts">
-            <label class="st-mine">
-              <input type="checkbox" checked={sortEasy} onChange={(e) => setSortEasy((e.target as HTMLInputElement).checked)} />
-              <span>Einfachste zuerst</span>
-            </label>
-            <label class="st-mine">
-              <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine((e.target as HTMLInputElement).checked)} />
-              <span>ungefähr mein Niveau</span>
-            </label>
+          {/* Niveau */}
+          <div class="st-filter">
+            {ALL_BANDS.map((b) => (
+              <button key={b} class={`st-chip lvl ${bands.has(b) ? 'on' : ''}`} onClick={() => toggleBand(b)}>{b}</button>
+            ))}
           </div>
+          <label class="st-mine" style={{ margin: '10px 2px 2px' }}>
+            <input type="checkbox" checked={sortEasy} onChange={(e) => setSortEasy((e.target as HTMLInputElement).checked)} />
+            <span>Einfachste zuerst (je Block)</span>
+          </label>
 
-          {toots === null ? (
+          {pages === null ? (
             <div style={{ marginTop: '24px' }}><Dots /></div>
-          ) : shown.length === 0 ? (
+          ) : totalShown === 0 && done ? (
             <p class="sl-muted" style={{ marginTop: '18px' }}>
-              {toots.length === 0
-                ? 'Hier ist gerade nichts — schau später nochmal vorbei.'
-                : 'Nichts auf deinem Niveau in dieser Rubrik — weite den Filter.'}
+              Nichts für diese Filter — wähle mehr Niveaus oder eine andere Rubrik.
             </p>
           ) : (
-            <ul class="st-list">
-              {shown.map(({ t, band }) => {
-                const a = AREAS.find((x) => x.id === t.rubrik);
-                return (
-                  <li key={t.id} class="st-card">
-                    <div class="st-card-head">
-                      <span class={`st-dot ${a?.color ?? ''}`} />
-                      <span class="st-author">{t.author || t.author_handle}</span>
-                      {band && <span class="sl-pop-band">{band}</span>}
-                      <a class="st-src" href={t.url} target="_blank" rel="noreferrer noopener">Original ↗</a>
-                    </div>
-                    <p class="st-text">
-                      <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(t.content, w), x, y })} />
-                    </p>
-                    {t.media_url && <TootImage src={t.media_url} />}
-                    {settings.learn !== settings.native && t.content.length <= 400 && (
-                      <TranslateReveal text={t.content} settings={settings} />
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              {blocks.map(({ page, items }, bi) =>
+                items.length === 0 ? null : (
+                  <div key={bi}>
+                    <div class="st-divider"><span>{relTime(page[0]?.created_at)}</span></div>
+                    <ul class="st-list">
+                      {items.map(({ t, band }) => {
+                        const a = AREAS.find((x) => x.id === t.rubrik);
+                        return (
+                          <li key={t.id} class="st-card">
+                            <div class="st-card-head">
+                              <span class={`st-dot ${a?.color ?? ''}`} />
+                              <span class="st-author">{t.author || t.author_handle}</span>
+                              {band && <span class="sl-pop-band">{band}</span>}
+                              <a class="st-src" href={t.url} target="_blank" rel="noreferrer noopener">Original ↗</a>
+                            </div>
+                            <p class="st-text">
+                              <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(t.content, w), x, y })} />
+                            </p>
+                            {t.media_url && <TootImage src={t.media_url} />}
+                            {settings.learn !== settings.native && t.content.length <= 400 && (
+                              <TranslateReveal text={t.content} settings={settings} />
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ),
+              )}
+              <div ref={sentinel} style={{ height: '1px' }} />
+              {loading && <div style={{ marginTop: '16px' }}><Dots /></div>}
+              {done && totalShown > 0 && <p class="sl-muted" style={{ textAlign: 'center', margin: '18px 0' }}>Das war's fürs Erste 🥒</p>}
+            </>
           )}
         </>
       )}

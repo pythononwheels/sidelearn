@@ -255,18 +255,19 @@ def upsert_toot(t: dict[str, Any]) -> bool:
 
 
 def stream_toots(
-    lang: str, rubriks: Optional[list[str]] = None, since: Optional[str] = None, limit: int = 50
+    lang: str, rubriks: Optional[list[str]] = None, before: Optional[str] = None, limit: int = 50
 ) -> list[dict[str, Any]]:
-    """Pooled toots for `lang`, newest first. `rubriks` filters by topic;
-    `since` (ISO) keeps only newer toots."""
+    """Pooled toots for `lang`, newest first. `rubriks` filters by topic; `before`
+    (ISO created_at) is a paging cursor — only toots older than it (for the
+    time-block infinite scroll)."""
     sql = (
         "SELECT id, lang, instance, url, author, author_handle, content, media_url, tags, rubrik, created_at "
         "FROM toot WHERE lang=? "
     )
     params: list[Any] = [lang]
-    if since:
-        sql += "AND created_at >= ? "
-        params.append(since)
+    if before:
+        sql += "AND created_at < ? "
+        params.append(before)
     if rubriks:
         sql += "AND rubrik IN (%s) " % ",".join("?" * len(rubriks))
         params.extend(rubriks)
@@ -278,12 +279,31 @@ def stream_toots(
 
 
 def prune_toots(keep_days: int) -> int:
-    """Delete toots older than `keep_days` (by created_at). Returns rows removed."""
+    """Delete toots older than `keep_days` (by created_at) — age backstop. Returns
+    rows removed."""
     from datetime import datetime, timedelta, timezone
 
     cutoff = (datetime.now(timezone.utc) - timedelta(days=keep_days)).isoformat()
     with conn() as c:
         cur = c.execute("DELETE FROM toot WHERE created_at < ?", (cutoff,))
+        return cur.rowcount
+
+
+def prune_toots_per_rubrik(keep: int) -> int:
+    """Rolling pool: within each (lang, rubrik) keep only the newest `keep` toots,
+    delete the rest. Keeps the pool bounded and balanced across topics. Returns
+    rows removed."""
+    with conn() as c:
+        cur = c.execute(
+            """DELETE FROM toot WHERE id IN (
+                 SELECT id FROM (
+                   SELECT id, ROW_NUMBER() OVER (
+                     PARTITION BY lang, rubrik ORDER BY created_at DESC
+                   ) AS rn FROM toot
+                 ) WHERE rn > ?
+               )""",
+            (keep,),
+        )
         return cur.rowcount
 
 

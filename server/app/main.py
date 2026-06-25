@@ -108,7 +108,7 @@ def _startup() -> None:
     if config.SOCIAL_ENABLE:
         threading.Thread(target=_run_harvest, daemon=True).start()
         scheduler.add_job(
-            _run_harvest, "interval", hours=config.SOCIAL_EVERY_H, id="social", replace_existing=True
+            _run_harvest, "interval", minutes=config.SOCIAL_EVERY_MIN, id="social", replace_existing=True
         )
     if (config.AUTO_BUILD or config.SOCIAL_ENABLE) and not scheduler.running:
         scheduler.start()
@@ -401,19 +401,17 @@ def stream(
     request: Request,
     lang: str = Query(...),
     tags: str = Query(""),
-    days: int | None = Query(None, ge=1, le=30),
-    limit: int = Query(50, ge=1, le=100),
+    before: str | None = Query(None, max_length=40),
+    limit: int = Query(40, ge=1, le=100),
 ) -> dict:
     """Pooled Mastodon toots for `lang`, newest first — for the Social-Stream tab.
-    `tags` = comma-sep rubriks (sport, natur, …) to filter; `days` limits age.
-    Instant, no LLM (difficulty/translation happen client-side / on-tap), but a
-    per-IP rate limit guards the DB."""
+    `tags` = comma-sep rubriks (sport, natur, …) to filter; `before` (ISO
+    created_at) is a paging cursor for the time-block infinite scroll. Instant, no
+    LLM (difficulty/translation happen client-side / on-tap), but a per-IP rate
+    limit guards the DB."""
     _check_lang(lang)
     rubriks = [t.strip() for t in tags.split(",") if t.strip()] or None
-    since = None
-    if days:
-        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
-    return {"lang": lang, "toots": db.stream_toots(lang, rubriks, since, limit)}
+    return {"lang": lang, "toots": db.stream_toots(lang, rubriks, before, limit)}
 
 
 @app.get("/surprise", dependencies=[Depends(require_origin)])
