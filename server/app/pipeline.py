@@ -94,11 +94,12 @@ def process_article(
     return {"ok": True, "made": made, "skipped": skipped, "errors": errors}
 
 
-def process_day(date_key: str, lang: str) -> dict:
-    """Process every (not-yet-prepared) article in a day's pool for `lang`."""
+def process_day(date_key: str, lang: str, force: bool = False) -> dict:
+    """Process every (not-yet-prepared) article in a day's pool for `lang`. With
+    `force`, re-generate even already-prepared levels."""
     made, errors = 0, []
     for aid in db.daily_article_ids(date_key, lang):
-        r = process_article(aid)
+        r = process_article(aid, None, force)
         made += r.get("made", 0)
         errors += r.get("errors", [])
     return {"made": made, "errors": errors}

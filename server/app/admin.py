@@ -200,11 +200,11 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
         + f"Level: {', '.join(config.LEVELS)}</p></aside>"
     )
 
-    cards_html, busy = _day_cards(lang, date_key)
+    cards_html, busy, state = _day_cards(lang, date_key)
     left = (
         f"<h1>Sidelearn — Admin</h1>{lang_tabs(lang)}"
         f"<h3>Tage ({lang.upper()})</h3>{day_links}"
-        f"<h3 style='margin-top:32px'>{date_key}</h3>{_day_bar(lang, date_key)}{cards_html}"
+        f"<h3 style='margin-top:32px'>{date_key}</h3>{_day_bar(lang, date_key, state, busy)}{cards_html}"
     )
     body = f"<div class=cols><div>{left}</div>{side}</div>"
     return page("Sidelearn Admin", body, refresh=5 if busy else 0)
@@ -377,16 +377,22 @@ def _month_calendar(lang: str, date_key: str, month: str, have: set[str]) -> str
     return nav + f"<div class=cal>{head}{''.join(cells)}</div>"
 
 
-def _day_cards(lang: str, date_key: str) -> tuple[str, bool]:
+def _day_cards(lang: str, date_key: str) -> tuple[str, bool, str]:
     """Article cards for one day's pool (thumbnail, level badges, per-article
-    actions). Returns (html, busy). Shared by the day page and the admin home."""
+    actions). Returns (html, busy, state) where state is empty|partial|complete.
+    Shared by the day page and the admin home."""
     ids = db.daily_article_ids(date_key, lang)
     cards = []
+    nlev = len(config.LEVELS)
+    n_art = n_done = 0
     for aid in ids:
         art = db.get_article(aid)
         if not art:
             continue
+        n_art += 1
         done = set(db.prepared_levels(aid))
+        if len(done) >= nlev:
+            n_done += 1
         running = aid in pipeline.PROCESSING
         badges = "".join(
             f"<span class='lvl {'done' if lv in done else ''}'>{lv}</span>" for lv in config.LEVELS
@@ -422,38 +428,41 @@ def _day_cards(lang: str, date_key: str) -> tuple[str, bool]:
             f"<a class=btn href='/admin/article?id={aid}&lang={lang}&date={date_key}'>Ansehen</a>"
             f"</div></div>"
         )
-    cards_html = "".join(cards) or "<p class=muted>Kein Pool für diesen Tag — oben „Pool entdecken“.</p>"
+    cards_html = "".join(cards) or "<p class=muted>Für diesen Tag liegt noch nichts vor.</p>"
     busy = any(db.get_article(a) and a in pipeline.PROCESSING for a in ids)
-    return cards_html, busy
+    state = "empty" if n_art == 0 else ("complete" if n_done >= n_art else "partial")
+    return cards_html, busy, state
 
 
-def _day_bar(lang: str, date_key: str) -> str:
-    auto = (
-        "<p class=muted style='margin:2px 0 10px'>"
-        "Inhalte werden <b>automatisch</b> gebaut (täglich 04:00 UTC + bei Container-Start). "
-        "Die Buttons sind nur ein manueller Notnagel — bei einer Kalender-Lücke oder einem "
-        "halben Build: „Artikel holen“ lädt die Wikipedia-Artikel des Tages (ohne KI), "
-        "„Aufbereiten“ erzeugt per KI die Niveau-Versionen + Quiz."
-        "</p>"
-        if config.AUTO_BUILD
-        else "<p class=muted style='margin:2px 0 10px'>Auto-Build ist <b>aus</b> — Inhalte hier manuell bauen:</p>"
-    )
-    return (
-        auto
-        + "<div class=bar>"
-        f"<form method=post action='/admin/discover?lang={lang}&date={date_key}'><button class=btn>Artikel holen</button></form>"
-        f"<form method=post action='/admin/process-day?lang={lang}&date={date_key}'><button class=btn>Aufbereiten (KI)</button></form>"
-        "</div>"
-    )
+def _day_bar(lang: str, date_key: str, state: str, busy: bool) -> str:
+    """One context action for the day (or none): build an empty day, finish a
+    partial one, or — when complete — a small force-reprocess. Auto-build (cron)
+    handles the normal case, so nothing shows when there's nothing to do."""
+
+    def form(action: str, label: str, primary: bool = False, extra: str = "") -> str:
+        cls = "btn primary" if primary else "btn"
+        return (
+            f"<form method=post action='/admin/{action}?lang={lang}&date={date_key}{extra}'>"
+            f"<button class='{cls}'>{label}</button></form>"
+        )
+
+    if busy:
+        return "<p class=muted style='margin:4px 0 14px'>⏳ Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
+    if state == "empty":
+        note = "Noch nichts gebaut." if config.AUTO_BUILD else "Auto-Build ist aus."
+        return f"<div class=bar>{form('build-day', 'Tag bauen', True)}<span class=muted>{note}</span></div>"
+    if state == "partial":
+        return f"<div class=bar>{form('process-day', 'Fehlende aufbereiten', True)}<span class=muted>Teilweise aufbereitet.</span></div>"
+    return f"<div class=bar><span class=muted>✓ Vollständig aufbereitet.</span>{form('process-day', '↻ neu aufbereiten', False, '&force=1')}</div>"
 
 
 @router.get("/admin/day", response_class=HTMLResponse)
 def admin_day(lang: str = "fr", date: str = "") -> HTMLResponse:
     date_key = date or pipeline.today_key()
-    cards_html, busy = _day_cards(lang, date_key)
+    cards_html, busy, state = _day_cards(lang, date_key)
     body = (
         f"<h1><a href='/admin?lang={lang}'>← Admin</a> · {date_key}</h1>{lang_tabs(lang, date_key)}"
-        f"{_day_bar(lang, date_key)}{cards_html}"
+        f"{_day_bar(lang, date_key, state, busy)}{cards_html}"
     )
     if busy:
         body += "<p class=muted>Verarbeitung läuft … Seite aktualisiert sich automatisch.</p>"
@@ -526,7 +535,16 @@ def admin_article(id: str, lang: str = "fr", date: str = "", level: str = "") ->
 @router.post("/admin/discover")
 async def admin_discover(lang: str, date: str) -> RedirectResponse:
     await pipeline.discover(lang, _parse(date))
-    return RedirectResponse(f"/admin/day?lang={lang}&date={date}", status_code=303)
+    return RedirectResponse(f"/admin?lang={lang}&date={date}", status_code=303)
+
+
+@router.post("/admin/build-day")
+async def admin_build_day(background: BackgroundTasks, lang: str, date: str) -> RedirectResponse:
+    """Build a whole day from scratch: discover the article pool (no LLM), then
+    process every level in the background. The one-click action for an empty day."""
+    await pipeline.discover(lang, _parse(date))
+    background.add_task(pipeline.process_day, date, lang, False)
+    return RedirectResponse(f"/admin?lang={lang}&date={date}", status_code=303)
 
 
 @router.post("/admin/process")
@@ -548,9 +566,9 @@ def admin_process(
 
 
 @router.post("/admin/process-day")
-def admin_process_day(background: BackgroundTasks, lang: str, date: str) -> RedirectResponse:
-    background.add_task(pipeline.process_day, date, lang)
-    return RedirectResponse(f"/admin/day?lang={lang}&date={date}", status_code=303)
+def admin_process_day(background: BackgroundTasks, lang: str, date: str, force: bool = False) -> RedirectResponse:
+    background.add_task(pipeline.process_day, date, lang, force)
+    return RedirectResponse(f"/admin?lang={lang}&date={date}", status_code=303)
 
 
 @router.get("/admin/abuse", response_class=HTMLResponse)
