@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.126] — 2026-06-26 — Tages-Variety-Fix + „Archiv"
+
+- **Fix**: aufeinanderfolgende Tage zeigten dieselben Artikel (der mostread-Feed ist „klebrig" und fällt
+  bei noch nicht veröffentlichtem „heute" auf den Vortag zurück). `discover` dedupliziert jetzt gegen die
+  **letzten 14 Tage** und wählt frische Artikel aus einem größeren Kandidaten-Pool.
+- **„Challenges" → „Archiv"** umbenannt (Tab-Label, Titel, Icon) — es ist ein Archiv vergangener
+  Tageslektionen, keine neuen Challenges. Das „Challenge erfüllt!" beim Lesen (Tagesziel) bleibt.
+
 ## [0.6.125] — 2026-06-25 — Stream: tieferer Pool
 
 - **Rollender Pool 80 → 120 pro Rubrik/Sprache** → Ziel ~2000 Toots gesamt (mehr zum Durchscrollen;
