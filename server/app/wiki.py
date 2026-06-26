@@ -80,6 +80,10 @@ def article_id(url: str) -> str:
 
 
 def _to_article(p: dict[str, Any], lang: str) -> Optional[dict[str, Any]]:
+    # Skip disambiguation / homonym pages (e.g. "XXX" = the Roman numeral 30) —
+    # they're link lists, not readable prose.
+    if p.get("type") == "disambiguation":
+        return None
     title = p.get("normalizedtitle") or (p.get("titles") or {}).get("normalized") or p.get("title")
     urls = p.get("content_urls") or {}
     url = (urls.get("desktop") or {}).get("page") or (urls.get("mobile") or {}).get("page")
