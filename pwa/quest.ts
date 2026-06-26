@@ -27,11 +27,11 @@ const COMBOS: QuestTask[][] = [
 
 const KEY = 'sl_pwa_quest';
 
-// Small stable string hash → combo index. Same date → same combo, always.
-function hashDate(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
+// Day number since the epoch → combo index. Consecutive days get consecutive
+// combos, so the quest never repeats the previous day's combo (it rotates).
+function comboIndex(date: string): number {
+  const dayNum = Math.floor(Date.parse(`${date}T00:00:00`) / 86_400_000);
+  return ((dayNum % COMBOS.length) + COMBOS.length) % COMBOS.length;
 }
 
 /** Today's quest. Frozen on first call of the day (stored), so editing COMBOS
@@ -42,7 +42,7 @@ export function getTodayQuest(): Quest {
     const saved = JSON.parse(localStorage.getItem(KEY) || 'null') as Quest | null;
     if (saved && saved.date === date && Array.isArray(saved.tasks)) return saved;
   } catch { /* ignore */ }
-  const id = hashDate(date) % COMBOS.length;
+  const id = comboIndex(date);
   const tasks: QuestTask[] = COMBOS[id] ?? ['article', 'cloze'];
   const quest: Quest = { date, id, tasks };
   try { localStorage.setItem(KEY, JSON.stringify(quest)); } catch { /* ignore */ }

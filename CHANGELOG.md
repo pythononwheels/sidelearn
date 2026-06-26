@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
+## [0.6.127] — 2026-06-26 — Tagesquest-Fixes
+
+- **Fix**: „Lies einen Rubrik-Artikel" wurde beim Lesen als **Kurzfassung (Digest)** nie abgehakt —
+  `creditOnce` markiert jetzt den `rubrik`-Tagesflag (der volle Artikel-Pfad tat das bereits).
+- **Quest rotiert täglich**: Combo-Auswahl per Tagesnummer statt Hash → zwei aufeinanderfolgende Tage
+  bekommen nie denselben Quest. Reset/Verfall bei Tageswechsel via `todayKey` + Visibility-Refresh.
+
 
 ## [0.6.126] — 2026-06-26 — Tages-Variety-Fix + „Archiv"
 

@@ -1286,6 +1286,7 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     if (credited.current) return;
     credited.current = true;
     award(XP.lesson);
+    markDailyDone('rubrik'); // digests are rubrik/archive reads → tick the daily quest's "rubrik" task
     logActivity({
       type: 'lesson', level: settings.level, title: article.title,
       detail: score.answered > 0 ? `Kurzfassung ${score.correct}/${score.answered}` : 'Kurzfassung',
