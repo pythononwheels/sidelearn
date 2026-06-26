@@ -168,6 +168,20 @@ def daily_article_ids(date: str, lang: str) -> list[str]:
     return [r["article_id"] for r in rows]
 
 
+def recent_daily_article_ids(lang: str, exclude_date: str, days: int = 14) -> set[str]:
+    """Article ids used in `lang`'s daily set over the last `days` days (excluding
+    `exclude_date`) — so a new day can skip recently-shown articles and stay fresh."""
+    from datetime import datetime, timedelta, timezone
+
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+    with conn() as c:
+        rows = c.execute(
+            "SELECT DISTINCT article_id FROM daily WHERE lang=? AND date>=? AND date<>?",
+            (lang, since, exclude_date),
+        ).fetchall()
+    return {r["article_id"] for r in rows}
+
+
 def daily_dates(lang: str, limit: int) -> list[str]:
     with conn() as c:
         rows = c.execute(

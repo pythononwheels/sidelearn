@@ -274,7 +274,7 @@ export function App() {
 function TabBar({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab) => void }) {
   const items: { id: Tab; label: string; icon: ComponentChildren }[] = [
     { id: 'home', label: 'Home', icon: <IconHome /> },
-    { id: 'challenges', label: 'Challenges', icon: <IconTarget /> },
+    { id: 'challenges', label: 'Archiv', icon: <IconArchive /> },
     { id: 'stream', label: 'Stream', icon: <IconStream /> },
     { id: 'report', label: 'Report', icon: <IconChart /> },
     { id: 'settings', label: 'Mehr', icon: <IconGear /> },
@@ -294,6 +294,7 @@ function TabBar({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab) => void }) {
 
 const svg = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } as const;
 const IconHome = () => (<svg {...svg}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></svg>);
+const IconArchive = () => (<svg {...svg}><rect x="3" y="3" width="18" height="4" rx="1" /><path d="M5 7v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7" /><path d="M10 11h4" /></svg>);
 const IconTarget = () => (<svg {...svg}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>);
 const IconChart = () => (<svg {...svg}><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="12" y="8" width="3" height="10" /><rect x="17" y="5" width="3" height="13" /></svg>);
 const IconStream = () => (<svg {...svg}><path d="M7.9 20A5 5 0 0 1 4 11.9 6 6 0 0 1 15.4 9 4.5 4.5 0 0 1 17 18H8" /></svg>);
@@ -1285,6 +1286,7 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     if (credited.current) return;
     credited.current = true;
     award(XP.lesson);
+    markDailyDone('rubrik'); // digests are rubrik/archive reads → tick the daily quest's "rubrik" task
     logActivity({
       type: 'lesson', level: settings.level, title: article.title,
       detail: score.answered > 0 ? `Kurzfassung ${score.correct}/${score.answered}` : 'Kurzfassung',
@@ -2078,7 +2080,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
 
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Challenges</h1>
+      <h1 class="tab-screen-title">Archiv</h1>
       <p class="lr-section">Heutige & frühere Tageslektionen</p>
       {days.length > 0 && (
         <div class="lr-pick day-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>

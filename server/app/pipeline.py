@@ -28,19 +28,31 @@ def _now() -> str:
 
 
 async def discover(lang: str, day: date) -> int:
-    """Fetch the day's pool for `lang` and store the original articles. No LLM."""
+    """Fetch the day's pool for `lang` and store the original articles. No LLM.
+
+    Skips articles already shown in the last ~14 days so consecutive days don't
+    repeat the same set (the mostread feed is sticky — and falls back to the
+    previous day when 'today' isn't published yet at cron time). Pulls from a
+    larger candidate pool and picks the first POOL fresh ones; if everything is
+    recent, falls back to the top candidates so the day is never empty."""
     dkey = day.strftime("%Y-%m-%d")
     added = 0
+    rank = 0
+    used = db.recent_daily_article_ids(lang, dkey, 14)
     async with httpx.AsyncClient(timeout=30) as client:
-        pool = await wiki.fetch_pool(client, lang, day, config.POOL)
-        for rank, a in enumerate(pool):
+        pool = await wiki.fetch_pool(client, lang, day, config.POOL * 6)
+        candidates = [a for a in pool if a["id"] not in used] or pool
+        for a in candidates:
+            if rank >= config.POOL:
+                break
             if not db.has_article(a["id"]):
                 paras = await wiki.fetch_paragraphs(client, lang, a["title"], config.MAX_PARAS)
-                if not paras:
-                    continue
+                if len(paras) < 3:
+                    continue  # skip disambiguation / list / stub pages (no real prose)
                 db.upsert_article({**a, "paragraphs": paras}, _now())
                 added += 1
             db.upsert_daily(dkey, lang, rank, a["id"])
+            rank += 1
     return added
 
 
