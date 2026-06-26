@@ -131,6 +131,16 @@ td.num,th.num{text-align:right}
 """
 
 
+def _kfmt(n: int) -> str:
+    """Compact token count for KPI cards: 702428 -> '702k', 2018178 -> '2.0M'."""
+    n = int(n or 0)
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    if n >= 1_000:
+        return f"{round(n / 1000)}k"
+    return str(n)
+
+
 def page(title: str, body: str, refresh: int = 0) -> HTMLResponse:
     meta_refresh = f"<meta http-equiv=refresh content={refresh}>" if refresh else ""
     return HTMLResponse(
@@ -175,9 +185,9 @@ def admin_home(lang: str = "fr", date: str = "", month: str = "") -> HTMLRespons
     kpis = (
         "<div class=cards>"
         f"<div class=kpi><b>{t['calls']}</b><span>Calls</span></div>"
-        f"<div class=kpi><b>${t['cost']:.4f}</b><span>Kosten</span></div>"
-        f"<div class=kpi><b>{t['tin']:,}</b><span>Input</span></div>"
-        f"<div class=kpi><b>{t['tout']:,}</b><span>Output</span></div>"
+        f"<div class=kpi><b>${t['cost']:.2f}</b><span>Kosten</span></div>"
+        f"<div class=kpi><b>{_kfmt(t['tin'])}</b><span>Input</span></div>"
+        f"<div class=kpi><b>{_kfmt(t['tout'])}</b><span>Output</span></div>"
         f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
         "</div>"
     )
@@ -256,9 +266,9 @@ def admin_stats() -> HTMLResponse:
     kpis = (
         "<div class=cards>"
         f"<div class=kpi><b>{t['calls']}</b><span>Calls</span></div>"
-        f"<div class=kpi><b>{t['tin']:,}</b><span>Input</span></div>"
-        f"<div class=kpi><b>{t['tout']:,}</b><span>Output</span></div>"
-        f"<div class=kpi><b>${t['cost']:.4f}</b><span>Kosten</span></div>"
+        f"<div class=kpi><b>{_kfmt(t['tin'])}</b><span>Input</span></div>"
+        f"<div class=kpi><b>{_kfmt(t['tout'])}</b><span>Output</span></div>"
+        f"<div class=kpi><b>${t['cost']:.2f}</b><span>Kosten</span></div>"
         f"<div class=kpi><b>{t['errors']}</b><span>Fehler</span></div>"
         "</div>"
     )
@@ -334,7 +344,7 @@ def admin_stats() -> HTMLResponse:
         " costc=new Chart($('costChart'),{type:'bar',data:{labels,datasets:[\n"
         "  {data:d.map(x=>x.cost),backgroundColor:'#6b57d6',borderRadius:3}]},\n"
         "  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},\n"
-        "   tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toFixed(4)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,afterFit:s=>{s.width=52}}}}});\n"
+        "   tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toFixed(2)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,afterFit:s=>{s.width=52}}}}});\n"
         "}\n"
         "document.querySelectorAll('.rng').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rng').forEach(x=>x.classList.remove('on'));b.classList.add('on');render(+b.dataset.d);});\n"
         "render(7);\n"
