@@ -177,7 +177,7 @@ const de: Dict = {
   // stream
   'stream.title': 'Stream',
   'stream.sub': 'echte Posts · zum Lesen & Lernen',
-  'stream.unsupported': 'Den Stream gibt’s bisher nur für Englisch und Französisch. Stell deine Lernsprache in „{more}" um, um ihn auszuprobieren.',
+  'stream.unsupported': 'Den Stream gibt’s für Englisch, Französisch, Niederländisch, Spanisch und Italienisch. Stell deine Lernsprache in „{more}" um, um ihn auszuprobieren.',
   'stream.sortEasy': 'Einfachste zuerst (je Block)',
   'stream.noResults': 'Nichts für diese Filter — wähle mehr Niveaus oder eine andere Rubrik.',
   'stream.original': 'Original ↗',
@@ -500,7 +500,7 @@ const en: Dict = {
 
   'stream.title': 'Stream',
   'stream.sub': 'real posts · to read & learn',
-  'stream.unsupported': 'The stream is currently only available for English and French. Switch your learning language in “{more}” to try it.',
+  'stream.unsupported': 'The stream is available for English, French, Dutch, Spanish and Italian. Switch your learning language in “{more}” to try it.',
   'stream.sortEasy': 'Easiest first (per block)',
   'stream.noResults': 'Nothing for these filters — pick more levels or another topic.',
   'stream.original': 'Original ↗',
