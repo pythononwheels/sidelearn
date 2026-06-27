@@ -318,8 +318,37 @@ const de: Dict = {
   'dict.removeAria': 'entfernen',
   'dict.saveAria': 'merken',
 
-  // lesson per-paragraph vocab question
+  // lesson (article reading)
   'lesson.vocabQ': 'Was bedeutet „{word}"?',
+  'lesson.logQuiz': 'Quiz {c}/{a}',
+  'lesson.stretchTitle': 'Eine Stufe über deinem Level — für neue Wörter',
+  'lesson.paraProgress': 'Absatz {n} / {total}',
+  'lesson.excerpt': ' · Auszug',
+  'lesson.plus1': ' · +1 ({lvl})',
+  'lesson.hintPre': 'Tippe ein ',
+  'lesson.hintPost': ' Wort für die Übersetzung.',
+  'lesson.read': 'Gelesen ✓',
+  'lesson.challengeH': 'Challenge erfüllt!',
+  'lesson.wordsLearned': '+{n} neue Wörter aus diesem Artikel gelernt',
+  'lesson.challengeP': '{done} Absätze geschafft — stark! Lies {more} weitere für Bonus-XP, oder mach beim nächsten Artikel weiter.',
+  'lesson.keepReading': 'Weiterlesen · Bonus +',
+  'lesson.nextArticle': 'Nächster Artikel',
+  'lesson.goalReached': 'Tagesziel erreicht!',
+  'lesson.quizScore': 'Quiz: {c} / {a} richtig',
+  'lesson.dailyAllRead': '{done} von {goal} der Tageslektion gelesen.',
+  'lesson.dailyDone': '{done} von {goal} der Tageslektion geschafft.',
+  'lesson.dailyDoneMore': '{done} von {goal} der Tageslektion geschafft — noch einer fehlt.',
+
+  // word popover
+  'pop.noTranslation': 'keine Übersetzung gefunden',
+  'pop.saved': 'gemerkt',
+  'pop.save': 'merken',
+
+  // translate reveal
+  'xlate.loading': 'Übersetze …',
+  'xlate.btn': '🌐 Übersetzung',
+
+  'update.banner': 'Neue Version verfügbar — tippen zum Aktualisieren.',
 };
 
 const en: Dict = {
@@ -600,6 +629,33 @@ const en: Dict = {
   'dict.saveAria': 'save',
 
   'lesson.vocabQ': 'What does „{word}" mean?',
+  'lesson.logQuiz': 'Quiz {c}/{a}',
+  'lesson.stretchTitle': 'One step above your level — for new words',
+  'lesson.paraProgress': 'Paragraph {n} / {total}',
+  'lesson.excerpt': ' · excerpt',
+  'lesson.plus1': ' · +1 ({lvl})',
+  'lesson.hintPre': 'Tap a ',
+  'lesson.hintPost': ' word for the translation.',
+  'lesson.read': 'Read ✓',
+  'lesson.challengeH': 'Challenge complete!',
+  'lesson.wordsLearned': '+{n} new words learned from this article',
+  'lesson.challengeP': '{done} paragraphs done — great! Read {more} more for bonus XP, or move on to the next article.',
+  'lesson.keepReading': 'Keep reading · bonus +',
+  'lesson.nextArticle': 'Next article',
+  'lesson.goalReached': 'Daily goal reached!',
+  'lesson.quizScore': 'Quiz: {c} / {a} correct',
+  'lesson.dailyAllRead': '{done} of {goal} of the daily lesson read.',
+  'lesson.dailyDone': '{done} of {goal} of the daily lesson done.',
+  'lesson.dailyDoneMore': '{done} of {goal} of the daily lesson done — one more to go.',
+
+  'pop.noTranslation': 'no translation found',
+  'pop.saved': 'saved',
+  'pop.save': 'save',
+
+  'xlate.loading': 'Translating …',
+  'xlate.btn': '🌐 Translation',
+
+  'update.banner': 'New version available — tap to update.',
 };
 
 const DICTS: Record<string, Dict> = { de, en };

@@ -337,16 +337,8 @@ const Gurki = ({ pose = 'yay', size = 92 }: { pose?: Pose; size?: number }) => (
   <img class="gurki" src={`/gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
 );
 
-const HYPE = [
-  "Bereit? Heute wird's gut!",
-  'Schön, dass du da bist!',
-  'Komm, wir lesen was Neues.',
-  'Gurki glaubt an dich.',
-  'Kleine Schritte, große Wirkung.',
-  'Ein Häppchen Wissen gefällig?',
-  'Heute schon schlauer als gestern.',
-  'Lesen macht stark — wie eine Gurke.',
-];
+// Greeting bubbles live in i18n as hype.0 … hype.{HYPE_COUNT-1}.
+const HYPE_COUNT = 8;
 
 /* ------------------------------------------------------------ Onboarding --- */
 
@@ -548,7 +540,7 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
     } catch { /* ignore */ }
   }, [questComplete]);
 
-  const [hypeIdx] = useState(() => Math.floor(Math.random() * HYPE.length));
+  const [hypeIdx] = useState(() => Math.floor(Math.random() * HYPE_COUNT));
   const pose: Pose = questComplete ? 'party' : 'yay';
   const bubble = questComplete
     ? t('home.bubbleDone')
@@ -811,14 +803,15 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
 /* -------------------------------------------------------------- Surprise --- */
 
-const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string; color: string }[] = [
-  { id: 'technik', label: 'Technik', icon: <IconWrench />, sub: 'Erfindungen, Computer …', color: 'a-technik' },
-  { id: 'sport', label: 'Sport', icon: <IconBall />, sub: 'Fußball, Olympia …', color: 'a-sport' },
-  { id: 'geschichte', label: 'Geschichte', icon: <IconLandmark />, sub: 'Antike, Mittelalter …', color: 'a-geschichte' },
-  { id: 'gesellschaft', label: 'Stars & Gesellschaft', icon: <IconStar />, sub: 'Promis, Musik, TV …', color: 'a-gesellschaft' },
-  { id: 'natur', label: 'Natur & Tiere', icon: <IconLeaf />, sub: 'Tiere, Pflanzen …', color: 'a-natur' },
-  { id: 'kultur', label: 'Kultur', icon: <IconMusic />, sub: 'Musik, Film, Kunst …', color: 'a-kultur' },
-  { id: 'wissenschaft', label: 'Wissenschaft', icon: <IconFlask />, sub: 'Weltraum, Physik …', color: 'a-wissenschaft' },
+// Rubric tiles. Display label + sub come from i18n (t('rubrik.<id>') / '<id>.sub').
+const AREAS: { id: string; icon: ComponentChildren; color: string }[] = [
+  { id: 'technik', icon: <IconWrench />, color: 'a-technik' },
+  { id: 'sport', icon: <IconBall />, color: 'a-sport' },
+  { id: 'geschichte', icon: <IconLandmark />, color: 'a-geschichte' },
+  { id: 'gesellschaft', icon: <IconStar />, color: 'a-gesellschaft' },
+  { id: 'natur', icon: <IconLeaf />, color: 'a-natur' },
+  { id: 'kultur', icon: <IconMusic />, color: 'a-kultur' },
+  { id: 'wissenschaft', icon: <IconFlask />, color: 'a-wissenschaft' },
 ];
 
 function SurpriseView({ settings, onOpen, onDigest, onBack }: {
@@ -1965,9 +1958,6 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
 
 /* ----------------------------------------------------------- Challenges --- */
 
-const CAL_WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-const CAL_MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-
 /** Month calendar that only enables days present in `available` (the sparse
  * archive). Scales to months/years far better than a flat dropdown list. */
 function DayCalendar({ available, sel, today, onPick }: {
@@ -1994,7 +1984,7 @@ function DayCalendar({ available, sel, today, onPick }: {
         <span class="cal-title">{t(`cal.month.${m - 1}`)} {y}</span>
         <button class="cal-nav" disabled={!canNext} onClick={() => canNext && shift(1)} aria-label={t('cal.nextAria')}>›</button>
       </div>
-      <div class="cal-grid cal-wd">{CAL_WD.map((_, i) => <span class="cal-wdl">{t(`cal.wd.${i}`)}</span>)}</div>
+      <div class="cal-grid cal-wd">{Array.from({ length: 7 }, (_, i) => <span class="cal-wdl">{t(`cal.wd.${i}`)}</span>)}</div>
       <div class="cal-grid">
         {cells.map((d, i) => {
           if (d === null) return <span class="cal-cell empty" key={`e${i}`} />;
@@ -2650,7 +2640,7 @@ function Lesson({
     if (arts.some((a) => a.url === article.url) && done >= goal) { celebrate(); setCelebrated(true); }
   }, [completed, daily]);
 
-  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">Lektion nicht verfügbar.</p></Frame>;
+  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">{t('common.lessonUnavailable')}</p></Frame>;
   if (!lesson) return <Frame title={article.title} onBack={onBack}><Dots /></Frame>;
 
   const total = lesson.paragraphs.length;
@@ -2667,7 +2657,7 @@ function Lesson({
       type: 'lesson',
       level: settings.level,
       title: article.title,
-      detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
+      detail: score.answered > 0 ? t('lesson.logQuiz', { c: score.correct, a: score.answered }) : undefined,
     });
     if (route) {
       completeActivity(settings.level, 'lesson'); // daily read advances the route
@@ -2714,7 +2704,7 @@ function Lesson({
       onBack={onBack}
       level={
         readLevel ? (
-          <span class="sl-stretch" title="Eine Stufe über deinem Level — für neue Wörter">+1 · {lvl}</span>
+          <span class="sl-stretch" title={t('lesson.stretchTitle')}>+1 · {lvl}</span>
         ) : (
           <div class="sl-levels">
             {LEVELS.map((l) => (
@@ -2727,11 +2717,11 @@ function Lesson({
       }
     >
       <p class="sl-progress">
-        Absatz {Math.min(visible, total)} / {total}
-        {total >= 8 ? ' · Auszug' : ''}
-        {readLevel ? ` · +1 (${lvl})` : ''}
+        {t('lesson.paraProgress', { n: Math.min(visible, total), total })}
+        {total >= 8 ? t('lesson.excerpt') : ''}
+        {readLevel ? t('lesson.plus1', { lvl }) : ''}
       </p>
-      <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
+      <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> {t('lesson.hintPre')}<span class="sl-hint-mark">{t('digest.hintMark')}</span>{t('lesson.hintPost')}</p>
 
       {lesson.paragraphs.slice(0, visible).map((p, i) => (
         <div key={i} class={`sl-para ${i === lastIdx && !completed ? 'current' : 'past'}`}>
@@ -2744,7 +2734,7 @@ function Lesson({
           </p>
           {i === lastIdx && !completed && !showChallenge && quizIdx === null && (
             <button class="sl-read" onClick={onRead}>
-              {i === total - 1 ? 'Fertig ✓' : 'Gelesen ✓'}
+              {i === total - 1 ? t('common.doneCheck') : t('lesson.read')}
             </button>
           )}
         </div>
@@ -2756,19 +2746,19 @@ function Lesson({
         return (
           <section class="sl-done">
             <span class="sl-done-ico"><IconSparkles /></span>
-            <h2>Challenge erfüllt!</h2>
-            {wordsLearned > 0 && <p class="sl-done-words">+{wordsLearned} neue Wörter aus diesem Artikel gelernt</p>}
-            <p class="sl-done-daily">{CHALLENGE} Absätze geschafft — stark! Lies {total - CHALLENGE} weitere für Bonus-XP, oder mach beim nächsten Artikel weiter.</p>
+            <h2>{t('lesson.challengeH')}</h2>
+            {wordsLearned > 0 && <p class="sl-done-words">{t('lesson.wordsLearned', { n: wordsLearned })}</p>}
+            <p class="sl-done-daily">{t('lesson.challengeP', { done: CHALLENGE, more: total - CHALLENGE })}</p>
             <div class="sl-done-actions">
               <button class="sl-read primary" onClick={() => { setShowChallenge(false); setVisible((v) => v + 1); }}>
-                Weiterlesen · Bonus +
+                {t('lesson.keepReading')}
               </button>
               {next && (
                 <button class="sl-read ghost" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(daily?.articles ?? [], next.url, settings.level))}>
-                  Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
+                  {t('lesson.nextArticle')} <span class="sl-btn-ico"><IconArrowRight /></span>
                 </button>
               )}
-              <button class="sl-read ghost" onClick={onHome}>Zur Übersicht</button>
+              <button class="sl-read ghost" onClick={onHome}>{t('common.toOverview')}</button>
             </div>
           </section>
         );
@@ -2809,30 +2799,30 @@ function Lesson({
         return (
           <section class="sl-done">
             <span class="sl-done-ico"><IconSparkles /></span>
-            <h2>{allDone ? 'Tagesziel erreicht!' : 'Geschafft'}</h2>
-            {wordsLearned > 0 && <p class="sl-done-words">+{wordsLearned} neue Wörter aus diesem Artikel gelernt</p>}
-            {score.answered > 0 && <p class="sl-done-score">Quiz: {score.correct} / {score.answered} richtig</p>}
+            <h2>{allDone ? t('lesson.goalReached') : t('common.done')}</h2>
+            {wordsLearned > 0 && <p class="sl-done-words">{t('lesson.wordsLearned', { n: wordsLearned })}</p>}
+            {score.answered > 0 && <p class="sl-done-score">{t('lesson.quizScore', { c: score.correct, a: score.answered })}</p>}
             {inDaily && (
               <p class="sl-done-daily">
                 {allDone
-                  ? `${doneCount} von ${goal} der Tageslektion gelesen.`
-                  : `${doneCount} von ${goal} der Tageslektion geschafft${next ? ' — noch einer fehlt.' : '.'}`}
+                  ? t('lesson.dailyAllRead', { done: doneCount, goal })
+                  : next ? t('lesson.dailyDoneMore', { done: doneCount, goal }) : t('lesson.dailyDone', { done: doneCount, goal })}
               </p>
             )}
             <div class="sl-done-actions">
               {inDaily && !allDone && next && (
                 <button class="sl-read primary" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(daily?.articles ?? [], next.url, settings.level))}>
-                  Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
+                  {t('lesson.nextArticle')} <span class="sl-btn-ico"><IconArrowRight /></span>
                 </button>
               )}
-              <button class={`sl-read ${inDaily && !allDone && next ? 'ghost' : ''}`} onClick={onHome}>Zur Übersicht</button>
+              <button class={`sl-read ${inDaily && !allDone && next ? 'ghost' : ''}`} onClick={onHome}>{t('common.toOverview')}</button>
             </div>
           </section>
         );
       })()}
 
       <footer class="sl-credit">
-        Quelle: <a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
+        {t('common.sourcePre')}<a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
       </footer>
 
       {pop && (
@@ -2856,7 +2846,7 @@ function Frame({
   return (
     <main class="sl-main">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
         <span class="sl-lessontitle">{title}</span>
       </header>
       {level}
@@ -2986,14 +2976,14 @@ function WordPopover({
               {translation}
               {pos && <span class="sl-pop-pos"> · {pos}</span>}
             </p>
-            {alts.length > 0 && <p class="sl-pop-alts">auch: {alts.join(', ')}</p>}
+            {alts.length > 0 && <p class="sl-pop-alts">{t('common.also', { alt: alts.join(', ') })}</p>}
             {example && <p class="sl-pop-ex">„{example}"{exampleDe && <span class="sl-pop-exd"> — {exampleDe}</span>}</p>}
           </>
         ) : (
-          <p class="sl-muted">keine Übersetzung gefunden</p>
+          <p class="sl-muted">{t('pop.noTranslation')}</p>
         )}
         <button class={`sl-merken ${saved ? 'saved' : ''}`} disabled={saved || !translation} onClick={merken}>
-          <span class="sl-merken-ico"><IconStar /></span>{saved ? 'gemerkt' : 'merken'}
+          <span class="sl-merken-ico"><IconStar /></span>{saved ? t('pop.saved') : t('pop.save')}
         </button>
       </div>
     </>
@@ -3003,26 +2993,26 @@ function WordPopover({
 /* ------------------------------------------------------ translate reveal --- */
 
 function TranslateReveal({ text, settings }: { text: string; settings: PwaSettings }) {
-  const [t, setT] = useState<string | null>(null);
+  const [tr, setTr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   // Reset when the sentence changes (next gap/question) — otherwise the previous
   // gap's translation lingers and is shown against the new, unrelated sentence.
-  useEffect(() => { setT(null); setLoading(false); }, [text]);
+  useEffect(() => { setTr(null); setLoading(false); }, [text]);
   if (!text || settings.learn === settings.native) return null;
   async function go() {
-    if (t !== null || loading) return;
+    if (tr !== null || loading) return;
     setLoading(true);
     const r = await fetchSentenceTranslation(SERVER, settings.learn, settings.native, text);
-    setT(r ?? '—');
+    setTr(r ?? '—');
     setLoading(false);
   }
   return (
     <div class="sl-xlate">
-      {t !== null ? (
-        <p class="sl-xlate-txt">{t}</p>
+      {tr !== null ? (
+        <p class="sl-xlate-txt">{tr}</p>
       ) : (
         <button class="sl-xlate-btn" disabled={loading} onClick={go}>
-          {loading ? 'Übersetze …' : '🌐 Übersetzung'}
+          {loading ? t('xlate.loading') : t('xlate.btn')}
         </button>
       )}
     </div>
@@ -3071,7 +3061,7 @@ function Quiz({
         })}
       </div>
       {answer !== null && (
-        <button class="sl-read" onClick={onNext}>{isLast ? 'Fertig ✓' : 'Weiter →'}</button>
+        <button class="sl-read" onClick={onNext}>{isLast ? t('common.doneCheck') : t('common.continueArrow')}</button>
       )}
     </div>
   );
@@ -3094,7 +3084,7 @@ function Updater() {
   };
   return (
     <div class="sl-update" onClick={apply}>
-      Neue Version verfügbar — tippen zum Aktualisieren.
+      {t('update.banner')}
     </div>
   );
 }
