@@ -2193,7 +2193,7 @@ function ReportTab({ settings, onDeck, onTest, onRoute }: {
   const pct = Math.round((prog.etappe + (prog.atAufstieg ? 0 : Math.min(cleared / ETAPPE_GOAL, 1))) / ETAPPEN_PER_LEVEL * 100);
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Report</h1>
+      <h1 class="tab-screen-title">{t('tab.report')}</h1>
 
       <div class={`rep-stage ${ready ? 'ready' : ''}`}>
         <div class="rep-stage-top">
@@ -2202,39 +2202,39 @@ function ReportTab({ settings, onDeck, onTest, onRoute }: {
         </div>
         <div class="rep-stage-bar"><i style={{ width: `${pct}%` }} /></div>
         {ready ? (
-          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>{prog.atAufstieg ? 'Aufstiegstest starten' : 'Etappentest starten'}</button>
+          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>{prog.atAufstieg ? t('report.startAufstieg') : t('report.startEtappe')}</button>
         ) : (
-          <p class="rep-stage-hint">{prog.atAufstieg ? '' : `Lerne diese Woche ${ETAPPE_GOAL} neue Wörter — dann öffnet der Etappentest (${Math.min(cleared, ETAPPE_GOAL)}/${ETAPPE_GOAL}).`}</p>
+          <p class="rep-stage-hint">{prog.atAufstieg ? '' : t('report.weekHint', { goal: ETAPPE_GOAL, cleared: Math.min(cleared, ETAPPE_GOAL) })}</p>
         )}
       </div>
 
       <div class="rep-kpis">
-        <div class="rep-kpi"><b>{s.level}</b><span>Level</span></div>
-        <div class="rep-kpi"><b>{s.totalXp}</b><span>XP gesamt</span></div>
-        <div class="rep-kpi"><b>{deck}</b><span>Vokabeln</span></div>
-        <div class="rep-kpi"><b>{acc}</b><span>Tage-Streak</span></div>
+        <div class="rep-kpi"><b>{s.level}</b><span>{t('report.kpiLevel')}</span></div>
+        <div class="rep-kpi"><b>{s.totalXp}</b><span>{t('report.kpiXp')}</span></div>
+        <div class="rep-kpi"><b>{deck}</b><span>{t('report.kpiVocab')}</span></div>
+        <div class="rep-kpi"><b>{acc}</b><span>{t('report.kpiStreak')}</span></div>
       </div>
 
       <div class="rep-card">
-        <h3>XP · letzte 7 Tage</h3>
+        <h3>{t('report.week7')}</h3>
         <div class="rep-week">
           {s.last7.map((d) => (
             <div class="rep-day">
               <div class="rep-bar" style={{ height: `${Math.round((d.xp / maxDay) * 92)}%` }} />
-              <span class="rep-day-l">{['Mo','Di','Mi','Do','Fr','Sa','So'][new Date(d.key).getDay() === 0 ? 6 : new Date(d.key).getDay() - 1]}</span>
+              <span class="rep-day-l">{t(`cal.wd.${new Date(d.key).getDay() === 0 ? 6 : new Date(d.key).getDay() - 1}`)}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div class="rep-card">
-        <h3>Heute</h3>
-        <div class="rep-row"><span>XP heute</span><b>{s.todayXp} / {s.goal}</b></div>
-        <div class="rep-row"><span>Level-Fortschritt</span><b>{s.intoLevel} / {s.levelSpan} XP</b></div>
+        <h3>{t('archive.today')}</h3>
+        <div class="rep-row"><span>{t('report.xpToday')}</span><b>{s.todayXp} / {s.goal}</b></div>
+        <div class="rep-row"><span>{t('report.levelProgress')}</span><b>{s.intoLevel} / {s.levelSpan} XP</b></div>
       </div>
 
-      <button class="lr-vocab" onClick={onRoute}>Lernroute ansehen →</button>
-      <button class="lr-vocab" onClick={onDeck}>Meine Vokabeln · {deck} →</button>
+      <button class="lr-vocab" onClick={onRoute}>{t('report.viewRoute')}</button>
+      <button class="lr-vocab" onClick={onDeck}>{t('report.myVocab', { n: deck })}</button>
     </main>
   );
 }
@@ -2427,16 +2427,16 @@ function DictView({ settings, initialMode, onBack }: {
   return (
     <main class="sl-main">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Wörterbuch</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('tile.dict')}</span>
       </header>
 
       <div class="dict-tools">
         <div class="dict-seg">
-          <button class={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>Alle</button>
-          <button class={mode === 'mine' ? 'on' : ''} onClick={() => setMode('mine')}>Meine</button>
+          <button class={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{t('dict.tabAll')}</button>
+          <button class={mode === 'mine' ? 'on' : ''} onClick={() => setMode('mine')}>{t('dict.tabMine')}</button>
         </div>
-        <input class="dict-search" placeholder="Suchen …" value={q} onInput={(e) => setQ(e.currentTarget.value)} />
+        <input class="dict-search" placeholder={t('dict.search')} value={q} onInput={(e) => setQ(e.currentTarget.value)} />
       </div>
 
       {(mode === 'all' && rich === null) || (rows.length === 0 && fb === 'loading') ? (
@@ -2444,10 +2444,10 @@ function DictView({ settings, initialMode, onBack }: {
       ) : displayed.length === 0 ? (
         <p class="sl-muted">
           {mode === 'mine'
-            ? 'Noch keine Merkwörter. Tippe beim Lesen ein Wort an und drücke „★ merken".'
+            ? t('dict.emptyMine')
             : ql
-              ? 'Nichts gefunden.'
-              : `Für ${LANG_LABELS[settings.learn]} gibt es noch kein Wörterbuch.`}
+              ? t('dict.notFound')
+              : t('dict.noDict', { lang: LANG_LABELS[settings.learn] })}
         </p>
       ) : (
         <ul class="sl-deck">
@@ -2465,7 +2465,7 @@ function DictView({ settings, initialMode, onBack }: {
                   </button>
                   <button
                     class={`dict-add${saved ? ' on' : ''}`}
-                    aria-label={saved ? 'entfernen' : 'merken'}
+                    aria-label={saved ? t('dict.removeAria') : t('dict.saveAria')}
                     onClick={() => toggleSave(r.word, s0?.t ?? '')}
                   >
                     {saved ? '★' : '☆'}
@@ -2494,8 +2494,6 @@ function DictView({ settings, initialMode, onBack }: {
 
 type QKind = 'quiz' | 'vocab' | 'cloze';
 interface LessonQuestion { kind: QKind; q: string; options: string[]; correct: number }
-
-const Q_LABEL: Record<QKind, string> = { quiz: 'Verständnis', vocab: 'Vokabel', cloze: 'Lückentext' };
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function sampleN<T>(arr: T[], n: number): T[] {
@@ -2550,8 +2548,8 @@ async function buildLessonQuestions(lesson: ServerLesson, settings: PwaSettings)
     } else if (type === 'vocab') {
       const word = here[Math.floor(Math.random() * here.length)]!;
       const correct = trans.get(word)!;
-      const options = shuffleInPlace([correct, ...sampleN(transValues.filter((t) => t !== correct), 3)]);
-      out.push({ kind: 'vocab', q: `Was bedeutet „${word}"?`, options, correct: options.indexOf(correct) });
+      const options = shuffleInPlace([correct, ...sampleN(transValues.filter((v) => v !== correct), 3)]);
+      out.push({ kind: 'vocab', q: t('lesson.vocabQ', { word }), options, correct: options.indexOf(correct) });
     } else {
       out.push({ kind: 'cloze', q: cz!.prompt, options: cz!.options, correct: cz!.options.indexOf(cz!.answer) });
     }

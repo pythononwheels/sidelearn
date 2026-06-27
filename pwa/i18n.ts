@@ -293,6 +293,33 @@ const de: Dict = {
   'archive.readCount': '{done}/{goal} gelesen',
   'archive.noLessons': 'Keine Lektionen für diesen Tag.',
   'archive.fromRubrics': 'Aus den Rubriken',
+
+  // report
+  'report.startAufstieg': 'Aufstiegstest starten',
+  'report.startEtappe': 'Etappentest starten',
+  'report.weekHint': 'Lerne diese Woche {goal} neue Wörter — dann öffnet der Etappentest ({cleared}/{goal}).',
+  'report.kpiLevel': 'Level',
+  'report.kpiXp': 'XP gesamt',
+  'report.kpiVocab': 'Vokabeln',
+  'report.kpiStreak': 'Tage-Streak',
+  'report.week7': 'XP · letzte 7 Tage',
+  'report.xpToday': 'XP heute',
+  'report.levelProgress': 'Level-Fortschritt',
+  'report.viewRoute': 'Lernroute ansehen →',
+  'report.myVocab': 'Meine Vokabeln · {n} →',
+
+  // dictionary (Wörterbuch)
+  'dict.tabAll': 'Alle',
+  'dict.tabMine': 'Meine',
+  'dict.search': 'Suchen …',
+  'dict.emptyMine': 'Noch keine Merkwörter. Tippe beim Lesen ein Wort an und drücke „★ merken".',
+  'dict.notFound': 'Nichts gefunden.',
+  'dict.noDict': 'Für {lang} gibt es noch kein Wörterbuch.',
+  'dict.removeAria': 'entfernen',
+  'dict.saveAria': 'merken',
+
+  // lesson per-paragraph vocab question
+  'lesson.vocabQ': 'Was bedeutet „{word}"?',
 };
 
 const en: Dict = {
@@ -549,6 +576,30 @@ const en: Dict = {
   'archive.readCount': '{done}/{goal} read',
   'archive.noLessons': 'No lessons for this day.',
   'archive.fromRubrics': 'From the topics',
+
+  'report.startAufstieg': 'Start level-up test',
+  'report.startEtappe': 'Start stage test',
+  'report.weekHint': 'Learn {goal} new words this week — then the stage test opens ({cleared}/{goal}).',
+  'report.kpiLevel': 'Level',
+  'report.kpiXp': 'Total XP',
+  'report.kpiVocab': 'Vocabulary',
+  'report.kpiStreak': 'Day streak',
+  'report.week7': 'XP · last 7 days',
+  'report.xpToday': 'XP today',
+  'report.levelProgress': 'Level progress',
+  'report.viewRoute': 'View learning route →',
+  'report.myVocab': 'My vocabulary · {n} →',
+
+  'dict.tabAll': 'All',
+  'dict.tabMine': 'Mine',
+  'dict.search': 'Search …',
+  'dict.emptyMine': 'No saved words yet. Tap a word while reading and press “★ save”.',
+  'dict.notFound': 'Nothing found.',
+  'dict.noDict': 'There’s no dictionary for {lang} yet.',
+  'dict.removeAria': 'remove',
+  'dict.saveAria': 'save',
+
+  'lesson.vocabQ': 'What does „{word}" mean?',
 };
 
 const DICTS: Record<string, Dict> = { de, en };
