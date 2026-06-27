@@ -217,6 +217,50 @@ const de: Dict = {
   'cloze.tapHint': 'Tippe auf das fehlende Wort',
   'cloze.resOk': 'Stark — richtig!',
   'cloze.resNo': 'Schade — richtig wäre „{answer}".',
+
+  // level-up test
+  'ltest.title': 'Etappen-Test',
+  'ltest.part1': 'Teil 1 · Wortschatz',
+  'ltest.vhPre': 'Tippe alle Wörter an, die du ',
+  'ltest.vhMark': 'kennst',
+  'ltest.vhPost': '. Manche sind erfunden — die lässt du aus.',
+  'ltest.toPart2': 'Weiter → Teil 2',
+  'ltest.noReading': 'Gerade kein Lesetext verfügbar — wir werten Teil 1 aus.',
+  'ltest.finishTest': 'Test abschließen',
+  'ltest.part2': 'Teil 2 · Leseverständnis',
+  'ltest.evaluate': 'Auswerten ✓',
+  'ltest.passed': 'Bestanden!',
+  'ltest.levelUpPre': 'Glückwunsch — du steigst auf ',
+  'ltest.levelUpPost': ' auf. Deine Texte werden ab jetzt auf diesem Niveau angepasst.',
+  'ltest.nextStagePre': 'Nächste Etappe freigeschaltet: ',
+  'ltest.notYet': 'Noch nicht ganz',
+  'ltest.notYetP': 'Kein Problem — lies und übe noch etwas weiter und versuch’s dann nochmal.',
+  'ltest.logPass': 'bestanden',
+  'ltest.logFail': 'nicht bestanden',
+
+  // stage test (Etappentest)
+  'etest.title': 'Etappentest',
+  'etest.vocabQ': 'Was bedeutet «{word}»?',
+  'etest.passedH': 'Etappe geschafft!',
+  'etest.nextStagePre': 'Nächste Etappe: ',
+  'etest.almost': 'Fast!',
+  'etest.almostP': 'Du brauchst 4 von 5 richtig. Lies/üb noch etwas und versuch’s nochmal.',
+  'etest.locked': 'Der Etappentest schaltet frei, wenn du das Wochenziel von {goal} neuen Wörtern geschafft hast. Üb noch im Vokabeltest.',
+  'etest.noQuestions': 'Gerade keine Fragen verfügbar — lies erst eine Tageslektion.',
+  'etest.checkLabelPre': 'Kurzer Check · ',
+  'etest.logPass': 'Etappe geschafft',
+
+  // question-kind labels
+  'qkind.quiz': 'Verständnis',
+  'qkind.vocab': 'Vokabel',
+  'qkind.cloze': 'Lückentext',
+
+  // longer relative time (route / archive)
+  'time.today': 'heute',
+  'time.yesterday': 'gestern',
+  'time.daysAgo': 'vor {n} Tagen',
+  'time.lastWeek': 'letzte Woche',
+  'time.weeksAgo': 'vor {n} Wochen',
 };
 
 const en: Dict = {
@@ -404,6 +448,46 @@ const en: Dict = {
   'cloze.tapHint': 'Tap the missing word',
   'cloze.resOk': 'Great — correct!',
   'cloze.resNo': 'Too bad — the answer is “{answer}”.',
+
+  'ltest.title': 'Stage test',
+  'ltest.part1': 'Part 1 · Vocabulary',
+  'ltest.vhPre': 'Tap all the words you ',
+  'ltest.vhMark': 'know',
+  'ltest.vhPost': '. Some are made up — leave those out.',
+  'ltest.toPart2': 'Next → Part 2',
+  'ltest.noReading': "No reading text available right now — we'll evaluate part 1.",
+  'ltest.finishTest': 'Finish test',
+  'ltest.part2': 'Part 2 · Reading comprehension',
+  'ltest.evaluate': 'Evaluate ✓',
+  'ltest.passed': 'Passed!',
+  'ltest.levelUpPre': 'Congrats — you move up to ',
+  'ltest.levelUpPost': '. Your texts will now be adapted to this level.',
+  'ltest.nextStagePre': 'Next stage unlocked: ',
+  'ltest.notYet': 'Not quite yet',
+  'ltest.notYetP': 'No worries — read and practise a bit more, then try again.',
+  'ltest.logPass': 'passed',
+  'ltest.logFail': 'not passed',
+
+  'etest.title': 'Stage test',
+  'etest.vocabQ': 'What does «{word}» mean?',
+  'etest.passedH': 'Stage done!',
+  'etest.nextStagePre': 'Next stage: ',
+  'etest.almost': 'Almost!',
+  'etest.almostP': 'You need 4 out of 5 correct. Read/practise a bit and try again.',
+  'etest.locked': 'The stage test unlocks once you reach the weekly goal of {goal} new words. Keep practising in the vocab quiz.',
+  'etest.noQuestions': 'No questions available right now — read a daily lesson first.',
+  'etest.checkLabelPre': 'Quick check · ',
+  'etest.logPass': 'Stage done',
+
+  'qkind.quiz': 'Comprehension',
+  'qkind.vocab': 'Vocabulary',
+  'qkind.cloze': 'Cloze',
+
+  'time.today': 'today',
+  'time.yesterday': 'yesterday',
+  'time.daysAgo': '{n} days ago',
+  'time.lastWeek': 'last week',
+  'time.weeksAgo': '{n} weeks ago',
 };
 
 const DICTS: Record<string, Dict> = { de, en };

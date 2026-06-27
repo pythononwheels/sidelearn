@@ -1632,7 +1632,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
     const passed = vocabPass && readingPass;
     let adv: CompleteResult | null = null;
     if (passed) { adv = completeActivity(settings.level, 'aufstieg'); onAdvance(adv); celebrate(); }
-    logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'bestanden' : 'nicht bestanden' });
+    logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? t('ltest.logPass') : t('ltest.logFail') });
     if (adv?.levelUp) logActivity({ type: 'levelup', level: adv.level, detail: adv.level });
     setResult({ passed, adv });
     setPhase('result');
@@ -1652,15 +1652,15 @@ function LevelTestView({ settings, onAdvance, onBack }: {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Etappen-Test</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('ltest.title')}</span>
       </header>
 
       {phase === 'vocab' && (
         items === null ? <Dots /> : (
           <>
-            <p class="lr-section" style={{ marginTop: 0 }}>Teil 1 · Wortschatz</p>
-            <p class="sl-hint">Tippe alle Wörter an, die du <b>kennst</b>. Manche sind erfunden — die lässt du aus.</p>
+            <p class="lr-section" style={{ marginTop: 0 }}>{t('ltest.part1')}</p>
+            <p class="sl-hint">{t('ltest.vhPre')}<b>{t('ltest.vhMark')}</b>{t('ltest.vhPost')}</p>
             <div class="tst-grid">
               {items.map((it) => (
                 <button class={`tst-word ${known.has(it.word) ? 'on' : ''}`} onClick={() => toggle(it.word)}>
@@ -1668,7 +1668,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
                 </button>
               ))}
             </div>
-            <button class="sl-read" onClick={startReading}>Weiter → Teil 2</button>
+            <button class="sl-read" onClick={startReading}>{t('ltest.toPart2')}</button>
           </>
         )
       )}
@@ -1676,13 +1676,13 @@ function LevelTestView({ settings, onAdvance, onBack }: {
       {phase === 'reading' && (
         questions === null ? <Dots /> : questions.length === 0 ? (
           <>
-            <p class="sl-muted">Gerade kein Lesetext verfügbar — wir werten Teil 1 aus.</p>
-            <button class="sl-read" onClick={conclude}>Test abschließen</button>
+            <p class="sl-muted">{t('ltest.noReading')}</p>
+            <button class="sl-read" onClick={conclude}>{t('ltest.finishTest')}</button>
           </>
         ) : (
           <>
-            <p class="lr-section" style={{ marginTop: 0 }}>Teil 2 · Leseverständnis</p>
-            <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
+            <p class="lr-section" style={{ marginTop: 0 }}>{t('ltest.part2')}</p>
+            <p class="sl-progress">{t('trainer.qProgress', { n: qpos + 1, total: questions.length })}</p>
             <div class="sl-quiz">
               <p class="sl-quiz-q">{questions[qpos]!.prompt}</p>
               <TranslateReveal text={questions[qpos]!.prompt} settings={settings} />
@@ -1699,7 +1699,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
               </div>
               {picked !== null && (
                 <button class="sl-read" onClick={nextReading}>
-                  {qpos + 1 >= questions.length ? 'Auswerten ✓' : 'Weiter →'}
+                  {qpos + 1 >= questions.length ? t('ltest.evaluate') : t('common.continueArrow')}
                 </button>
               )}
             </div>
@@ -1712,21 +1712,21 @@ function LevelTestView({ settings, onAdvance, onBack }: {
           {result.passed ? (
             <>
               <span class="sl-done-ico"><IconSparkles /></span>
-              <h2>Bestanden!</h2>
+              <h2>{t('ltest.passed')}</h2>
               {result.adv?.levelUp ? (
-                <p>Glückwunsch — du steigst auf <b>{result.adv.level}</b> auf. Deine Texte werden ab jetzt auf diesem Niveau angepasst.</p>
+                <p>{t('ltest.levelUpPre')}<b>{result.adv.level}</b>{t('ltest.levelUpPost')}</p>
               ) : (
-                <p>Nächste Etappe freigeschaltet: <b>{getStageProgress(settings.level).label}</b>.</p>
+                <p>{t('ltest.nextStagePre')}<b>{getStageProgress(settings.level).label}</b>.</p>
               )}
             </>
           ) : (
             <>
               <span class="sl-done-ico muted"><IconRefresh /></span>
-              <h2>Noch nicht ganz</h2>
-              <p>Kein Problem — lies und übe noch etwas weiter und versuch's dann nochmal.</p>
+              <h2>{t('ltest.notYet')}</h2>
+              <p>{t('ltest.notYetP')}</p>
             </>
           )}
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       )}
     </main>
@@ -1753,11 +1753,11 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
       if (cleared < ETAPPE_GOAL && batch.length > 0) { setLocked(true); setQuestions([]); return; }
       // Mostly the Etappe's just-learned target words, plus a couple article questions.
       const pool = [...new Set(targets.map((t) => t.translation).filter(Boolean))];
-      const vq: LessonQuestion[] = sampleN(batch, 3).map((t) => {
-        const c = t.translation;
+      const vq: LessonQuestion[] = sampleN(batch, 3).map((b) => {
+        const c = b.translation;
         const distractors = sampleN(pool.filter((x) => x.toLowerCase() !== c.toLowerCase()), 3);
         const options = shuffleInPlace([c, ...distractors]);
-        return { kind: 'vocab' as const, q: `Was bedeutet «${t.word}»?`, options, correct: options.indexOf(c) };
+        return { kind: 'vocab' as const, q: t('etest.vocabQ', { word: b.word }), options, correct: options.indexOf(c) };
       }).filter((q) => q.options.length >= 2);
       let articleQs: LessonQuestion[] = [];
       const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
@@ -1795,7 +1795,7 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
         recordMilestone({ level: settings.level, etappe: eIdx, sublevel: `${settings.level}.${eIdx + 1}`, words: ETAPPE_GOAL, articles, ts: Date.now() });
         celebrate();
       }
-      logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'Etappe geschafft' : 'Etappentest' });
+      logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? t('etest.logPass') : t('etest.title') });
       setResult({ passed });
     } else { setQpos(qpos + 1); setPicked(null); }
   }
@@ -1804,37 +1804,37 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Etappentest</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('etest.title')}</span>
       </header>
 
       {result ? (
         <section class="sl-done">
           {result.passed ? (
-            <><span class="sl-done-ico"><IconSparkles /></span><h2>Etappe geschafft!</h2>
-              <p>Nächste Etappe: <b>{getStageProgress(settings.level).label}</b>.</p></>
+            <><span class="sl-done-ico"><IconSparkles /></span><h2>{t('etest.passedH')}</h2>
+              <p>{t('etest.nextStagePre')}<b>{getStageProgress(settings.level).label}</b>.</p></>
           ) : (
-            <><span class="sl-done-ico muted"><IconRefresh /></span><h2>Fast!</h2>
-              <p>Du brauchst 4 von 5 richtig. Lies/üb noch etwas und versuch's nochmal.</p></>
+            <><span class="sl-done-ico muted"><IconRefresh /></span><h2>{t('etest.almost')}</h2>
+              <p>{t('etest.almostP')}</p></>
           )}
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : questions === null ? (
         <Dots />
       ) : locked ? (
         <>
-          <p class="sl-muted">Der Etappentest schaltet frei, wenn du das Wochenziel von {ETAPPE_GOAL} neuen Wörtern geschafft hast. Üb noch im Vokabeltest.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <p class="sl-muted">{t('etest.locked', { goal: ETAPPE_GOAL })}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </>
       ) : questions.length === 0 ? (
         <>
-          <p class="sl-muted">Gerade keine Fragen verfügbar — lies erst eine Tageslektion.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <p class="sl-muted">{t('etest.noQuestions')}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </>
       ) : q ? (
         <>
-          <p class="lr-section" style={{ marginTop: 0 }}>Kurzer Check · {Q_LABEL[q.kind]}</p>
-          <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
+          <p class="lr-section" style={{ marginTop: 0 }}>{t('etest.checkLabelPre')}{t(`qkind.${q.kind}`)}</p>
+          <p class="sl-progress">{t('trainer.qProgress', { n: qpos + 1, total: questions.length })}</p>
           <div class="sl-quiz">
             <p class="sl-quiz-q">{q.q}</p>
             {q.kind !== 'vocab' && <TranslateReveal text={q.q} settings={settings} />}
@@ -1848,7 +1848,7 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
               })}
             </div>
             {picked !== null && (
-              <button class="sl-read" onClick={nextQ}>{qpos + 1 >= questions.length ? 'Auswerten ✓' : 'Weiter →'}</button>
+              <button class="sl-read" onClick={nextQ}>{qpos + 1 >= questions.length ? t('ltest.evaluate') : t('common.continueArrow')}</button>
             )}
           </div>
         </>
@@ -1861,11 +1861,11 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
 function timeAgo(ts: number): string {
   const d = Math.floor((Date.now() - ts) / 86400000);
-  if (d <= 0) return 'heute';
-  if (d === 1) return 'gestern';
-  if (d < 7) return `vor ${d} Tagen`;
-  if (d < 14) return 'letzte Woche';
-  return `vor ${Math.floor(d / 7)} Wochen`;
+  if (d <= 0) return t('time.today');
+  if (d === 1) return t('time.yesterday');
+  if (d < 7) return t('time.daysAgo', { n: d });
+  if (d < 14) return t('time.lastWeek');
+  return t('time.weeksAgo', { n: Math.floor(d / 7) });
 }
 
 function RouteView({ settings, onTrainer, onTest, onBack }: {
@@ -2778,7 +2778,7 @@ function Lesson({
 
       {quizIdx !== null && questions?.[quizIdx] && (
         <>
-          <p class="sl-qlabel">{Q_LABEL[questions[quizIdx]!.kind]}</p>
+          <p class="sl-qlabel">{t(`qkind.${questions[quizIdx]!.kind}`)}</p>
           <Quiz
             q={{ q: questions[quizIdx]!.q, options: questions[quizIdx]!.options, correct: questions[quizIdx]!.correct }}
             answer={answer}
