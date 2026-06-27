@@ -117,7 +117,8 @@
 
   /* features */
   .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
-  .f{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+  .f{display:block;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);color:var(--text);transition:transform .15s,box-shadow .15s,border-color .15s}
+  a.f:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(124,92,252,.20);border-color:var(--accent)}
   .f .fi{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;color:#fff}
   .f h3{font-size:17px;margin:12px 0 5px}
   .f p{color:var(--soft);font-size:14px}
@@ -204,7 +205,7 @@
       </div>
     </div>
     <div class="phone real">
-      <img src="shots/home.webp" width="800" height="1740" alt="Learny Startscreen — Tagesquest, Streak und Fortschritt" />
+      <img data-shot="home" src="shots/home-de.webp" width="800" height="1740" alt="Learny Startscreen — Tagesquest, Streak und Fortschritt" />
     </div>
   </header>
 
@@ -251,13 +252,13 @@
     <div class="kicker" data-i18n="kFeat">Alles dabei</div>
     <h2 class="sec-h" data-i18n="featH">Mehr als nur Lesen</h2>
     <div class="feat">
-      <div class="f"><div class="fi" style="background:linear-gradient(#7fdcff,#5ac8fa);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div><h3 data-i18n="fe1h">Wörterbuch</h3><p data-i18n="fe1p">Tippe ein unbekanntes Wort an — Übersetzung sofort, im Text.</p></div>
-      <div class="f"><div class="fi" style="background:linear-gradient(#7fdcff,#5ac8fa);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12h4"/><rect x="9" y="9" width="6" height="6" rx="1.4"/><path d="M17 12h4"/></svg></div><h3 data-i18n="fe2h">Lückentexte</h3><p data-i18n="fe2p">Setze fehlende Wörter ein — so festigt sich neuer Wortschatz.</p></div>
-      <div class="f"><div class="fi" style="background:linear-gradient(#b6f06a,#8fd84a);color:#fff"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><path d="M12 17h.01"/></svg></div><h3 data-i18n="fe3h">Quiz nach dem Artikel</h3><p data-i18n="fe3p">Kleine Fragen nach jedem Text prüfen dein Verständnis.</p></div>
-      <div class="f"><div class="fi" style="background:linear-gradient(#caa9ff,#9b6bff);color:#fff"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="8" width="13" height="11" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3"/></svg></div><h3 data-i18n="fe4h">Eigene Vokabeln</h3><p data-i18n="fe4p">Sammle Wörter in deinem persönlichen Deck und übe sie gezielt.</p></div>
-      <div class="f"><div class="fi" style="background:linear-gradient(#b6f06a,#8fd84a);color:#fff"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.25" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.25" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.25" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.25" fill="currentColor" stroke="none"/></svg></div><h3 data-i18n="fe5h">Artikelrubriken</h3><p data-i18n="fe5p">Lust auf mehr? Stöbere durch Technik, Natur, Kultur & Co.</p></div>
-      <div class="f"><div class="fi" style="background:var(--grad);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2c1 4 4 5 4 9a4 4 0 0 1-8 0c0-1 .3-1.8.8-2.5C8 10 7 11 7 13a5 5 0 0 0 10 0c0-5-5-7-5-11z"/></svg></div><h3 data-i18n="fe6h">Streak & XP</h3><p data-i18n="fe6p">Tagesziele, Streak und Level halten dich dran — spielerisch.</p></div>
-      <div class="f"><div class="fi" style="background:linear-gradient(#caa9ff,#9b6bff);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M7.9 20A5 5 0 0 1 4 11.9 6 6 0 0 1 15.4 9 4.5 4.5 0 0 1 17 18H8" /></svg></div><h3 data-i18n="fe7h">Social Stream</h3><p data-i18n="fe7p">Echte Social-Media-Posts in deiner Lernsprache — nach Thema & Sprachniveau gefiltert. Tippen zum Übersetzen.</p></div>
+      <a class="f" href="modi.html#lesen"><div class="fi" style="background:linear-gradient(#7fdcff,#5ac8fa);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div><h3 data-i18n="fe1h">Wörterbuch</h3><p data-i18n="fe1p">Tippe ein unbekanntes Wort an — Übersetzung sofort, im Text.</p></a>
+      <a class="f" href="modi.html#luecke"><div class="fi" style="background:linear-gradient(#7fdcff,#5ac8fa);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12h4"/><rect x="9" y="9" width="6" height="6" rx="1.4"/><path d="M17 12h4"/></svg></div><h3 data-i18n="fe2h">Lückentexte</h3><p data-i18n="fe2p">Setze fehlende Wörter ein — so festigt sich neuer Wortschatz.</p></a>
+      <a class="f" href="modi.html#lesen"><div class="fi" style="background:linear-gradient(#b6f06a,#8fd84a);color:#fff"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><path d="M12 17h.01"/></svg></div><h3 data-i18n="fe3h">Quiz nach dem Artikel</h3><p data-i18n="fe3p">Kleine Fragen nach jedem Text prüfen dein Verständnis.</p></a>
+      <a class="f" href="modi.html#vokabeln"><div class="fi" style="background:linear-gradient(#caa9ff,#9b6bff);color:#fff"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="8" width="13" height="11" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3"/></svg></div><h3 data-i18n="fe4h">Eigene Vokabeln</h3><p data-i18n="fe4p">Sammle Wörter in deinem persönlichen Deck und übe sie gezielt.</p></a>
+      <a class="f" href="modi.html#lesen"><div class="fi" style="background:linear-gradient(#b6f06a,#8fd84a);color:#fff"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.25" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.25" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.25" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.25" fill="currentColor" stroke="none"/></svg></div><h3 data-i18n="fe5h">Wikipedia-Artikelrubriken</h3><p data-i18n="fe5p">Lust auf mehr? Stöbere durch Artikel aus Technik, Natur, Kultur & weiteren Rubriken.</p></a>
+      <a class="f" href="modi.html#stream"><div class="fi" style="background:linear-gradient(#caa9ff,#9b6bff);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M7.9 20A5 5 0 0 1 4 11.9 6 6 0 0 1 15.4 9 4.5 4.5 0 0 1 17 18H8" /></svg></div><h3 data-i18n="fe7h">Social Stream</h3><p data-i18n="fe7p">Echte Social-Media-Posts in deiner Lernsprache — nach Thema & Sprachniveau gefiltert. Tippen zum Übersetzen.</p></a>
+      <a class="f" href="modi.html#start"><div class="fi" style="background:var(--grad);color:#fff"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2c1 4 4 5 4 9a4 4 0 0 1-8 0c0-1 .3-1.8.8-2.5C8 10 7 11 7 13a5 5 0 0 0 10 0c0-5-5-7-5-11z"/></svg></div><h3 data-i18n="fe6h">Streak & XP</h3><p data-i18n="fe6p">Tagesziele, Streak und Level halten dich dran — spielerisch.</p></a>
     </div>
   </section>
 
@@ -340,7 +341,7 @@
       fe2h:"Lückentexte", fe2p:"Setze fehlende Wörter ein — so festigt sich neuer Wortschatz.",
       fe3h:"Quiz nach dem Artikel", fe3p:"Kleine Fragen nach jedem Text prüfen dein Verständnis.",
       fe4h:"Eigene Vokabeln", fe4p:"Sammle Wörter in deinem persönlichen Deck und übe sie gezielt.",
-      fe5h:"Artikelrubriken", fe5p:"Lust auf mehr? Stöbere durch Technik, Natur, Kultur & Co.",
+      fe5h:"Wikipedia-Artikelrubriken", fe5p:"Lust auf mehr? Stöbere durch Artikel aus Technik, Natur, Kultur & weiteren Rubriken.",
       fe6h:"Streak & XP", fe6p:"Tagesziele, Streak und Level halten dich dran — spielerisch.",
       fe7h:"Social Stream", fe7p:"Echte Social-Media-Posts in deiner Lernsprache — nach Thema & Sprachniveau gefiltert. Tippen zum Übersetzen.",
       kInstall:"Installieren", instH:"So holst du Learny auf den Homescreen",
@@ -378,7 +379,7 @@
       fe2h:"Cloze (fill-in)", fe2p:"Fill in the missing words — that's how new vocabulary sticks.",
       fe3h:"Quiz after each article", fe3p:"A few questions after each text check your understanding.",
       fe4h:"Your own vocabulary", fe4p:"Collect words in your personal deck and drill them.",
-      fe5h:"Article topics", fe5p:"Want more? Browse tech, nature, culture & more.",
+      fe5h:"Wikipedia Article topics", fe5p:"Want more? Browse tech, nature, culture & more articles from several categories.",
       fe6h:"Streak & XP", fe6p:"Daily goals, a streak and levels keep you going — playfully.",
       fe7h:"Social Stream", fe7p:"Real social-media posts in your target language — filtered by topic & level. Tap to translate.",
       kInstall:"Install", instH:"How to get Learny on your home screen",
@@ -403,6 +404,10 @@
     });
     document.querySelectorAll('#lang button').forEach(function(b){
       b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+    });
+    // swap app screenshots to the matching UI language
+    document.querySelectorAll('img[data-shot]').forEach(function(im){
+      im.src = 'shots/' + im.getAttribute('data-shot') + '-' + lang + '.webp';
     });
     try { localStorage.setItem('learny_lang', lang); } catch(e){}
   }
