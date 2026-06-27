@@ -171,6 +171,24 @@ const de: Dict = {
   'time.minAgo': 'vor {n} Min',
   'time.hourAgo': 'vor {n} Std',
   'time.dayAgo': 'vor {n} Tg',
+
+  'common.continueArrow': 'Weiter →',
+
+  // stream
+  'stream.title': 'Stream',
+  'stream.sub': 'echte Posts · zum Lesen & Lernen',
+  'stream.unsupported': 'Den Stream gibt’s bisher nur für Englisch und Französisch. Stell deine Lernsprache in „{more}" um, um ihn auszuprobieren.',
+  'stream.sortEasy': 'Einfachste zuerst (je Block)',
+  'stream.noResults': 'Nichts für diese Filter — wähle mehr Niveaus oder eine andere Rubrik.',
+  'stream.original': 'Original ↗',
+  'stream.end': 'Das war’s fürs Erste 🥒',
+
+  // sentence reader (digest / stream)
+  'sr.fullText': 'Ganzer Text',
+  'sr.bySentence': 'Satz für Satz →',
+  'sr.progress': 'Satz {n} / {total}',
+  'sr.fullTextArrow': 'Ganzer Text →',
+  'sr.readFull': 'Ganzen Text lesen →',
 };
 
 const en: Dict = {
@@ -317,6 +335,22 @@ const en: Dict = {
   'time.minAgo': '{n} min ago',
   'time.hourAgo': '{n} h ago',
   'time.dayAgo': '{n} d ago',
+
+  'common.continueArrow': 'Continue →',
+
+  'stream.title': 'Stream',
+  'stream.sub': 'real posts · to read & learn',
+  'stream.unsupported': 'The stream is currently only available for English and French. Switch your learning language in “{more}” to try it.',
+  'stream.sortEasy': 'Easiest first (per block)',
+  'stream.noResults': 'Nothing for these filters — pick more levels or another topic.',
+  'stream.original': 'Original ↗',
+  'stream.end': "That's it for now 🥒",
+
+  'sr.fullText': 'Full text',
+  'sr.bySentence': 'Sentence by sentence →',
+  'sr.progress': 'Sentence {n} / {total}',
+  'sr.fullTextArrow': 'Full text →',
+  'sr.readFull': 'Read the whole text →',
 };
 
 const DICTS: Record<string, Dict> = { de, en };

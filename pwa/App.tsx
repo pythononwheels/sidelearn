@@ -1094,25 +1094,24 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <span class="sl-lessontitle">Stream</span>
-        <span class="st-sub">echte Posts · zum Lesen & Lernen</span>
+        <span class="sl-lessontitle">{t('stream.title')}</span>
+        <span class="st-sub">{t('stream.sub')}</span>
       </header>
 
       {!supported ? (
         <p class="sl-muted" style={{ marginTop: '18px' }}>
-          Den Stream gibt's bisher nur für <b>Englisch</b> und <b>Französisch</b>. Stell deine
-          Lernsprache in „Mehr" um, um ihn auszuprobieren.
+          {t('stream.unsupported', { more: t('tab.more') })}
         </p>
       ) : (
         <>
           {/* Thema */}
           <div class="st-filter">
-            <button class={`st-chip ${rubrik === null ? 'on' : ''}`} onClick={() => setRubrik(null)}>Alle</button>
+            <button class={`st-chip ${rubrik === null ? 'on' : ''}`} onClick={() => setRubrik(null)}>{t('rubrik.all')}</button>
             {STREAM_RUBRIKS.map((id) => {
               const a = AREAS.find((x) => x.id === id);
               return (
                 <button key={id} class={`st-chip ${rubrik === id ? 'on' : ''}`} onClick={() => setRubrik(rubrik === id ? null : id)}>
-                  <span class={`st-dot ${a?.color ?? ''}`} />{a?.label ?? id}
+                  <span class={`st-dot ${a?.color ?? ''}`} />{a ? t(`rubrik.${a.id}`) : id}
                 </button>
               );
             })}
@@ -1125,14 +1124,14 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
           </div>
           <label class="st-mine" style={{ margin: '10px 2px 2px' }}>
             <input type="checkbox" checked={sortEasy} onChange={(e) => setSortEasy((e.target as HTMLInputElement).checked)} />
-            <span>Einfachste zuerst (je Block)</span>
+            <span>{t('stream.sortEasy')}</span>
           </label>
 
           {pages === null ? (
             <div style={{ marginTop: '24px' }}><Dots /></div>
           ) : totalShown === 0 && done ? (
             <p class="sl-muted" style={{ marginTop: '18px' }}>
-              Nichts für diese Filter — wähle mehr Niveaus oder eine andere Rubrik.
+              {t('stream.noResults')}
             </p>
           ) : (
             <>
@@ -1141,22 +1140,22 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
                   <div key={bi}>
                     <div class="st-divider"><span>{relTime(page[0]?.created_at)}</span></div>
                     <ul class="st-list">
-                      {items.map(({ t, band }) => {
-                        const a = AREAS.find((x) => x.id === t.rubrik);
+                      {items.map(({ t: toot, band }) => {
+                        const a = AREAS.find((x) => x.id === toot.rubrik);
                         return (
-                          <li key={t.id} class="st-card">
+                          <li key={toot.id} class="st-card">
                             <div class="st-card-head">
                               <span class={`st-dot ${a?.color ?? ''}`} />
-                              <span class="st-author">{t.author || t.author_handle}</span>
+                              <span class="st-author">{toot.author || toot.author_handle}</span>
                               {band && <span class="sl-pop-band">{band}</span>}
-                              <a class="st-src" href={t.url} target="_blank" rel="noreferrer noopener">Original ↗</a>
+                              <a class="st-src" href={toot.url} target="_blank" rel="noreferrer noopener">{t('stream.original')}</a>
                             </div>
                             <p class="st-text">
-                              <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(t.content, w), x, y })} />
+                              <TapText text={toot.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(toot.content, w), x, y })} />
                             </p>
-                            {t.media_url && <TootImage src={t.media_url} />}
-                            {settings.learn !== settings.native && t.content.length <= 400 && (
-                              <TranslateReveal text={t.content} settings={settings} />
+                            {toot.media_url && <TootImage src={toot.media_url} />}
+                            {settings.learn !== settings.native && toot.content.length <= 400 && (
+                              <TranslateReveal text={toot.content} settings={settings} />
                             )}
                           </li>
                         );
@@ -1167,7 +1166,7 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
               )}
               <div ref={sentinel} style={{ height: '1px' }} />
               {loading && <div style={{ marginTop: '16px' }}><Dots /></div>}
-              {done && totalShown > 0 && <p class="sl-muted" style={{ textAlign: 'center', margin: '18px 0' }}>Das war's fürs Erste 🥒</p>}
+              {done && totalShown > 0 && <p class="sl-muted" style={{ textAlign: 'center', margin: '18px 0' }}>{t('stream.end')}</p>}
             </>
           )}
         </>
@@ -1209,8 +1208,8 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
       <>
         {sentences.length > 1 && (
           <div class="sr-bar">
-            <span class="sr-progress">Ganzer Text</span>
-            <button class="sr-skip" onClick={() => { setI(0); setMode('step'); }}>Satz für Satz →</button>
+            <span class="sr-progress">{t('sr.fullText')}</span>
+            <button class="sr-skip" onClick={() => { setI(0); setMode('step'); }}>{t('sr.bySentence')}</button>
           </div>
         )}
         <div class="sl-para current"><p class="sl-text">{tap(text)}</p></div>
@@ -1224,8 +1223,8 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
   return (
     <>
       <div class="sr-bar">
-        <span class="sr-progress">Satz {i + 1} / {sentences.length}</span>
-        <button class="sr-skip" onClick={() => setMode('full')}>Ganzer Text →</button>
+        <span class="sr-progress">{t('sr.progress', { n: i + 1, total: sentences.length })}</span>
+        <button class="sr-skip" onClick={() => setMode('full')}>{t('sr.fullTextArrow')}</button>
       </div>
       <div class="sl-para current"><p class="sl-text sr-text">
         {sentences.slice(0, i).map((s, k) => <span key={k}>{tap(s)}{' '}</span>)}
@@ -1233,7 +1232,7 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
       </p></div>
       <div class="cloze-xlate"><TranslateReveal text={cur} settings={settings} /></div>
       <button class="sl-read mc-btn" onClick={() => { if (last) setMode('full'); else setI((n) => n + 1); }}>
-        {last ? 'Ganzen Text lesen →' : 'Weiter →'}
+        {last ? t('sr.readFull') : t('common.continueArrow')}
       </button>
     </>
   );
