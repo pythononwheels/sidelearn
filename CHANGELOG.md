@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [Unreleased] — 2026-06-27 — Landing: echte Screenshots + „So funktioniert's"-Seite
+
+- **Hero-Mock → echter Screenshot**: Der CSS-gebaute Phone-Dummy oben rechts auf der Landing weicht
+  einem echten Startscreen-Screenshot (per Playwright von `learny.pyrates.io/app/`, als WebP).
+- **Neue Seite `modi.html`** („So funktioniert's"): sechs Modi (Startscreen, Artikel lesen mit
+  Tap-Übersetzung, Lückentext, Vokabeltest, Lernpfad, Social Stream) als alternierende Sektionen mit
+  echten Screenshots + Beschreibungen, zweisprachig DE/EN, Reveal-on-Scroll. Vom Hero-Button verlinkt.
+- **Copy aktualisiert**: Subtitle → „Lies jeden Tag aktuelle und gekürzte Wikipedia-Artikel …"; neues
+  **Social-Stream**-Feature-Tile; „Zufallsartikel aus Wikipedia" → **„Artikelrubriken"**; durchgängig
+  „Sprachniveau" statt „Niveau".
+- **Bilder als WebP** in `pwa/landing/shots/` (~264 KB gesamt statt ~1,1 MB PNG).
+
 ## [0.6.127] — 2026-06-26 — Tagesquest-Fixes
 
 - **Fix**: „Lies einen Rubrik-Artikel" wurde beim Lesen als **Kurzfassung (Digest)** nie abgehakt —
