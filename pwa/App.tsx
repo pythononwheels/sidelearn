@@ -32,6 +32,7 @@ import {
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
+import { t, setUiLang } from './i18n';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
 import { seedVocab, nextLevelTargets, type SeedWord } from './seedvocab';
@@ -151,6 +152,9 @@ export function App() {
   const [settings, setSettings] = useState<PwaSettings>(getSettings());
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [tab, setTab] = useState<Tab>('home');
+
+  // UI language follows the native language; set before any child renders.
+  setUiLang(settings.native);
 
   const patch = (p: Partial<PwaSettings>) => {
     const next = { ...settings, ...p };
@@ -273,11 +277,11 @@ export function App() {
 
 function TabBar({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab) => void }) {
   const items: { id: Tab; label: string; icon: ComponentChildren }[] = [
-    { id: 'home', label: 'Home', icon: <IconHome /> },
-    { id: 'challenges', label: 'Archiv', icon: <IconArchive /> },
-    { id: 'stream', label: 'Stream', icon: <IconStream /> },
-    { id: 'report', label: 'Report', icon: <IconChart /> },
-    { id: 'settings', label: 'Mehr', icon: <IconGear /> },
+    { id: 'home', label: t('tab.home'), icon: <IconHome /> },
+    { id: 'challenges', label: t('tab.archive'), icon: <IconArchive /> },
+    { id: 'stream', label: t('tab.stream'), icon: <IconStream /> },
+    { id: 'report', label: t('tab.report'), icon: <IconChart /> },
+    { id: 'settings', label: t('tab.more'), icon: <IconGear /> },
   ];
   return (
     <nav class="tabbar">
@@ -333,16 +337,8 @@ const Gurki = ({ pose = 'yay', size = 92 }: { pose?: Pose; size?: number }) => (
   <img class="gurki" src={`/gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
 );
 
-const HYPE = [
-  "Bereit? Heute wird's gut!",
-  'Schön, dass du da bist!',
-  'Komm, wir lesen was Neues.',
-  'Gurki glaubt an dich.',
-  'Kleine Schritte, große Wirkung.',
-  'Ein Häppchen Wissen gefällig?',
-  'Heute schon schlauer als gestern.',
-  'Lesen macht stark — wie eine Gurke.',
-];
+// Greeting bubbles live in i18n as hype.0 … hype.{HYPE_COUNT-1}.
+const HYPE_COUNT = 8;
 
 /* ------------------------------------------------------------ Onboarding --- */
 
@@ -354,15 +350,16 @@ function Onboarding({
   onDone: (p: Partial<PwaSettings>) => void;
 }) {
   const [step, setStep] = useState(0);
-  const [learn, setLearn] = useState<Language>(settings.learn);
+  const [nat, setNat] = useState<Language>(settings.native);
+  const [learn, setLearn] = useState<Language>(settings.learn === settings.native ? (LANGUAGES.find((l) => l !== settings.native) as Language) : settings.learn);
   const [level, setLevel] = useState<CefrLevel>(settings.level);
 
-  const levelHint: Record<string, string> = {
-    A1: 'Ganz neu — erste Wörter & Sätze',
-    A2: 'Anfänger:in — einfache Sätze',
-    B1: 'Mittelstufe — Alltagstexte',
-    B2: 'Fortgeschritten — komplexere Texte',
-    C1: 'Sehr gut — anspruchsvolle Texte',
+  // UI language follows the (in-progress) native pick, so onboarding itself
+  // switches language live as you choose.
+  setUiLang(nat);
+  const pickNative = (l: Language) => {
+    setNat(l);
+    if (learn === l) setLearn(LANGUAGES.find((x) => x !== l) as Language);
   };
 
   return (
@@ -370,37 +367,45 @@ function Onboarding({
       <div class="lr-onb-logo" />
       {step === 0 ? (
         <>
-          <h1 class="lr-onb-h">Willkommen bei Learny</h1>
-          <p class="lr-onb-p">Lies jeden Tag echte Texte — vereinfacht auf dein Niveau. Welche Sprache möchtest du lernen?</p>
+          <h1 class="lr-onb-h">{t('onb.welcome')}</h1>
+          <p class="lr-onb-p">{t('onb.uiP')}</p>
           <div class="lr-onb-grid">
-            {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
-              <button
-                class={`lr-onb-choice ${learn === l ? 'sel' : ''}`}
-                onClick={() => setLearn(l)}
-              >
+            {LANGUAGES.map((l) => (
+              <button class={`lr-onb-choice ${nat === l ? 'sel' : ''}`} onClick={() => pickNative(l)}>
                 {LANG_LABELS[l]}
               </button>
             ))}
           </div>
-          <button class="lr-onb-next" onClick={() => setStep(1)}>Weiter →</button>
+          <button class="lr-onb-next" onClick={() => setStep(1)}>{t('common.next')}</button>
         </>
-      ) : (
+      ) : step === 1 ? (
         <>
-          <h1 class="lr-onb-h">Wie gut bist du schon?</h1>
-          <p class="lr-onb-p">Kein Stress — du kannst das Niveau jederzeit ändern.</p>
-          <div class="lr-onb-levels">
-            {(['A1', 'A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
-              <button
-                class={`lr-onb-level ${level === l ? 'sel' : ''}`}
-                onClick={() => setLevel(l)}
-              >
-                <span class="lr-onb-level-name">{l}</span>
-                <span class="lr-onb-level-hint">{levelHint[l]}</span>
+          <h1 class="lr-onb-h">{t('onb.langH')}</h1>
+          <p class="lr-onb-p">{t('onb.langP')}</p>
+          <div class="lr-onb-grid">
+            {LANGUAGES.filter((l) => l !== nat).map((l) => (
+              <button class={`lr-onb-choice ${learn === l ? 'sel' : ''}`} onClick={() => setLearn(l)}>
+                {LANG_LABELS[l]}
               </button>
             ))}
           </div>
-          <button class="lr-onb-next" onClick={() => onDone({ learn, level })}>Los geht's</button>
-          <button class="lr-onb-back" onClick={() => setStep(0)}>← zurück</button>
+          <button class="lr-onb-next" onClick={() => setStep(2)}>{t('common.next')}</button>
+          <button class="lr-onb-back" onClick={() => setStep(0)}>{t('common.back')}</button>
+        </>
+      ) : (
+        <>
+          <h1 class="lr-onb-h">{t('onb.levelH')}</h1>
+          <p class="lr-onb-p">{t('onb.levelP')}</p>
+          <div class="lr-onb-levels">
+            {(['A1', 'A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
+              <button class={`lr-onb-level ${level === l ? 'sel' : ''}`} onClick={() => setLevel(l)}>
+                <span class="lr-onb-level-name">{l}</span>
+                <span class="lr-onb-level-hint">{t(`onb.hint.${l}`)}</span>
+              </button>
+            ))}
+          </div>
+          <button class="lr-onb-next" onClick={() => onDone({ native: nat, learn, level })}>{t('common.start')}</button>
+          <button class="lr-onb-back" onClick={() => setStep(1)}>{t('common.back')}</button>
         </>
       )}
     </main>
@@ -446,10 +451,10 @@ function ArticleList({ articles, next, allDone, onOpen }: {
               )}
               <span class="lr-item-body">
                 <span class="lr-item-title">{a.title}</span>
-                <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
+                <span class="lr-item-sub">{a.summary || t('common.paragraphs', { n: a.paragraphs })}</span>
               </span>
               <span class={`lr-item-state ${done ? 'done' : ''}`}>
-                {done ? '✓' : started ? 'weiter ›' : isNext ? 'Start ›' : 'lesen ›'}
+                {done ? '✓' : started ? t('common.readMore') : isNext ? t('common.readStart') : t('common.readGo')}
               </span>
             </button>
           </li>
@@ -505,18 +510,18 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
   function questMeta(task: QuestTask): QTask {
     const open = (a: typeof next, lvl?: CefrLevel) => { if (a) onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail }, true, lvl); };
     switch (task) {
-      case 'cloze': return { task, label: 'Mach einen Lückentext', icon: <IconGap />, done: dailyDone('cloze'), onClick: onCloze };
-      case 'vocab': return { task, label: 'Mach einen Vokabeltest', icon: <IconCards />, done: dailyDone('vocab'), onClick: onTrainer };
-      case 'rubrik': return { task, label: 'Lies einen Rubrik-Artikel', icon: <IconDice />, done: dailyDone('rubrik'), onClick: onSurprise };
+      case 'cloze': return { task, label: t('quest.cloze'), icon: <IconGap />, done: dailyDone('cloze'), onClick: onCloze };
+      case 'vocab': return { task, label: t('quest.vocab'), icon: <IconCards />, done: dailyDone('vocab'), onClick: onTrainer };
+      case 'rubrik': return { task, label: t('quest.rubrik'), icon: <IconDice />, done: dailyDone('rubrik'), onClick: onSurprise };
       case 'article_plus1': {
         const nl = nextLevel(settings.level);
         const plus = articles.length > 1 ? articles[1] : undefined;
         const can = nl !== settings.level && !!plus; // a +1 read needs a higher level + a 2nd article
-        return { task, label: can ? 'Lies einen +1-Artikel' : 'Lies einen Artikel', badge: can ? nl : undefined, icon: <IconNewspaper />,
+        return { task, label: can ? t('quest.articlePlus1') : t('quest.article'), badge: can ? nl : undefined, icon: <IconNewspaper />,
           done: can ? dailyDone('article_plus1') : dailyDone('article'),
           onClick: () => open(plus ?? next, can ? nl : undefined) };
       }
-      default: return { task, label: 'Lies einen Artikel', icon: <IconNewspaper />, done: dailyDone('article'),
+      default: return { task, label: t('quest.article'), icon: <IconNewspaper />, done: dailyDone('article'),
         onClick: () => open(next, stretchReadLevel(articles, next?.url ?? '', settings.level)) };
     }
   }
@@ -535,11 +540,11 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
     } catch { /* ignore */ }
   }, [questComplete]);
 
-  const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
+  const [hypeIdx] = useState(() => Math.floor(Math.random() * HYPE_COUNT));
   const pose: Pose = questComplete ? 'party' : 'yay';
   const bubble = questComplete
-    ? 'Tagesquest geschafft — Gurki ist stolz!'
-    : questDone > 0 ? 'Stark — noch eine Aufgabe!' : hype;
+    ? t('home.bubbleDone')
+    : questDone > 0 ? t('home.bubbleOne') : t(`hype.${hypeIdx}`);
 
   return (
     <main class="sl-main with-nav h2" key={tick}>
@@ -563,25 +568,25 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
         <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-ring, var(--ll-accent)) ${levelPct}%, var(--ll-border) 0)` }}>
           <div class="h2-ring-in"><Gurki pose={pose} size={92} /></div>
         </div>
-        <b class="h2-title">{stats.streak > 0 ? `Tag ${stats.streak} — stark!` : 'Willkommen zurück!'}</b>
+        <b class="h2-title">{stats.streak > 0 ? t('home.dayN', { n: stats.streak }) : t('home.welcomeBack')}</b>
         <div class="h2-lvlbar">
           <span class="h2-lvl-end">{lvlL}</span>
           <div class="h2-lvl-track"><i style={{ width: `${levelPct}%` }} /></div>
           <span class="h2-lvl-end next">{lvlR}</span>
         </div>
-        <span class="h2-sub">{prog.atAufstieg ? `Aufstiegstest bereit · Level ${prog.level}` : `${prog.level}.${prog.etappeDisplay} · ${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} neue Wörter`}{articles.length > 0 ? ` · Tagesquest ${questDone}/${questTasks.length}` : ''}</span>
+        <span class="h2-sub">{prog.atAufstieg ? t('home.aufstiegReady', { level: prog.level }) : t('home.subStage', { stage: `${prog.level}.${prog.etappeDisplay}`, cleared: Math.min(batchCleared, ETAPPE_GOAL), goal: ETAPPE_GOAL })}{articles.length > 0 ? t('home.subQuest', { done: questDone, total: questTasks.length }) : ''}</span>
         <div class="h2-bubble">{bubble}</div>
       </section>
 
       {loading ? (
         <Dots />
       ) : articles.length === 0 ? (
-        <div class="h2-card empty">Heute noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später wieder vorbei.</div>
+        <div class="h2-card empty">{t('home.empty', { lang: LANG_LABELS[settings.learn] })}</div>
       ) : (
         <>
           <div class={`quest-card ${questComplete ? 'done' : ''}`}>
             <div class="quest-head">
-              <span class="quest-title"><IconTarget />{questComplete ? 'Tagesquest geschafft!' : 'Tagesquest'}</span>
+              <span class="quest-title"><IconTarget />{questComplete ? t('home.questDoneTitle') : t('home.questTitle')}</span>
               <span class="quest-count">{questDone}/{questTasks.length}{questComplete ? ' ✓' : ''}</span>
             </div>
             <div class="quest-tasks">
@@ -594,38 +599,38 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
               ))}
             </div>
           </div>
-          <p class="lr-credit-line">Aus den meistgelesenen Wikipedia-Artikeln des Tages · CC BY-SA</p>
+          <p class="lr-credit-line">{t('home.credit')}</p>
         </>
       )}
 
       <div class="lr-tiles four">
-        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">Artikelrubriken</span></button>
-        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico t-luecke"><IconGap /></span><span class="lr-tile-t">Lückentext</span></button>
-        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">Vokabeltest</span></button>
-        <button class="lr-tile" onClick={onDict}><span class="lr-tile-ico t-dict"><IconBook /></span><span class="lr-tile-t">Wörterbuch</span></button>
+        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">{t('tile.topics')}</span></button>
+        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico t-luecke"><IconGap /></span><span class="lr-tile-t">{t('tile.cloze')}</span></button>
+        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">{t('tile.vocab')}</span></button>
+        <button class="lr-tile" onClick={onDict}><span class="lr-tile-ico t-dict"><IconBook /></span><span class="lr-tile-t">{t('tile.dict')}</span></button>
       </div>
 
       <button class="mini-head" onClick={onRoute}>
-        <span class="mini-head-t">Dein Lernpfad</span>
+        <span class="mini-head-t">{t('home.yourPath')}</span>
         <span class="mini-head-s">{prog.label}</span>
       </button>
       <div class="route mini">
         <div class={`rn l ${etappeReady && !prog.atAufstieg ? 'done' : 'current'} ${weeklyNext === 'vocab' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot">{etappeReady && !prog.atAufstieg ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
-            <span class="rn-title">Lerne neue Wörter</span>
-            <span class="rn-sub">{prog.atAufstieg ? 'Wortschatz wiederholen · tippen' : `${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} diese Woche · tippen`}</span>
+            <span class="rn-title">{t('home.learnWords')}</span>
+            <span class="rn-sub">{prog.atAufstieg ? t('home.reviewVocab') : t('home.weekWords', { cleared: Math.min(batchCleared, ETAPPE_GOAL), goal: ETAPPE_GOAL })}</span>
           </button>
         </div>
         <div class={`rn r ${etappeReady ? 'current' : 'locked'} ${weeklyNext === 'check' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot" style={etappeReady ? undefined : CHEST_DOT}><IconChest /></span></div>
           <button class="rn-card" disabled={!etappeReady} onClick={() => etappeReady && onTest()}>
-            <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappen-Check'}</span>
-            <span class="rn-sub">{etappeReady ? 'freigeschaltet · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
+            <span class="rn-title">{prog.atAufstieg ? t('test.aufstieg') : t('test.etappe')}</span>
+            <span class="rn-sub">{etappeReady ? t('home.unlocked') : t('home.fromWords', { goal: ETAPPE_GOAL })}</span>
           </button>
         </div>
       </div>
-      <button class="mini-all" onClick={onRoute}><IconRoute />Ganzen Lernpfad ansehen →</button>
+      <button class="mini-all" onClick={onRoute}><IconRoute />{t('home.seeFullPath')}</button>
     </main>
   );
 }
@@ -700,7 +705,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
     if (done && !credited.current) {
       credited.current = true;
       markDailyDone('vocab');
-      logActivity({ type: 'lesson', level: settings.level, title: 'Vokabeltest', detail: `${score}/${cards?.length ?? 0} richtig` });
+      logActivity({ type: 'lesson', level: settings.level, title: t('trainer.title'), detail: t('trainer.logDetail', { score, total: cards?.length ?? 0 }) });
     }
   }, [done]);
 
@@ -730,8 +735,8 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Vokabeltest</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('trainer.title')}</span>
       </header>
 
       {cards === null ? (
@@ -739,21 +744,21 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
       ) : cards.length === 0 ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconCheck /></span>
-          <h2>Alles wiederholt!</h2>
-          <p class="sl-muted">Gerade sind keine Wörter fällig. Lies eine Lektion und komm später wieder — die Wiederholungen kommen über die Tage verteilt.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <h2>{t('trainer.allReviewedH')}</h2>
+          <p class="sl-muted">{t('trainer.allReviewedP')}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : done ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Session fertig</h2>
-          <p>{score} von {cards.length} richtig.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <h2>{t('trainer.doneH')}</h2>
+          <p>{t('trainer.doneP', { score, total: cards.length })}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : card ? (
         <>
-          <p class="sl-progress">Frage {pos + 1} / {cards.length}</p>
-          <p class="mc-prompt">Was bedeutet <b>{card.word}</b>?{card.pos ? <span class="dict-pos"> · {card.pos}</span> : null}</p>
+          <p class="sl-progress">{t('trainer.qProgress', { n: pos + 1, total: cards.length })}</p>
+          <p class="mc-prompt">{t('trainer.promptPre')}<b>{card.word}</b>{t('trainer.promptPost')}{card.pos ? <span class="dict-pos"> · {card.pos}</span> : null}</p>
           <div class={`sl-quiz-opts mc-opts ${picked !== null ? 'answered' : ''}`}>
             {card.options.map((opt, i) => {
               const cls = picked === null ? '' : i === card.correct ? 'correct' : i === picked ? 'wrong' : 'dim';
@@ -763,14 +768,14 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
             })}
           </div>
           {picked === null ? (
-            <button class="sl-read ghost mc-btn" onClick={dontKnow}>Weiß nicht</button>
+            <button class="sl-read ghost mc-btn" onClick={dontKnow}>{t('trainer.dontKnow')}</button>
           ) : (
             <>
               {(() => {
                 const ok = picked === card.correct;
                 const dunno = picked === -1;
                 const pose: Pose = ok ? 'party' : dunno ? 'think' : 'sad';
-                const msg = ok ? 'Aaah — richtig!' : dunno ? 'Schau’s dir an — nächstes Mal sitzt’s!' : 'Ohh — leider nicht.';
+                const msg = ok ? t('trainer.resOk') : dunno ? t('trainer.resDunno') : t('trainer.resNo');
                 return (
                   <div class={`mc-result ${ok ? 'ok' : dunno ? 'dunno' : 'no'}`}>
                     <Gurki pose={pose} size={50} />
@@ -785,9 +790,9 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
                     {s.ex && <span class="dict-sense-ex">„{s.ex}"{s.exd ? <span class="dict-sense-exd"> — {s.exd}</span> : null}</span>}
                   </div>
                 ))}
-                {card.rich?.alt?.length ? <p class="mc-alt">auch: {card.rich.alt.join(', ')}</p> : null}
+                {card.rich?.alt?.length ? <p class="mc-alt">{t('common.also', { alt: card.rich.alt.join(', ') })}</p> : null}
               </div>
-              <button class="sl-read mc-btn" onClick={next}>{pos + 1 >= cards.length ? 'Fertig ✓' : 'Weiter'}</button>
+              <button class="sl-read mc-btn" onClick={next}>{pos + 1 >= cards.length ? t('common.doneCheck') : t('common.continue')}</button>
             </>
           )}
         </>
@@ -798,14 +803,15 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
 /* -------------------------------------------------------------- Surprise --- */
 
-const AREAS: { id: string; label: string; icon: ComponentChildren; sub: string; color: string }[] = [
-  { id: 'technik', label: 'Technik', icon: <IconWrench />, sub: 'Erfindungen, Computer …', color: 'a-technik' },
-  { id: 'sport', label: 'Sport', icon: <IconBall />, sub: 'Fußball, Olympia …', color: 'a-sport' },
-  { id: 'geschichte', label: 'Geschichte', icon: <IconLandmark />, sub: 'Antike, Mittelalter …', color: 'a-geschichte' },
-  { id: 'gesellschaft', label: 'Stars & Gesellschaft', icon: <IconStar />, sub: 'Promis, Musik, TV …', color: 'a-gesellschaft' },
-  { id: 'natur', label: 'Natur & Tiere', icon: <IconLeaf />, sub: 'Tiere, Pflanzen …', color: 'a-natur' },
-  { id: 'kultur', label: 'Kultur', icon: <IconMusic />, sub: 'Musik, Film, Kunst …', color: 'a-kultur' },
-  { id: 'wissenschaft', label: 'Wissenschaft', icon: <IconFlask />, sub: 'Weltraum, Physik …', color: 'a-wissenschaft' },
+// Rubric tiles. Display label + sub come from i18n (t('rubrik.<id>') / '<id>.sub').
+const AREAS: { id: string; icon: ComponentChildren; color: string }[] = [
+  { id: 'technik', icon: <IconWrench />, color: 'a-technik' },
+  { id: 'sport', icon: <IconBall />, color: 'a-sport' },
+  { id: 'geschichte', icon: <IconLandmark />, color: 'a-geschichte' },
+  { id: 'gesellschaft', icon: <IconStar />, color: 'a-gesellschaft' },
+  { id: 'natur', icon: <IconLeaf />, color: 'a-natur' },
+  { id: 'kultur', icon: <IconMusic />, color: 'a-kultur' },
+  { id: 'wissenschaft', icon: <IconFlask />, color: 'a-wissenschaft' },
 ];
 
 function SurpriseView({ settings, onOpen, onDigest, onBack }: {
@@ -845,49 +851,48 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={() => (choice ? setChoice(null) : area ? setArea(null) : onBack())} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Artikelrubriken</span>
+        <button class="sl-back" onClick={() => (choice ? setChoice(null) : area ? setArea(null) : onBack())} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('tile.topics')}</span>
       </header>
 
       {choice ? (
         <section class="dg-choose">
           <p class="lr-section" style={{ marginTop: '4px' }}>{choice.title}</p>
-          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>Wie möchtest du lesen?</p>
+          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>{t('surprise.howRead')}</p>
           <button class="dg-opt" onClick={() => onOpen(choice, false)}>
             <span class="dg-opt-ico full"><IconNewspaper /></span>
-            <span class="dg-opt-body"><b>Ganzer Artikel</b><small>8 Absätze · mit Quiz pro Absatz</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.fullArticle')}</b><small>{t('surprise.fullArticleSub')}</small></span>
           </button>
           <button class="dg-opt" onClick={() => onDigest(choice)}>
             <span class="dg-opt-ico digest"><IconBolt /></span>
-            <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.digest')}</b><small>{t('surprise.digestSub')}</small></span>
           </button>
-          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Zurück zur Liste</button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>{t('surprise.backToList')}</button>
         </section>
       ) : loading ? (
         <section class="sl-done">
           <Dots />
           <p class="sl-muted" style={{ marginTop: '12px' }}>
-            Wir suchen einen {AREAS.find((a) => a.id === loading)?.label}-Artikel und
-            vereinfachen ihn auf {settings.level} … einen Moment.
+            {t('surprise.loading', { area: t(`rubrik.${loading}`), level: settings.level })}
           </p>
         </section>
       ) : area ? (
         <>
           <div class="ch-rubrik-head" style={{ marginTop: '4px' }}>
             <span class={`lr-tile-ico ${meta?.color ?? ''}`}>{meta?.icon}</span>
-            <span class="ch-rubrik-label">{meta?.label}</span>
+            <span class="ch-rubrik-label">{meta ? t(`rubrik.${meta.id}`) : ''}</span>
           </div>
           <button class="sl-read" style={{ width: '100%', marginTop: '12px' }} onClick={() => surprise(area)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><IconDice /> Überraschung — neuer Artikel</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><IconDice /> {t('surprise.surpriseBtn')}</span>
           </button>
-          {error && <p class="sl-muted" style={{ marginTop: '12px' }}>Das hat nicht geklappt. Bitte nochmal versuchen.</p>}
+          {error && <p class="sl-muted" style={{ marginTop: '12px' }}>{t('surprise.error')}</p>}
           {list === null ? (
             <div style={{ marginTop: '18px' }}><Dots /></div>
           ) : list.length === 0 ? (
-            <p class="sl-muted" style={{ marginTop: '18px' }}>Hier ist noch nichts vorbereitet — hol dir oben eine Überraschung.</p>
+            <p class="sl-muted" style={{ marginTop: '18px' }}>{t('surprise.empty')}</p>
           ) : (
             <>
-              <p class="lr-section" style={{ marginTop: '20px' }}>Aus den letzten 14 Tagen</p>
+              <p class="lr-section" style={{ marginTop: '20px' }}>{t('surprise.last14')}</p>
               <ul class="lr-list">
                 {[...list].sort((a, b) => Number(isCompleted(a.url)) - Number(isCompleted(b.url))).map((a) => {
                   const done = isCompleted(a.url);
@@ -898,7 +903,7 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
                           ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
                           : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
                         <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
-                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? 'gelesen ✓' : 'lesen ›'}</span>
+                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? t('common.readDone') : t('common.readGo')}</span>
                       </button>
                     </li>
                   );
@@ -909,19 +914,18 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
         </>
       ) : (
         <>
-          <p class="lr-section" style={{ marginTop: '4px' }}>Wähle einen Bereich.</p>
+          <p class="lr-section" style={{ marginTop: '4px' }}>{t('surprise.chooseArea')}</p>
           <div class="lr-tiles" style={{ marginTop: '10px' }}>
             {AREAS.map((a) => (
               <button class="lr-tile" onClick={() => openArea(a.id)}>
                 <span class={`lr-tile-ico ${a.color}`}>{a.icon}</span>
-                <span class="lr-tile-t">{a.label}</span>
-                <span class="lr-tile-s">{a.sub}</span>
+                <span class="lr-tile-t">{t(`rubrik.${a.id}`)}</span>
+                <span class="lr-tile-s">{t(`rubrik.${a.id}.sub`)}</span>
               </button>
             ))}
           </div>
           <p class="sl-muted" style={{ marginTop: '18px' }}>
-            Frisch aus Wikipedia, auf dein Sprachniveau gebracht — die zuletzt vorbereiteten Artikel
-            der Rubrik plus jederzeit eine neue Überraschung.
+            {t('surprise.intro')}
           </p>
         </>
       )}
@@ -979,11 +983,11 @@ const ALL_BANDS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 function relTime(iso?: string): string {
   if (!iso) return '';
   const min = (Date.now() - new Date(iso).getTime()) / 60000;
-  if (min < 1.5) return 'gerade eben';
-  if (min < 60) return `vor ${Math.round(min)} Min`;
+  if (min < 1.5) return t('time.justNow');
+  if (min < 60) return t('time.minAgo', { n: Math.round(min) });
   const h = min / 60;
-  if (h < 24) return `vor ${Math.round(h)} Std`;
-  return `vor ${Math.round(h / 24)} Tg`;
+  if (h < 24) return t('time.hourAgo', { n: Math.round(h) });
+  return t('time.dayAgo', { n: Math.round(h / 24) });
 }
 
 function StreamTab({ settings }: { settings: PwaSettings }) {
@@ -1083,25 +1087,24 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <span class="sl-lessontitle">Stream</span>
-        <span class="st-sub">echte Posts · zum Lesen & Lernen</span>
+        <span class="sl-lessontitle">{t('stream.title')}</span>
+        <span class="st-sub">{t('stream.sub')}</span>
       </header>
 
       {!supported ? (
         <p class="sl-muted" style={{ marginTop: '18px' }}>
-          Den Stream gibt's bisher nur für <b>Englisch</b> und <b>Französisch</b>. Stell deine
-          Lernsprache in „Mehr" um, um ihn auszuprobieren.
+          {t('stream.unsupported', { more: t('tab.more') })}
         </p>
       ) : (
         <>
           {/* Thema */}
           <div class="st-filter">
-            <button class={`st-chip ${rubrik === null ? 'on' : ''}`} onClick={() => setRubrik(null)}>Alle</button>
+            <button class={`st-chip ${rubrik === null ? 'on' : ''}`} onClick={() => setRubrik(null)}>{t('rubrik.all')}</button>
             {STREAM_RUBRIKS.map((id) => {
               const a = AREAS.find((x) => x.id === id);
               return (
                 <button key={id} class={`st-chip ${rubrik === id ? 'on' : ''}`} onClick={() => setRubrik(rubrik === id ? null : id)}>
-                  <span class={`st-dot ${a?.color ?? ''}`} />{a?.label ?? id}
+                  <span class={`st-dot ${a?.color ?? ''}`} />{a ? t(`rubrik.${a.id}`) : id}
                 </button>
               );
             })}
@@ -1114,14 +1117,14 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
           </div>
           <label class="st-mine" style={{ margin: '10px 2px 2px' }}>
             <input type="checkbox" checked={sortEasy} onChange={(e) => setSortEasy((e.target as HTMLInputElement).checked)} />
-            <span>Einfachste zuerst (je Block)</span>
+            <span>{t('stream.sortEasy')}</span>
           </label>
 
           {pages === null ? (
             <div style={{ marginTop: '24px' }}><Dots /></div>
           ) : totalShown === 0 && done ? (
             <p class="sl-muted" style={{ marginTop: '18px' }}>
-              Nichts für diese Filter — wähle mehr Niveaus oder eine andere Rubrik.
+              {t('stream.noResults')}
             </p>
           ) : (
             <>
@@ -1130,22 +1133,22 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
                   <div key={bi}>
                     <div class="st-divider"><span>{relTime(page[0]?.created_at)}</span></div>
                     <ul class="st-list">
-                      {items.map(({ t, band }) => {
-                        const a = AREAS.find((x) => x.id === t.rubrik);
+                      {items.map(({ t: toot, band }) => {
+                        const a = AREAS.find((x) => x.id === toot.rubrik);
                         return (
-                          <li key={t.id} class="st-card">
+                          <li key={toot.id} class="st-card">
                             <div class="st-card-head">
                               <span class={`st-dot ${a?.color ?? ''}`} />
-                              <span class="st-author">{t.author || t.author_handle}</span>
+                              <span class="st-author">{toot.author || toot.author_handle}</span>
                               {band && <span class="sl-pop-band">{band}</span>}
-                              <a class="st-src" href={t.url} target="_blank" rel="noreferrer noopener">Original ↗</a>
+                              <a class="st-src" href={toot.url} target="_blank" rel="noreferrer noopener">{t('stream.original')}</a>
                             </div>
                             <p class="st-text">
-                              <TapText text={t.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(t.content, w), x, y })} />
+                              <TapText text={toot.content} isHard={isHard} onWord={(w, x, y) => setPop({ word: w, sentence: sentenceFor(toot.content, w), x, y })} />
                             </p>
-                            {t.media_url && <TootImage src={t.media_url} />}
-                            {settings.learn !== settings.native && t.content.length <= 400 && (
-                              <TranslateReveal text={t.content} settings={settings} />
+                            {toot.media_url && <TootImage src={toot.media_url} />}
+                            {settings.learn !== settings.native && toot.content.length <= 400 && (
+                              <TranslateReveal text={toot.content} settings={settings} />
                             )}
                           </li>
                         );
@@ -1156,7 +1159,7 @@ function StreamTab({ settings }: { settings: PwaSettings }) {
               )}
               <div ref={sentinel} style={{ height: '1px' }} />
               {loading && <div style={{ marginTop: '16px' }}><Dots /></div>}
-              {done && totalShown > 0 && <p class="sl-muted" style={{ textAlign: 'center', margin: '18px 0' }}>Das war's fürs Erste 🥒</p>}
+              {done && totalShown > 0 && <p class="sl-muted" style={{ textAlign: 'center', margin: '18px 0' }}>{t('stream.end')}</p>}
             </>
           )}
         </>
@@ -1198,8 +1201,8 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
       <>
         {sentences.length > 1 && (
           <div class="sr-bar">
-            <span class="sr-progress">Ganzer Text</span>
-            <button class="sr-skip" onClick={() => { setI(0); setMode('step'); }}>Satz für Satz →</button>
+            <span class="sr-progress">{t('sr.fullText')}</span>
+            <button class="sr-skip" onClick={() => { setI(0); setMode('step'); }}>{t('sr.bySentence')}</button>
           </div>
         )}
         <div class="sl-para current"><p class="sl-text">{tap(text)}</p></div>
@@ -1213,8 +1216,8 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
   return (
     <>
       <div class="sr-bar">
-        <span class="sr-progress">Satz {i + 1} / {sentences.length}</span>
-        <button class="sr-skip" onClick={() => setMode('full')}>Ganzer Text →</button>
+        <span class="sr-progress">{t('sr.progress', { n: i + 1, total: sentences.length })}</span>
+        <button class="sr-skip" onClick={() => setMode('full')}>{t('sr.fullTextArrow')}</button>
       </div>
       <div class="sl-para current"><p class="sl-text sr-text">
         {sentences.slice(0, i).map((s, k) => <span key={k}>{tap(s)}{' '}</span>)}
@@ -1222,7 +1225,7 @@ function SentenceReader({ text, settings, isHard, onWord, onFinish, finishLabel 
       </p></div>
       <div class="cloze-xlate"><TranslateReveal text={cur} settings={settings} /></div>
       <button class="sl-read mc-btn" onClick={() => { if (last) setMode('full'); else setI((n) => n + 1); }}>
-        {last ? 'Ganzen Text lesen →' : 'Weiter →'}
+        {last ? t('sr.readFull') : t('common.continueArrow')}
       </button>
     </>
   );
@@ -1289,11 +1292,11 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     markDailyDone('rubrik'); // digests are rubrik/archive reads → tick the daily quest's "rubrik" task
     logActivity({
       type: 'lesson', level: settings.level, title: article.title,
-      detail: score.answered > 0 ? `Kurzfassung ${score.correct}/${score.answered}` : 'Kurzfassung',
+      detail: score.answered > 0 ? t('digest.logDetail', { c: score.correct, a: score.answered }) : t('digest.title'),
     });
   }
 
-  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">Lektion nicht verfügbar.</p></Frame>;
+  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">{t('common.lessonUnavailable')}</p></Frame>;
   if (!lesson) return <Frame title={article.title} onBack={onBack}><Dots /></Frame>;
 
   const hasOwn = !!lesson.digest?.trim();
@@ -1304,15 +1307,15 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     if (genState !== 'done') {
       return (
         <Frame title={article.title} onBack={onBack}>
-          <p class="sl-qlabel">Kurzfassung</p>
-          <section class="sl-done"><Dots /><p class="sl-muted" style={{ marginTop: '12px' }}>Wir erstellen die Kurzfassung … einen Moment.</p></section>
+          <p class="sl-qlabel">{t('digest.title')}</p>
+          <section class="sl-done"><Dots /><p class="sl-muted" style={{ marginTop: '12px' }}>{t('digest.generating')}</p></section>
         </Frame>
       );
     }
     return (
       <Frame title={article.title} onBack={onBack}>
-        <p class="sl-muted">Für diesen Artikel gibt es gerade keine Kurzfassung — lies ihn als ganzen Artikel.</p>
-        <button class="sl-read" onClick={() => onOpen(article, false)}>Ganzen Artikel lesen</button>
+        <p class="sl-muted">{t('digest.none')}</p>
+        <button class="sl-read" onClick={() => onOpen(article, false)}>{t('digest.readFull')}</button>
       </Frame>
     );
   }
@@ -1321,15 +1324,15 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     <Frame title={article.title} onBack={onBack}>
       {phase === 'read' && (
         <>
-          <p class="sl-qlabel">Kurzfassung</p>
-          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort an — oder hol dir Satz für Satz die Übersetzung.</p>
+          <p class="sl-qlabel">{t('digest.title')}</p>
+          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> {t('digest.hintPre')}<span class="sl-hint-mark">{t('digest.hintMark')}</span>{t('digest.hintPost')}</p>
           <SentenceReader
             text={digest}
             settings={settings}
             isHard={isHard}
             onWord={(word, sentence, x, y) => setPop({ word, sentence, x, y })}
             onFinish={() => { if (questions.length) setPhase('quiz'); else { creditOnce(); setPhase('done'); } }}
-            finishLabel={questions.length ? 'Fragen starten' : 'Fertig ✓'}
+            finishLabel={questions.length ? t('digest.startQuestions') : t('common.doneCheck')}
           />
         </>
       )}
@@ -1338,7 +1341,7 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
         const cur = questions[qIdx]!;
         return (
           <>
-            <p class="sl-progress">Frage {qIdx + 1} / {questions.length}</p>
+            <p class="sl-progress">{t('trainer.qProgress', { n: qIdx + 1, total: questions.length })}</p>
             <Quiz
               q={cur}
               answer={answer}
@@ -1364,16 +1367,16 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
       {phase === 'done' && (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Geschafft</h2>
-          {score.answered > 0 && <p class="sl-done-score">{score.correct} / {score.answered} richtig</p>}
+          <h2>{t('common.done')}</h2>
+          {score.answered > 0 && <p class="sl-done-score">{t('common.scoreCorrect', { c: score.correct, a: score.answered })}</p>}
           <div class="sl-done-actions">
-            <button class="sl-read" onClick={onHome}>Zur Übersicht</button>
+            <button class="sl-read" onClick={onHome}>{t('common.toOverview')}</button>
           </div>
         </section>
       )}
 
       <footer class="sl-credit">
-        Quelle: <a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
+        {t('common.sourcePre')}<a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
       </footer>
 
       {pop && <WordPopover pop={pop} settings={settings} onClose={() => setPop(null)} />}
@@ -1428,7 +1431,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
         clozeText.current += ' ' + exText; // so the completion scan credits these targets
       }
       const qs = shuffleInPlace([...articleQs, ...iqs]).slice(0, 8);
-      setTitle(lessons.length > 1 ? 'Tageslektion' : lessons[0]!.title);
+      setTitle(lessons.length > 1 ? t('cloze.dailyLesson') : lessons[0]!.title);
       setQuestions(qs.length ? qs : buildClozeQuestions(text, vocab, pool, Math.random, 8));
     })();
     return () => { alive = false; };
@@ -1458,32 +1461,32 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       credited.current = true;
       completeActivity(settings.level, 'cloze');
       markDailyDone('cloze');
-      logActivity({ type: 'lesson', level: settings.level, title: `Lückentext: ${title}`, detail: 'Lückentext' });
-      void creditWordsFromText(settings, clozeText.current, `Lückentext: ${title}`);
+      logActivity({ type: 'lesson', level: settings.level, title: t('cloze.logTitle', { title }), detail: t('cloze.title') });
+      void creditWordsFromText(settings, clozeText.current, t('cloze.logTitle', { title }));
     }
   }, [done]);
 
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Lückentext</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('cloze.title')}</span>
       </header>
 
       {questions === null ? (
         <Dots />
       ) : questions.length === 0 ? (
-        <p class="sl-muted">Gerade kein Lückentext verfügbar — schau, dass es eine Tageslektion gibt, und versuch es nochmal.</p>
+        <p class="sl-muted">{t('cloze.empty')}</p>
       ) : done ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Geschafft</h2>
-          <p>{score} von {questions.length} richtig.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <h2>{t('common.done')}</h2>
+          <p>{t('trainer.doneP', { score, total: questions.length })}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : q ? (
         <>
-          <p class="sl-progress">Lücke {pos + 1} / {questions.length} · {title}</p>
+          <p class="sl-progress">{t('cloze.progress', { n: pos + 1, total: questions.length, title })}</p>
           {/* Three zones: sentence card · translate · options */}
           <div class="cloze-card">
             <p class="sl-quiz-q cloze-q">{renderCloze(q.prompt)}</p>
@@ -1492,7 +1495,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
             <TranslateReveal text={q.prompt} settings={settings} />
           </div>
           <div class={`cloze-opts ${picked !== null ? 'answered' : ''}`}>
-            <p class="cloze-hint">{picked === null ? 'Tippe auf das fehlende Wort' : ' '}</p>
+            <p class="cloze-hint">{picked === null ? t('cloze.tapHint') : ' '}</p>
             <div class="sl-quiz-opts cloze-opts-list">
               {q.options.map((opt) => {
                 let cls = '';
@@ -1509,13 +1512,13 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
             <div class={`cloze-result ${picked === q.answer ? 'ok' : 'no'}`}>
               <Gurki pose={picked === q.answer ? 'party' : 'sad'} size={48} />
               <span class="cloze-result-txt">
-                {picked === q.answer ? 'Stark — richtig!' : `Schade — richtig wäre „${q.answer}".`}
+                {picked === q.answer ? t('cloze.resOk') : t('cloze.resNo', { answer: q.answer })}
               </span>
             </div>
           )}
           {picked !== null && (
             <button class="sl-read cloze-next" onClick={next}>
-              {pos + 1 >= questions.length ? 'Fertig ✓' : 'Weiter →'}
+              {pos + 1 >= questions.length ? t('common.doneCheck') : t('common.continueArrow')}
             </button>
           )}
         </>
@@ -1622,7 +1625,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
     const passed = vocabPass && readingPass;
     let adv: CompleteResult | null = null;
     if (passed) { adv = completeActivity(settings.level, 'aufstieg'); onAdvance(adv); celebrate(); }
-    logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'bestanden' : 'nicht bestanden' });
+    logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? t('ltest.logPass') : t('ltest.logFail') });
     if (adv?.levelUp) logActivity({ type: 'levelup', level: adv.level, detail: adv.level });
     setResult({ passed, adv });
     setPhase('result');
@@ -1642,15 +1645,15 @@ function LevelTestView({ settings, onAdvance, onBack }: {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Etappen-Test</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('ltest.title')}</span>
       </header>
 
       {phase === 'vocab' && (
         items === null ? <Dots /> : (
           <>
-            <p class="lr-section" style={{ marginTop: 0 }}>Teil 1 · Wortschatz</p>
-            <p class="sl-hint">Tippe alle Wörter an, die du <b>kennst</b>. Manche sind erfunden — die lässt du aus.</p>
+            <p class="lr-section" style={{ marginTop: 0 }}>{t('ltest.part1')}</p>
+            <p class="sl-hint">{t('ltest.vhPre')}<b>{t('ltest.vhMark')}</b>{t('ltest.vhPost')}</p>
             <div class="tst-grid">
               {items.map((it) => (
                 <button class={`tst-word ${known.has(it.word) ? 'on' : ''}`} onClick={() => toggle(it.word)}>
@@ -1658,7 +1661,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
                 </button>
               ))}
             </div>
-            <button class="sl-read" onClick={startReading}>Weiter → Teil 2</button>
+            <button class="sl-read" onClick={startReading}>{t('ltest.toPart2')}</button>
           </>
         )
       )}
@@ -1666,13 +1669,13 @@ function LevelTestView({ settings, onAdvance, onBack }: {
       {phase === 'reading' && (
         questions === null ? <Dots /> : questions.length === 0 ? (
           <>
-            <p class="sl-muted">Gerade kein Lesetext verfügbar — wir werten Teil 1 aus.</p>
-            <button class="sl-read" onClick={conclude}>Test abschließen</button>
+            <p class="sl-muted">{t('ltest.noReading')}</p>
+            <button class="sl-read" onClick={conclude}>{t('ltest.finishTest')}</button>
           </>
         ) : (
           <>
-            <p class="lr-section" style={{ marginTop: 0 }}>Teil 2 · Leseverständnis</p>
-            <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
+            <p class="lr-section" style={{ marginTop: 0 }}>{t('ltest.part2')}</p>
+            <p class="sl-progress">{t('trainer.qProgress', { n: qpos + 1, total: questions.length })}</p>
             <div class="sl-quiz">
               <p class="sl-quiz-q">{questions[qpos]!.prompt}</p>
               <TranslateReveal text={questions[qpos]!.prompt} settings={settings} />
@@ -1689,7 +1692,7 @@ function LevelTestView({ settings, onAdvance, onBack }: {
               </div>
               {picked !== null && (
                 <button class="sl-read" onClick={nextReading}>
-                  {qpos + 1 >= questions.length ? 'Auswerten ✓' : 'Weiter →'}
+                  {qpos + 1 >= questions.length ? t('ltest.evaluate') : t('common.continueArrow')}
                 </button>
               )}
             </div>
@@ -1702,21 +1705,21 @@ function LevelTestView({ settings, onAdvance, onBack }: {
           {result.passed ? (
             <>
               <span class="sl-done-ico"><IconSparkles /></span>
-              <h2>Bestanden!</h2>
+              <h2>{t('ltest.passed')}</h2>
               {result.adv?.levelUp ? (
-                <p>Glückwunsch — du steigst auf <b>{result.adv.level}</b> auf. Deine Texte werden ab jetzt auf diesem Niveau angepasst.</p>
+                <p>{t('ltest.levelUpPre')}<b>{result.adv.level}</b>{t('ltest.levelUpPost')}</p>
               ) : (
-                <p>Nächste Etappe freigeschaltet: <b>{getStageProgress(settings.level).label}</b>.</p>
+                <p>{t('ltest.nextStagePre')}<b>{getStageProgress(settings.level).label}</b>.</p>
               )}
             </>
           ) : (
             <>
               <span class="sl-done-ico muted"><IconRefresh /></span>
-              <h2>Noch nicht ganz</h2>
-              <p>Kein Problem — lies und übe noch etwas weiter und versuch's dann nochmal.</p>
+              <h2>{t('ltest.notYet')}</h2>
+              <p>{t('ltest.notYetP')}</p>
             </>
           )}
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       )}
     </main>
@@ -1743,11 +1746,11 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
       if (cleared < ETAPPE_GOAL && batch.length > 0) { setLocked(true); setQuestions([]); return; }
       // Mostly the Etappe's just-learned target words, plus a couple article questions.
       const pool = [...new Set(targets.map((t) => t.translation).filter(Boolean))];
-      const vq: LessonQuestion[] = sampleN(batch, 3).map((t) => {
-        const c = t.translation;
+      const vq: LessonQuestion[] = sampleN(batch, 3).map((b) => {
+        const c = b.translation;
         const distractors = sampleN(pool.filter((x) => x.toLowerCase() !== c.toLowerCase()), 3);
         const options = shuffleInPlace([c, ...distractors]);
-        return { kind: 'vocab' as const, q: `Was bedeutet «${t.word}»?`, options, correct: options.indexOf(c) };
+        return { kind: 'vocab' as const, q: t('etest.vocabQ', { word: b.word }), options, correct: options.indexOf(c) };
       }).filter((q) => q.options.length >= 2);
       let articleQs: LessonQuestion[] = [];
       const daily = await fetchServerDaily(SERVER, settings.learn, settings.level);
@@ -1785,7 +1788,7 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
         recordMilestone({ level: settings.level, etappe: eIdx, sublevel: `${settings.level}.${eIdx + 1}`, words: ETAPPE_GOAL, articles, ts: Date.now() });
         celebrate();
       }
-      logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? 'Etappe geschafft' : 'Etappentest' });
+      logActivity({ type: 'test', level: settings.level, ok: passed, detail: passed ? t('etest.logPass') : t('etest.title') });
       setResult({ passed });
     } else { setQpos(qpos + 1); setPicked(null); }
   }
@@ -1794,37 +1797,37 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Etappentest</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('etest.title')}</span>
       </header>
 
       {result ? (
         <section class="sl-done">
           {result.passed ? (
-            <><span class="sl-done-ico"><IconSparkles /></span><h2>Etappe geschafft!</h2>
-              <p>Nächste Etappe: <b>{getStageProgress(settings.level).label}</b>.</p></>
+            <><span class="sl-done-ico"><IconSparkles /></span><h2>{t('etest.passedH')}</h2>
+              <p>{t('etest.nextStagePre')}<b>{getStageProgress(settings.level).label}</b>.</p></>
           ) : (
-            <><span class="sl-done-ico muted"><IconRefresh /></span><h2>Fast!</h2>
-              <p>Du brauchst 4 von 5 richtig. Lies/üb noch etwas und versuch's nochmal.</p></>
+            <><span class="sl-done-ico muted"><IconRefresh /></span><h2>{t('etest.almost')}</h2>
+              <p>{t('etest.almostP')}</p></>
           )}
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : questions === null ? (
         <Dots />
       ) : locked ? (
         <>
-          <p class="sl-muted">Der Etappentest schaltet frei, wenn du das Wochenziel von {ETAPPE_GOAL} neuen Wörtern geschafft hast. Üb noch im Vokabeltest.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <p class="sl-muted">{t('etest.locked', { goal: ETAPPE_GOAL })}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </>
       ) : questions.length === 0 ? (
         <>
-          <p class="sl-muted">Gerade keine Fragen verfügbar — lies erst eine Tageslektion.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <p class="sl-muted">{t('etest.noQuestions')}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </>
       ) : q ? (
         <>
-          <p class="lr-section" style={{ marginTop: 0 }}>Kurzer Check · {Q_LABEL[q.kind]}</p>
-          <p class="sl-progress">Frage {qpos + 1} / {questions.length}</p>
+          <p class="lr-section" style={{ marginTop: 0 }}>{t('etest.checkLabelPre')}{t(`qkind.${q.kind}`)}</p>
+          <p class="sl-progress">{t('trainer.qProgress', { n: qpos + 1, total: questions.length })}</p>
           <div class="sl-quiz">
             <p class="sl-quiz-q">{q.q}</p>
             {q.kind !== 'vocab' && <TranslateReveal text={q.q} settings={settings} />}
@@ -1838,7 +1841,7 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
               })}
             </div>
             {picked !== null && (
-              <button class="sl-read" onClick={nextQ}>{qpos + 1 >= questions.length ? 'Auswerten ✓' : 'Weiter →'}</button>
+              <button class="sl-read" onClick={nextQ}>{qpos + 1 >= questions.length ? t('ltest.evaluate') : t('common.continueArrow')}</button>
             )}
           </div>
         </>
@@ -1851,11 +1854,11 @@ function EtappenTest({ settings, onBack }: { settings: PwaSettings; onBack: () =
 
 function timeAgo(ts: number): string {
   const d = Math.floor((Date.now() - ts) / 86400000);
-  if (d <= 0) return 'heute';
-  if (d === 1) return 'gestern';
-  if (d < 7) return `vor ${d} Tagen`;
-  if (d < 14) return 'letzte Woche';
-  return `vor ${Math.floor(d / 7)} Wochen`;
+  if (d <= 0) return t('time.today');
+  if (d === 1) return t('time.yesterday');
+  if (d < 7) return t('time.daysAgo', { n: d });
+  if (d < 14) return t('time.lastWeek');
+  return t('time.weeksAgo', { n: Math.floor(d / 7) });
 }
 
 function RouteView({ settings, onTrainer, onTest, onBack }: {
@@ -1891,8 +1894,8 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
         <div class={`rn done ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot"><IconCheck /></span></div>
           <span class="rn-card">
-            <span class="rn-title">Sprachniveau {level}.{e + 1}</span>
-            <span class="rn-sub">{m ? `${m.words} Wörter · ${m.articles} Artikel · Check ✓` : 'geschafft'}</span>
+            <span class="rn-title">{t('route.subLevel', { level, n: e + 1 })}</span>
+            <span class="rn-sub">{m ? t('route.mileSub', { words: m.words, articles: m.articles }) : t('route.mileDone')}</span>
           </span>
         </div>,
       );
@@ -1900,20 +1903,20 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
       rows.push(
         <div class={`rn head ${side()}`} key={`h${e}`}>
           <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
-          <span class="rn-card flat"><span class="rn-title">Sprachniveau {level}.{e + 1} — diese Woche</span></span>
+          <span class="rn-card flat"><span class="rn-title">{t('route.subLevelWeek', { level, n: e + 1 })}</span></span>
         </div>,
         <div class={`rn ${ready ? 'done' : 'current'} ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot">{ready ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
-            <span class="rn-title">Lerne neue Wörter</span>
-            <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} diese Woche · tippen</span>
+            <span class="rn-title">{t('home.learnWords')}</span>
+            <span class="rn-sub">{t('home.weekWords', { cleared: Math.min(cleared, ETAPPE_GOAL), goal: ETAPPE_GOAL })}</span>
           </button>
         </div>,
         <div class={`rn ${ready ? 'current' : 'locked'} ${ready ? 'pulse' : ''} ${side()}`} key={`t${e}`}>
           <div class="rn-rail"><span class="rn-dot" style={ready ? undefined : CHEST_DOT}><IconChest /></span></div>
           <button class="rn-card" disabled={!ready} onClick={() => ready && onTest()}>
-            <span class="rn-title">Etappen-Check</span>
-            <span class="rn-sub">{ready ? 'kurzer Test über die neuen Wörter · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
+            <span class="rn-title">{t('test.etappe')}</span>
+            <span class="rn-sub">{ready ? t('route.etappeCheckReady') : t('home.fromWords', { goal: ETAPPE_GOAL })}</span>
           </button>
         </div>,
       );
@@ -1923,7 +1926,7 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
       rows.push(
         <div class={`rn locked ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot" style={milestone ? CHEST_DOT : pastelDot(e)}>{milestone ? <IconChest /> : n}</span></div>
-          <span class="rn-card"><span class="rn-title">Etappe {n}</span><span class="rn-sub">{milestone ? `Meilenstein · ${ETAPPE_GOAL} Wörter` : `${ETAPPE_GOAL} Wörter + Check`}</span></span>
+          <span class="rn-card"><span class="rn-title">{t('route.etappeN', { n })}</span><span class="rn-sub">{milestone ? t('route.mileLabel', { goal: ETAPPE_GOAL }) : t('route.wordsCheck', { goal: ETAPPE_GOAL })}</span></span>
         </div>,
       );
     }
@@ -1932,8 +1935,8 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
     <div class={`rn ${prog.atAufstieg ? 'current' : 'locked'} ${prog.atAufstieg ? 'pulse' : ''} ${side()}`} key="auf">
       <div class="rn-rail"><span class="rn-dot" ref={prog.atAufstieg ? curRef : undefined} style={prog.atAufstieg ? undefined : CHEST_DOT}><IconChest /></span></div>
       <button class="rn-card" disabled={!prog.atAufstieg} onClick={() => prog.atAufstieg && onTest()}>
-        <span class="rn-title">Aufstiegstest → {prog.nextLevel}</span>
-        <span class="rn-sub">{prog.atAufstieg ? `alle Wörter für ${prog.nextLevel} · tippen` : 'nach Etappe 10'}</span>
+        <span class="rn-title">{t('route.aufstiegTo', { next: prog.nextLevel })}</span>
+        <span class="rn-sub">{prog.atAufstieg ? t('route.aufstiegReadySub', { next: prog.nextLevel }) : t('route.aufstiegLockedSub')}</span>
       </button>
     </div>,
   );
@@ -1941,11 +1944,11 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Lernpfad</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('route.title')}</span>
       </header>
       <div class="rt-head">
-        <b>{level}</b><span>Etappe {prog.etappeDisplay}/{ETAPPEN_PER_LEVEL} → {prog.nextLevel}</span>
+        <b>{level}</b><span>{t('route.headStage', { n: prog.etappeDisplay, total: ETAPPEN_PER_LEVEL, next: prog.nextLevel })}</span>
         {levelIdx > 0 && <span class="rt-prev">{STAGE_LEVELS.slice(0, levelIdx).join(' ✓ ')} ✓</span>}
       </div>
       <div class="route">{rows}</div>
@@ -1954,9 +1957,6 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
 }
 
 /* ----------------------------------------------------------- Challenges --- */
-
-const CAL_WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-const CAL_MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 /** Month calendar that only enables days present in `available` (the sparse
  * archive). Scales to months/years far better than a flat dropdown list. */
@@ -1980,11 +1980,11 @@ function DayCalendar({ available, sel, today, onPick }: {
   return (
     <div class="cal">
       <div class="cal-head">
-        <button class="cal-nav" disabled={!canPrev} onClick={() => canPrev && shift(-1)} aria-label="Früher">‹</button>
-        <span class="cal-title">{CAL_MONTHS[m - 1]} {y}</span>
-        <button class="cal-nav" disabled={!canNext} onClick={() => canNext && shift(1)} aria-label="Später">›</button>
+        <button class="cal-nav" disabled={!canPrev} onClick={() => canPrev && shift(-1)} aria-label={t('cal.prevAria')}>‹</button>
+        <span class="cal-title">{t(`cal.month.${m - 1}`)} {y}</span>
+        <button class="cal-nav" disabled={!canNext} onClick={() => canNext && shift(1)} aria-label={t('cal.nextAria')}>›</button>
       </div>
-      <div class="cal-grid cal-wd">{CAL_WD.map((w) => <span class="cal-wdl">{w}</span>)}</div>
+      <div class="cal-grid cal-wd">{Array.from({ length: 7 }, (_, i) => <span class="cal-wdl">{t(`cal.wd.${i}`)}</span>)}</div>
       <div class="cal-grid">
         {cells.map((d, i) => {
           if (d === null) return <span class="cal-cell empty" key={`e${i}`} />;
@@ -2058,21 +2058,21 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
     return (
       <main class="sl-main with-nav">
         <header class="sl-lessonhead">
-          <button class="sl-back" onClick={() => setChoice(null)} aria-label="Zurück">←</button>
-          <span class="sl-lessontitle">Lesen</span>
+          <button class="sl-back" onClick={() => setChoice(null)} aria-label={t('common.backAria')}>←</button>
+          <span class="sl-lessontitle">{t('archive.readTitle')}</span>
         </header>
         <section class="dg-choose">
           <p class="lr-section" style={{ marginTop: '4px' }}>{choice.title}</p>
-          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>Wie möchtest du lesen?</p>
+          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>{t('surprise.howRead')}</p>
           <button class="dg-opt" onClick={() => { onOpen(toRef(choice), false); setChoice(null); }}>
             <span class="dg-opt-ico full"><IconNewspaper /></span>
-            <span class="dg-opt-body"><b>Ganzer Artikel</b><small>8 Absätze · mit Quiz pro Absatz</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.fullArticle')}</b><small>{t('surprise.fullArticleSub')}</small></span>
           </button>
           <button class="dg-opt" onClick={() => { onDigest(toRef(choice)); setChoice(null); }}>
             <span class="dg-opt-ico digest"><IconBolt /></span>
-            <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.digest')}</b><small>{t('surprise.digestSub')}</small></span>
           </button>
-          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Zurück</button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>{t('common.backBtn')}</button>
         </section>
       </main>
     );
@@ -2080,11 +2080,11 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
 
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Archiv</h1>
-      <p class="lr-section">Heutige & frühere Tageslektionen</p>
+      <h1 class="tab-screen-title">{t('tab.archive')}</h1>
+      <p class="lr-section">{t('archive.subtitle')}</p>
       {days.length > 0 && (
         <div class="lr-pick day-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => { setSel(undefined); setOlderOpen(false); }}>Heute</button>
+          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => { setSel(undefined); setOlderOpen(false); }}>{t('archive.today')}</button>
           {recent.map((d) => (
             <button class={`pill-day ${sel === d ? 'on' : ''}`} onClick={() => { setSel(d); setOlderOpen(false); }}>
               {d.slice(5)}
@@ -2093,7 +2093,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
           {older.length > 0 && (
             <div class="day-older">
               <button class={`pill-day older ${selOlder ? 'on' : ''}`} onClick={() => setOlderOpen((o) => !o)} aria-expanded={olderOpen}>
-                {selOlder ? `${sel!.slice(5)} ▾` : 'Kalender ▾'}
+                {selOlder ? `${sel!.slice(5)} ▾` : t('archive.calendar')}
               </button>
               {olderOpen && (
                 <DayCalendar
@@ -2108,19 +2108,19 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
         </div>
       )}
       {daily && articles.length > 0 && (
-        <p class="lr-section" style={{ marginTop: 0 }}>{doneCount}/{goal} gelesen</p>
+        <p class="lr-section" style={{ marginTop: 0 }}>{t('archive.readCount', { done: doneCount, goal })}</p>
       )}
       {loading ? (
         <Dots />
       ) : articles.length === 0 ? (
-        <p class="sl-muted">Keine Lektionen für diesen Tag.</p>
+        <p class="sl-muted">{t('archive.noLessons')}</p>
       ) : (
         <ArticleList articles={articles} next={next} allDone={doneCount >= goal} onOpen={onOpen} />
       )}
 
       {groups.length > 0 && (
         <>
-          <p class="lr-section" style={{ marginTop: '22px' }}>Aus den Rubriken</p>
+          <p class="lr-section" style={{ marginTop: '22px' }}>{t('archive.fromRubrics')}</p>
           {groups.map((g) => {
             const open = openAreas.has(g.meta.id);
             const seen = g.items.filter((a) => isCompleted(a.url)).length;
@@ -2128,7 +2128,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
               <div class="ch-rubrik" key={g.meta.id}>
                 <button class={`ch-rubrik-head ${open ? 'open' : ''}`} onClick={() => toggleArea(g.meta.id)} aria-expanded={open}>
                   <span class={`lr-tile-ico ${g.meta.color}`}>{g.meta.icon}</span>
-                  <span class="ch-rubrik-label">{g.meta.label}</span>
+                  <span class="ch-rubrik-label">{t(`rubrik.${g.meta.id}`)}</span>
                   <span class="ch-rubrik-count">{seen > 0 ? `${seen}/${g.items.length}` : g.items.length}</span>
                   <span class="ch-rubrik-chev">›</span>
                 </button>
@@ -2143,7 +2143,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
                               ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
                               : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
                             <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
-                            <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : 'lesen ›'}</span>
+                            <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : t('common.readGo')}</span>
                           </button>
                         </li>
                       );
@@ -2183,7 +2183,7 @@ function ReportTab({ settings, onDeck, onTest, onRoute }: {
   const pct = Math.round((prog.etappe + (prog.atAufstieg ? 0 : Math.min(cleared / ETAPPE_GOAL, 1))) / ETAPPEN_PER_LEVEL * 100);
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Report</h1>
+      <h1 class="tab-screen-title">{t('tab.report')}</h1>
 
       <div class={`rep-stage ${ready ? 'ready' : ''}`}>
         <div class="rep-stage-top">
@@ -2192,39 +2192,39 @@ function ReportTab({ settings, onDeck, onTest, onRoute }: {
         </div>
         <div class="rep-stage-bar"><i style={{ width: `${pct}%` }} /></div>
         {ready ? (
-          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>{prog.atAufstieg ? 'Aufstiegstest starten' : 'Etappentest starten'}</button>
+          <button class="rep-stage-test" onClick={onTest}><span class="rep-test-ico"><IconTarget /></span>{prog.atAufstieg ? t('report.startAufstieg') : t('report.startEtappe')}</button>
         ) : (
-          <p class="rep-stage-hint">{prog.atAufstieg ? '' : `Lerne diese Woche ${ETAPPE_GOAL} neue Wörter — dann öffnet der Etappentest (${Math.min(cleared, ETAPPE_GOAL)}/${ETAPPE_GOAL}).`}</p>
+          <p class="rep-stage-hint">{prog.atAufstieg ? '' : t('report.weekHint', { goal: ETAPPE_GOAL, cleared: Math.min(cleared, ETAPPE_GOAL) })}</p>
         )}
       </div>
 
       <div class="rep-kpis">
-        <div class="rep-kpi"><b>{s.level}</b><span>Level</span></div>
-        <div class="rep-kpi"><b>{s.totalXp}</b><span>XP gesamt</span></div>
-        <div class="rep-kpi"><b>{deck}</b><span>Vokabeln</span></div>
-        <div class="rep-kpi"><b>{acc}</b><span>Tage-Streak</span></div>
+        <div class="rep-kpi"><b>{s.level}</b><span>{t('report.kpiLevel')}</span></div>
+        <div class="rep-kpi"><b>{s.totalXp}</b><span>{t('report.kpiXp')}</span></div>
+        <div class="rep-kpi"><b>{deck}</b><span>{t('report.kpiVocab')}</span></div>
+        <div class="rep-kpi"><b>{acc}</b><span>{t('report.kpiStreak')}</span></div>
       </div>
 
       <div class="rep-card">
-        <h3>XP · letzte 7 Tage</h3>
+        <h3>{t('report.week7')}</h3>
         <div class="rep-week">
           {s.last7.map((d) => (
             <div class="rep-day">
               <div class="rep-bar" style={{ height: `${Math.round((d.xp / maxDay) * 92)}%` }} />
-              <span class="rep-day-l">{['Mo','Di','Mi','Do','Fr','Sa','So'][new Date(d.key).getDay() === 0 ? 6 : new Date(d.key).getDay() - 1]}</span>
+              <span class="rep-day-l">{t(`cal.wd.${new Date(d.key).getDay() === 0 ? 6 : new Date(d.key).getDay() - 1}`)}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div class="rep-card">
-        <h3>Heute</h3>
-        <div class="rep-row"><span>XP heute</span><b>{s.todayXp} / {s.goal}</b></div>
-        <div class="rep-row"><span>Level-Fortschritt</span><b>{s.intoLevel} / {s.levelSpan} XP</b></div>
+        <h3>{t('archive.today')}</h3>
+        <div class="rep-row"><span>{t('report.xpToday')}</span><b>{s.todayXp} / {s.goal}</b></div>
+        <div class="rep-row"><span>{t('report.levelProgress')}</span><b>{s.intoLevel} / {s.levelSpan} XP</b></div>
       </div>
 
-      <button class="lr-vocab" onClick={onRoute}>Lernroute ansehen →</button>
-      <button class="lr-vocab" onClick={onDeck}>Meine Vokabeln · {deck} →</button>
+      <button class="lr-vocab" onClick={onRoute}>{t('report.viewRoute')}</button>
+      <button class="lr-vocab" onClick={onDeck}>{t('report.myVocab', { n: deck })}</button>
     </main>
   );
 }
@@ -2250,15 +2250,28 @@ function SettingsTab({ settings, onPatch }: {
     input.value = '';
     if (!file) return;
     const ok = importData(await file.text());
-    if (ok) { alert('Importiert ✓ — die App wird neu geladen.'); location.reload(); }
-    else alert('Import fehlgeschlagen — ist das eine Learny-Sicherung (.json)?');
+    if (ok) { alert(t('set.importOk')); location.reload(); }
+    else alert(t('set.importFail'));
   }
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Einstellungen</h1>
+      <h1 class="tab-screen-title">{t('set.title')}</h1>
 
       <div class="set-group">
-        <p class="set-label">Sprache lernen</p>
+        <p class="set-label">{t('set.uiLang')}</p>
+        <p class="sl-muted" style={{ margin: '0 0 10px' }}>{t('set.uiLangHint')}</p>
+        <div class="set-grid">
+          {LANGUAGES.map((l) => (
+            <button class={`set-choice ${settings.native === l ? 'sel' : ''}`}
+              onClick={() => onPatch(l === settings.learn ? { native: l, learn: LANGUAGES.find((x) => x !== l) as Language } : { native: l })}>
+              {LANG_LABELS[l]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="set-group">
+        <p class="set-label">{t('set.learn')}</p>
         <div class="set-grid">
           {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
             <button class={`set-choice ${settings.learn === l ? 'sel' : ''}`} onClick={() => onPatch({ learn: l })}>
@@ -2269,7 +2282,7 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
-        <p class="set-label">Niveau</p>
+        <p class="set-label">{t('set.level')}</p>
         <div class="set-grid">
           {LEVELS.map((l) => (
             <button class={`set-choice ${settings.level === l ? 'sel' : ''}`} onClick={() => onPatch({ level: l })}>
@@ -2280,7 +2293,7 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
-        <p class="set-label">Theme</p>
+        <p class="set-label">{t('set.theme')}</p>
         <div class="theme-grid">
           {THEMES.map((t) => (
             <button class={`theme-card ${settings.theme === t.id ? 'sel' : ''}`} onClick={() => onPatch({ theme: t.id })}>
@@ -2293,29 +2306,26 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
-        <p class="set-label">Daten · Sicherung</p>
-        <p class="sl-muted" style={{ margin: '0 0 10px' }}>
-          Dein Fortschritt (Streak, Route, Vokabeln) liegt nur auf diesem Gerät. Exportiere ihn vor
-          App-Löschen oder Handywechsel — und importiere ihn am neuen Gerät.
-        </p>
+        <p class="set-label">{t('set.backup')}</p>
+        <p class="sl-muted" style={{ margin: '0 0 10px' }}>{t('set.backupHint')}</p>
         <div class="set-grid">
-          <button class="set-choice" onClick={doExport}>⤓ Exportieren</button>
+          <button class="set-choice" onClick={doExport}>{t('set.export')}</button>
           <label class="set-choice" style={{ textAlign: 'center', cursor: 'pointer' }}>
-            ⤒ Importieren
+            {t('set.import')}
             <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={doImport} />
           </label>
         </div>
       </div>
 
       <div class="set-group">
-        <p class="set-label">App</p>
+        <p class="set-label">{t('set.app')}</p>
         <div class="set-version">
-          <span>Version <b>{__APP_VERSION__}</b></span>
+          <span>{t('set.version')} <b>{__APP_VERSION__}</b></span>
           <UpdateCheck />
         </div>
       </div>
 
-      <p class="sl-muted">Learny · Teil der Sidelearn-Familie · Texte: Wikipedia (CC BY-SA)</p>
+      <p class="sl-muted">{t('set.foot')}</p>
     </main>
   );
 }
@@ -2339,7 +2349,7 @@ function UpdateCheck() {
   }
   return (
     <button class="set-update" onClick={check} disabled={state === 'checking'}>
-      {state === 'checking' ? 'Suche …' : state === 'current' ? 'Aktuell ✓' : 'Auf Updates prüfen'}
+      {state === 'checking' ? t('set.update.checking') : state === 'current' ? t('set.update.current') : t('set.update.idle')}
     </button>
   );
 }
@@ -2407,16 +2417,16 @@ function DictView({ settings, initialMode, onBack }: {
   return (
     <main class="sl-main">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Wörterbuch</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('tile.dict')}</span>
       </header>
 
       <div class="dict-tools">
         <div class="dict-seg">
-          <button class={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>Alle</button>
-          <button class={mode === 'mine' ? 'on' : ''} onClick={() => setMode('mine')}>Meine</button>
+          <button class={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{t('dict.tabAll')}</button>
+          <button class={mode === 'mine' ? 'on' : ''} onClick={() => setMode('mine')}>{t('dict.tabMine')}</button>
         </div>
-        <input class="dict-search" placeholder="Suchen …" value={q} onInput={(e) => setQ(e.currentTarget.value)} />
+        <input class="dict-search" placeholder={t('dict.search')} value={q} onInput={(e) => setQ(e.currentTarget.value)} />
       </div>
 
       {(mode === 'all' && rich === null) || (rows.length === 0 && fb === 'loading') ? (
@@ -2424,10 +2434,10 @@ function DictView({ settings, initialMode, onBack }: {
       ) : displayed.length === 0 ? (
         <p class="sl-muted">
           {mode === 'mine'
-            ? 'Noch keine Merkwörter. Tippe beim Lesen ein Wort an und drücke „★ merken".'
+            ? t('dict.emptyMine')
             : ql
-              ? 'Nichts gefunden.'
-              : `Für ${LANG_LABELS[settings.learn]} gibt es noch kein Wörterbuch.`}
+              ? t('dict.notFound')
+              : t('dict.noDict', { lang: LANG_LABELS[settings.learn] })}
         </p>
       ) : (
         <ul class="sl-deck">
@@ -2445,7 +2455,7 @@ function DictView({ settings, initialMode, onBack }: {
                   </button>
                   <button
                     class={`dict-add${saved ? ' on' : ''}`}
-                    aria-label={saved ? 'entfernen' : 'merken'}
+                    aria-label={saved ? t('dict.removeAria') : t('dict.saveAria')}
                     onClick={() => toggleSave(r.word, s0?.t ?? '')}
                   >
                     {saved ? '★' : '☆'}
@@ -2474,8 +2484,6 @@ function DictView({ settings, initialMode, onBack }: {
 
 type QKind = 'quiz' | 'vocab' | 'cloze';
 interface LessonQuestion { kind: QKind; q: string; options: string[]; correct: number }
-
-const Q_LABEL: Record<QKind, string> = { quiz: 'Verständnis', vocab: 'Vokabel', cloze: 'Lückentext' };
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function sampleN<T>(arr: T[], n: number): T[] {
@@ -2530,8 +2538,8 @@ async function buildLessonQuestions(lesson: ServerLesson, settings: PwaSettings)
     } else if (type === 'vocab') {
       const word = here[Math.floor(Math.random() * here.length)]!;
       const correct = trans.get(word)!;
-      const options = shuffleInPlace([correct, ...sampleN(transValues.filter((t) => t !== correct), 3)]);
-      out.push({ kind: 'vocab', q: `Was bedeutet „${word}"?`, options, correct: options.indexOf(correct) });
+      const options = shuffleInPlace([correct, ...sampleN(transValues.filter((v) => v !== correct), 3)]);
+      out.push({ kind: 'vocab', q: t('lesson.vocabQ', { word }), options, correct: options.indexOf(correct) });
     } else {
       out.push({ kind: 'cloze', q: cz!.prompt, options: cz!.options, correct: cz!.options.indexOf(cz!.answer) });
     }
@@ -2632,7 +2640,7 @@ function Lesson({
     if (arts.some((a) => a.url === article.url) && done >= goal) { celebrate(); setCelebrated(true); }
   }, [completed, daily]);
 
-  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">Lektion nicht verfügbar.</p></Frame>;
+  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">{t('common.lessonUnavailable')}</p></Frame>;
   if (!lesson) return <Frame title={article.title} onBack={onBack}><Dots /></Frame>;
 
   const total = lesson.paragraphs.length;
@@ -2649,7 +2657,7 @@ function Lesson({
       type: 'lesson',
       level: settings.level,
       title: article.title,
-      detail: score.answered > 0 ? `Quiz ${score.correct}/${score.answered}` : undefined,
+      detail: score.answered > 0 ? t('lesson.logQuiz', { c: score.correct, a: score.answered }) : undefined,
     });
     if (route) {
       completeActivity(settings.level, 'lesson'); // daily read advances the route
@@ -2696,7 +2704,7 @@ function Lesson({
       onBack={onBack}
       level={
         readLevel ? (
-          <span class="sl-stretch" title="Eine Stufe über deinem Level — für neue Wörter">+1 · {lvl}</span>
+          <span class="sl-stretch" title={t('lesson.stretchTitle')}>+1 · {lvl}</span>
         ) : (
           <div class="sl-levels">
             {LEVELS.map((l) => (
@@ -2709,11 +2717,11 @@ function Lesson({
       }
     >
       <p class="sl-progress">
-        Absatz {Math.min(visible, total)} / {total}
-        {total >= 8 ? ' · Auszug' : ''}
-        {readLevel ? ` · +1 (${lvl})` : ''}
+        {t('lesson.paraProgress', { n: Math.min(visible, total), total })}
+        {total >= 8 ? t('lesson.excerpt') : ''}
+        {readLevel ? t('lesson.plus1', { lvl }) : ''}
       </p>
-      <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort für die Übersetzung.</p>
+      <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> {t('lesson.hintPre')}<span class="sl-hint-mark">{t('digest.hintMark')}</span>{t('lesson.hintPost')}</p>
 
       {lesson.paragraphs.slice(0, visible).map((p, i) => (
         <div key={i} class={`sl-para ${i === lastIdx && !completed ? 'current' : 'past'}`}>
@@ -2726,7 +2734,7 @@ function Lesson({
           </p>
           {i === lastIdx && !completed && !showChallenge && quizIdx === null && (
             <button class="sl-read" onClick={onRead}>
-              {i === total - 1 ? 'Fertig ✓' : 'Gelesen ✓'}
+              {i === total - 1 ? t('common.doneCheck') : t('lesson.read')}
             </button>
           )}
         </div>
@@ -2738,19 +2746,19 @@ function Lesson({
         return (
           <section class="sl-done">
             <span class="sl-done-ico"><IconSparkles /></span>
-            <h2>Challenge erfüllt!</h2>
-            {wordsLearned > 0 && <p class="sl-done-words">+{wordsLearned} neue Wörter aus diesem Artikel gelernt</p>}
-            <p class="sl-done-daily">{CHALLENGE} Absätze geschafft — stark! Lies {total - CHALLENGE} weitere für Bonus-XP, oder mach beim nächsten Artikel weiter.</p>
+            <h2>{t('lesson.challengeH')}</h2>
+            {wordsLearned > 0 && <p class="sl-done-words">{t('lesson.wordsLearned', { n: wordsLearned })}</p>}
+            <p class="sl-done-daily">{t('lesson.challengeP', { done: CHALLENGE, more: total - CHALLENGE })}</p>
             <div class="sl-done-actions">
               <button class="sl-read primary" onClick={() => { setShowChallenge(false); setVisible((v) => v + 1); }}>
-                Weiterlesen · Bonus +
+                {t('lesson.keepReading')}
               </button>
               {next && (
                 <button class="sl-read ghost" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(daily?.articles ?? [], next.url, settings.level))}>
-                  Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
+                  {t('lesson.nextArticle')} <span class="sl-btn-ico"><IconArrowRight /></span>
                 </button>
               )}
-              <button class="sl-read ghost" onClick={onHome}>Zur Übersicht</button>
+              <button class="sl-read ghost" onClick={onHome}>{t('common.toOverview')}</button>
             </div>
           </section>
         );
@@ -2758,7 +2766,7 @@ function Lesson({
 
       {quizIdx !== null && questions?.[quizIdx] && (
         <>
-          <p class="sl-qlabel">{Q_LABEL[questions[quizIdx]!.kind]}</p>
+          <p class="sl-qlabel">{t(`qkind.${questions[quizIdx]!.kind}`)}</p>
           <Quiz
             q={{ q: questions[quizIdx]!.q, options: questions[quizIdx]!.options, correct: questions[quizIdx]!.correct }}
             answer={answer}
@@ -2791,30 +2799,30 @@ function Lesson({
         return (
           <section class="sl-done">
             <span class="sl-done-ico"><IconSparkles /></span>
-            <h2>{allDone ? 'Tagesziel erreicht!' : 'Geschafft'}</h2>
-            {wordsLearned > 0 && <p class="sl-done-words">+{wordsLearned} neue Wörter aus diesem Artikel gelernt</p>}
-            {score.answered > 0 && <p class="sl-done-score">Quiz: {score.correct} / {score.answered} richtig</p>}
+            <h2>{allDone ? t('lesson.goalReached') : t('common.done')}</h2>
+            {wordsLearned > 0 && <p class="sl-done-words">{t('lesson.wordsLearned', { n: wordsLearned })}</p>}
+            {score.answered > 0 && <p class="sl-done-score">{t('lesson.quizScore', { c: score.correct, a: score.answered })}</p>}
             {inDaily && (
               <p class="sl-done-daily">
                 {allDone
-                  ? `${doneCount} von ${goal} der Tageslektion gelesen.`
-                  : `${doneCount} von ${goal} der Tageslektion geschafft${next ? ' — noch einer fehlt.' : '.'}`}
+                  ? t('lesson.dailyAllRead', { done: doneCount, goal })
+                  : next ? t('lesson.dailyDoneMore', { done: doneCount, goal }) : t('lesson.dailyDone', { done: doneCount, goal })}
               </p>
             )}
             <div class="sl-done-actions">
               {inDaily && !allDone && next && (
                 <button class="sl-read primary" onClick={() => onOpen({ id: next.id, title: next.title, url: next.url, thumb: next.thumbnail }, true, stretchReadLevel(daily?.articles ?? [], next.url, settings.level))}>
-                  Nächster Artikel <span class="sl-btn-ico"><IconArrowRight /></span>
+                  {t('lesson.nextArticle')} <span class="sl-btn-ico"><IconArrowRight /></span>
                 </button>
               )}
-              <button class={`sl-read ${inDaily && !allDone && next ? 'ghost' : ''}`} onClick={onHome}>Zur Übersicht</button>
+              <button class={`sl-read ${inDaily && !allDone && next ? 'ghost' : ''}`} onClick={onHome}>{t('common.toOverview')}</button>
             </div>
           </section>
         );
       })()}
 
       <footer class="sl-credit">
-        Quelle: <a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
+        {t('common.sourcePre')}<a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
       </footer>
 
       {pop && (
@@ -2838,7 +2846,7 @@ function Frame({
   return (
     <main class="sl-main">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
         <span class="sl-lessontitle">{title}</span>
       </header>
       {level}
@@ -2968,14 +2976,14 @@ function WordPopover({
               {translation}
               {pos && <span class="sl-pop-pos"> · {pos}</span>}
             </p>
-            {alts.length > 0 && <p class="sl-pop-alts">auch: {alts.join(', ')}</p>}
+            {alts.length > 0 && <p class="sl-pop-alts">{t('common.also', { alt: alts.join(', ') })}</p>}
             {example && <p class="sl-pop-ex">„{example}"{exampleDe && <span class="sl-pop-exd"> — {exampleDe}</span>}</p>}
           </>
         ) : (
-          <p class="sl-muted">keine Übersetzung gefunden</p>
+          <p class="sl-muted">{t('pop.noTranslation')}</p>
         )}
         <button class={`sl-merken ${saved ? 'saved' : ''}`} disabled={saved || !translation} onClick={merken}>
-          <span class="sl-merken-ico"><IconStar /></span>{saved ? 'gemerkt' : 'merken'}
+          <span class="sl-merken-ico"><IconStar /></span>{saved ? t('pop.saved') : t('pop.save')}
         </button>
       </div>
     </>
@@ -2985,26 +2993,26 @@ function WordPopover({
 /* ------------------------------------------------------ translate reveal --- */
 
 function TranslateReveal({ text, settings }: { text: string; settings: PwaSettings }) {
-  const [t, setT] = useState<string | null>(null);
+  const [tr, setTr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   // Reset when the sentence changes (next gap/question) — otherwise the previous
   // gap's translation lingers and is shown against the new, unrelated sentence.
-  useEffect(() => { setT(null); setLoading(false); }, [text]);
+  useEffect(() => { setTr(null); setLoading(false); }, [text]);
   if (!text || settings.learn === settings.native) return null;
   async function go() {
-    if (t !== null || loading) return;
+    if (tr !== null || loading) return;
     setLoading(true);
     const r = await fetchSentenceTranslation(SERVER, settings.learn, settings.native, text);
-    setT(r ?? '—');
+    setTr(r ?? '—');
     setLoading(false);
   }
   return (
     <div class="sl-xlate">
-      {t !== null ? (
-        <p class="sl-xlate-txt">{t}</p>
+      {tr !== null ? (
+        <p class="sl-xlate-txt">{tr}</p>
       ) : (
         <button class="sl-xlate-btn" disabled={loading} onClick={go}>
-          {loading ? 'Übersetze …' : '🌐 Übersetzung'}
+          {loading ? t('xlate.loading') : t('xlate.btn')}
         </button>
       )}
     </div>
@@ -3053,7 +3061,7 @@ function Quiz({
         })}
       </div>
       {answer !== null && (
-        <button class="sl-read" onClick={onNext}>{isLast ? 'Fertig ✓' : 'Weiter →'}</button>
+        <button class="sl-read" onClick={onNext}>{isLast ? t('common.doneCheck') : t('common.continueArrow')}</button>
       )}
     </div>
   );
@@ -3076,7 +3084,7 @@ function Updater() {
   };
   return (
     <div class="sl-update" onClick={apply}>
-      Neue Version verfügbar — tippen zum Aktualisieren.
+      {t('update.banner')}
     </div>
   );
 }

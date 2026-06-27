@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.128] — 2026-06-28 — Mehrsprachige UI (DE/EN)
+
+- **Komplett zweisprachige App-Oberfläche (DE/EN)** über ein leichtes `t()`-System (`pwa/i18n.ts`,
+  ~274 Keys × {de, en}). Alle Flächen lokalisiert: Onboarding, Home, Artikel lesen + Wort-Popover,
+  Stream, Vokabeltest, Lückentext, Lernpfad, Tests, Report, Archiv, Wörterbuch, Settings.
+- **UI-Sprache = Muttersprache** (`native`): neuer Sprach-Picker als **Onboarding-Schritt 0** (schaltet
+  live um) und in **Settings → „App-Sprache"**. Erststart errät die Sprache aus dem Browser.
+- `fr/es/nl` sind als Dict-Slots vorbereitet und fallen bis zur Übersetzung auf EN zurück.
+- Verifiziert: Playwright-EN-Rundgang über 12 Flächen → 0 deutsche Reste; DE rendert unverändert; `tsc`
+  clean, Build grün. Stream-„nicht unterstützt"-Meldung auf alle 5 Sprachen aktualisiert.
+
 ## [Unreleased] — 2026-06-27 — Landing: echte Screenshots + „So funktioniert's"-Seite
 
 - **Hero-Mock → echter Screenshot**: Der CSS-gebaute Phone-Dummy oben rechts auf der Landing weicht

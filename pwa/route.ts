@@ -12,6 +12,7 @@
  */
 
 import { type CefrLevel } from '@/core/difficulty/banding';
+import { t } from './i18n';
 
 export const STAGE_LEVELS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 export const ETAPPEN_PER_LEVEL = 10;
@@ -103,7 +104,9 @@ export function getRouteProgress(currentLevel: CefrLevel): RouteProgress {
     etappeDisplay: Math.min(s.etappe + 1, ETAPPEN_PER_LEVEL),
     atAufstieg,
     nextLevel: nextLevel(s.level),
-    label: atAufstieg ? `${s.level} · Aufstieg` : `${s.level} · Etappe ${s.etappe + 1}/${ETAPPEN_PER_LEVEL}`,
+    label: atAufstieg
+      ? t('route.labelAufstieg', { level: s.level })
+      : t('route.labelEtappe', { level: s.level, n: s.etappe + 1, total: ETAPPEN_PER_LEVEL }),
   };
 }
 
