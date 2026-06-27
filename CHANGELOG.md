@@ -25,6 +25,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   **Social-Stream**-Feature-Tile; „Zufallsartikel aus Wikipedia" → **„Artikelrubriken"**; durchgängig
   „Sprachniveau" statt „Niveau".
 - **Bilder als WebP** in `pwa/landing/shots/` (~264 KB gesamt statt ~1,1 MB PNG).
+- **modi-Seite überarbeitet**: Social-Stream-Sektion vor den Lernpfad gezogen; **Mastodon-Shoutout**
+  (Logo + Link) plus Hinweis, dass Learny alle 15 Min ~200 Posts je Sprache von öffentlichen
+  Mastodon-Servern holt und nach Sprachniveau einsortiert; Artikel-Shot neu (Tap-Übersetzung unten
+  statt überdeckend).
+- **Feature-Tiles verlinken** jetzt direkt auf die passende modi-Sektion (man landet beim Screenshot);
+  „Artikelrubriken" → **„Wikipedia Article topics / Wikipedia-Artikelrubriken"**; „Streak & XP" ans Ende.
 - **Hero-Copy**: Subtitle umgestellt („… (most read), gekürzt und angepasst …"); CTA „Kostenlos loslegen /
   Start free" → **„Los geht's / Get started"** (klingt nicht mehr nach „kostenlos jetzt, später evtl.
   nicht"); dafür **„Komplett kostenlos / Completely free"** als erster Trust-Checkmark.

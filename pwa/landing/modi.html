@@ -84,6 +84,14 @@
     .copy li{text-align:left}
     .device{width:248px}
   }
+  .masto-note{color:var(--soft);font-size:15.5px;margin-top:12px;max-width:30em}
+  .masto-shout{display:inline-flex;align-items:center;gap:10px;margin-top:18px;
+    background:#f3f2ff;border:1px solid #e3dfff;border-radius:99px;padding:9px 16px;
+    font-family:var(--head);font-weight:700;font-size:14px;color:#563acc}
+  .masto-shout:hover{background:#ece9ff}
+  .masto-logo{width:22px;height:22px;fill:#6364ff;flex:none}
+  @media(max-width:820px){.masto-note,.masto-shout{margin-left:auto;margin-right:auto}}
+
   @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
 </style>
 </head>
@@ -107,8 +115,8 @@
       <a href="#lesen" data-i18n="j2">Artikel lesen</a>
       <a href="#luecke" data-i18n="j3">Lückentext</a>
       <a href="#vokabeln" data-i18n="j4">Vokabeltest</a>
-      <a href="#pfad" data-i18n="j5">Lernpfad</a>
       <a href="#stream" data-i18n="j6">Social Stream</a>
+      <a href="#pfad" data-i18n="j5">Lernpfad</a>
     </div>
   </header>
 
@@ -156,26 +164,31 @@
     <div class="shot reveal"><div class="device"><img src="shots/vocab.webp" width="800" height="1740" alt="Vokabeltest" loading="lazy" /></div></div>
   </section>
 
-  <section class="feature" id="pfad">
-    <div class="copy reveal">
-      <span class="step-k"><b>5</b> <span data-i18n="s5k">Dein Weg</span></span>
-      <h2 data-i18n="s5h">Etappe für Etappe — A1 bis C1</h2>
-      <p data-i18n="s5p">5 Level, je 10 Etappen. Lesen, Lernen, Testen — am Ende jeder Etappe wartet der Aufstiegstest. Dein Fortschritt ist immer als klarer Pfad sichtbar, kein Punktechaos.</p>
-    </div>
-    <div class="shot reveal"><div class="device"><img src="shots/route.webp" width="800" height="1740" alt="Lernpfad" loading="lazy" /></div></div>
-  </section>
-
   <section class="feature" id="stream">
     <div class="copy reveal">
-      <span class="step-k"><b>6</b> <span data-i18n="s6k">Neu</span></span>
+      <span class="step-k"><b>5</b> <span data-i18n="s6k">Neu</span></span>
       <h2 data-i18n="s6h">Social Stream <span class="new" data-i18n="s6badge">Neu</span></h2>
       <p data-i18n="s6p">Echte Social-Media-Posts in deiner Lernsprache — gefiltert nach Thema und Sprachniveau, einfachste zuerst. Tippen zum Übersetzen. So klingt die Sprache, wie sie heute wirklich gesprochen wird.</p>
+      <p class="masto-note" data-i18n="s6harvest">Alle 15 Minuten holt Learny rund 200 frische Beiträge je Sprache von öffentlichen Mastodon-Servern — über viele Hashtags — und sortiert sie automatisch nach Sprachniveau.</p>
       <ul>
         <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="s6a">Filter nach Rubrik &amp; Sprachniveau (A1–C2)</span></li>
         <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="s6b">Englisch, Französisch, Niederländisch, Spanisch, Italienisch</span></li>
       </ul>
+      <a class="masto-shout" href="https://joinmastodon.org" target="_blank" rel="noopener">
+        <svg class="masto-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"/></svg>
+        <span data-i18n="s6shout">Shoutout an die offene Mastodon-Community</span>
+      </a>
     </div>
     <div class="shot reveal"><div class="device"><img src="shots/stream.webp" width="800" height="1740" alt="Social Stream" loading="lazy" /></div></div>
+  </section>
+
+  <section class="feature" id="pfad">
+    <div class="copy reveal">
+      <span class="step-k"><b>6</b> <span data-i18n="s5k">Dein Weg</span></span>
+      <h2 data-i18n="s5h">Etappe für Etappe — A1 bis C1</h2>
+      <p data-i18n="s5p">5 Level, je 10 Etappen. Lesen, Lernen, Testen — am Ende jeder Etappe wartet der Aufstiegstest. Dein Fortschritt ist immer als klarer Pfad sichtbar, kein Punktechaos.</p>
+    </div>
+    <div class="shot reveal"><div class="device"><img src="shots/route.webp" width="800" height="1740" alt="Lernpfad" loading="lazy" /></div></div>
   </section>
 
   <section class="closer">
@@ -206,7 +219,9 @@
       s5p:"5 Level, je 10 Etappen. Lesen, Lernen, Testen — am Ende jeder Etappe wartet der Aufstiegstest. Dein Fortschritt ist immer als klarer Pfad sichtbar, kein Punktechaos.",
       s6k:"Neu", s6h:'Social Stream <span class="new">Neu</span>', s6badge:"Neu",
       s6p:"Echte Social-Media-Posts in deiner Lernsprache — gefiltert nach Thema und Sprachniveau, einfachste zuerst. Tippen zum Übersetzen. So klingt die Sprache, wie sie heute wirklich gesprochen wird.",
+      s6harvest:"Alle 15 Minuten holt Learny rund 200 frische Beiträge je Sprache von öffentlichen Mastodon-Servern — über viele Hashtags — und sortiert sie automatisch nach Sprachniveau.",
       s6a:"Filter nach Rubrik & Sprachniveau (A1–C2)", s6b:"Englisch, Französisch, Niederländisch, Spanisch, Italienisch",
+      s6shout:"Shoutout an die offene Mastodon-Community",
       closeH:"Klingt gut?", closeP:"Kein Account, kein Tracking — alles bleibt auf deinem Gerät.", closeBtn:"Learny öffnen"
     },
     en:{
@@ -228,7 +243,9 @@
       s5p:"5 levels, 10 stages each. Read, learn, test — at the end of every stage the level-up test awaits. Your progress is always a clear path, no point chaos.",
       s6k:"New", s6h:'Social Stream <span class="new">New</span>', s6badge:"New",
       s6p:"Real social-media posts in your target language — filtered by topic and level, easiest first. Tap to translate. This is how the language really sounds today.",
+      s6harvest:"Every 15 minutes Learny pulls ~200 fresh posts per language from public Mastodon servers — across many hashtags — and sorts them by level automatically.",
       s6a:"Filter by topic & level (A1–C2)", s6b:"English, French, Dutch, Spanish, Italian",
+      s6shout:"Shoutout to the open Mastodon community",
       closeH:"Sounds good?", closeP:"No account, no tracking — everything stays on your device.", closeBtn:"Open Learny"
     }
   };
