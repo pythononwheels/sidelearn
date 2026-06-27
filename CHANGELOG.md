@@ -14,6 +14,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   **Social-Stream**-Feature-Tile; „Zufallsartikel aus Wikipedia" → **„Artikelrubriken"**; durchgängig
   „Sprachniveau" statt „Niveau".
 - **Bilder als WebP** in `pwa/landing/shots/` (~264 KB gesamt statt ~1,1 MB PNG).
+- **Hero-Copy**: Subtitle umgestellt („… (most read), gekürzt und angepasst …"); CTA „Kostenlos loslegen /
+  Start free" → **„Los geht's / Get started"** (klingt nicht mehr nach „kostenlos jetzt, später evtl.
+  nicht"); dafür **„Komplett kostenlos / Completely free"** als erster Trust-Checkmark.
 
 ## [0.6.127] — 2026-06-26 — Tagesquest-Fixes
 
