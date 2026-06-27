@@ -32,6 +32,7 @@ import {
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
+import { t, setUiLang } from './i18n';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
 import { seedVocab, nextLevelTargets, type SeedWord } from './seedvocab';
@@ -151,6 +152,9 @@ export function App() {
   const [settings, setSettings] = useState<PwaSettings>(getSettings());
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [tab, setTab] = useState<Tab>('home');
+
+  // UI language follows the native language; set before any child renders.
+  setUiLang(settings.native);
 
   const patch = (p: Partial<PwaSettings>) => {
     const next = { ...settings, ...p };
@@ -273,11 +277,11 @@ export function App() {
 
 function TabBar({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab) => void }) {
   const items: { id: Tab; label: string; icon: ComponentChildren }[] = [
-    { id: 'home', label: 'Home', icon: <IconHome /> },
-    { id: 'challenges', label: 'Archiv', icon: <IconArchive /> },
-    { id: 'stream', label: 'Stream', icon: <IconStream /> },
-    { id: 'report', label: 'Report', icon: <IconChart /> },
-    { id: 'settings', label: 'Mehr', icon: <IconGear /> },
+    { id: 'home', label: t('tab.home'), icon: <IconHome /> },
+    { id: 'challenges', label: t('tab.archive'), icon: <IconArchive /> },
+    { id: 'stream', label: t('tab.stream'), icon: <IconStream /> },
+    { id: 'report', label: t('tab.report'), icon: <IconChart /> },
+    { id: 'settings', label: t('tab.more'), icon: <IconGear /> },
   ];
   return (
     <nav class="tabbar">
@@ -354,15 +358,16 @@ function Onboarding({
   onDone: (p: Partial<PwaSettings>) => void;
 }) {
   const [step, setStep] = useState(0);
-  const [learn, setLearn] = useState<Language>(settings.learn);
+  const [nat, setNat] = useState<Language>(settings.native);
+  const [learn, setLearn] = useState<Language>(settings.learn === settings.native ? (LANGUAGES.find((l) => l !== settings.native) as Language) : settings.learn);
   const [level, setLevel] = useState<CefrLevel>(settings.level);
 
-  const levelHint: Record<string, string> = {
-    A1: 'Ganz neu — erste Wörter & Sätze',
-    A2: 'Anfänger:in — einfache Sätze',
-    B1: 'Mittelstufe — Alltagstexte',
-    B2: 'Fortgeschritten — komplexere Texte',
-    C1: 'Sehr gut — anspruchsvolle Texte',
+  // UI language follows the (in-progress) native pick, so onboarding itself
+  // switches language live as you choose.
+  setUiLang(nat);
+  const pickNative = (l: Language) => {
+    setNat(l);
+    if (learn === l) setLearn(LANGUAGES.find((x) => x !== l) as Language);
   };
 
   return (
@@ -370,37 +375,45 @@ function Onboarding({
       <div class="lr-onb-logo" />
       {step === 0 ? (
         <>
-          <h1 class="lr-onb-h">Willkommen bei Learny</h1>
-          <p class="lr-onb-p">Lies jeden Tag echte Texte — vereinfacht auf dein Niveau. Welche Sprache möchtest du lernen?</p>
+          <h1 class="lr-onb-h">{t('onb.welcome')}</h1>
+          <p class="lr-onb-p">{t('onb.uiP')}</p>
           <div class="lr-onb-grid">
-            {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
-              <button
-                class={`lr-onb-choice ${learn === l ? 'sel' : ''}`}
-                onClick={() => setLearn(l)}
-              >
+            {LANGUAGES.map((l) => (
+              <button class={`lr-onb-choice ${nat === l ? 'sel' : ''}`} onClick={() => pickNative(l)}>
                 {LANG_LABELS[l]}
               </button>
             ))}
           </div>
-          <button class="lr-onb-next" onClick={() => setStep(1)}>Weiter →</button>
+          <button class="lr-onb-next" onClick={() => setStep(1)}>{t('common.next')}</button>
         </>
-      ) : (
+      ) : step === 1 ? (
         <>
-          <h1 class="lr-onb-h">Wie gut bist du schon?</h1>
-          <p class="lr-onb-p">Kein Stress — du kannst das Niveau jederzeit ändern.</p>
-          <div class="lr-onb-levels">
-            {(['A1', 'A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
-              <button
-                class={`lr-onb-level ${level === l ? 'sel' : ''}`}
-                onClick={() => setLevel(l)}
-              >
-                <span class="lr-onb-level-name">{l}</span>
-                <span class="lr-onb-level-hint">{levelHint[l]}</span>
+          <h1 class="lr-onb-h">{t('onb.langH')}</h1>
+          <p class="lr-onb-p">{t('onb.langP')}</p>
+          <div class="lr-onb-grid">
+            {LANGUAGES.filter((l) => l !== nat).map((l) => (
+              <button class={`lr-onb-choice ${learn === l ? 'sel' : ''}`} onClick={() => setLearn(l)}>
+                {LANG_LABELS[l]}
               </button>
             ))}
           </div>
-          <button class="lr-onb-next" onClick={() => onDone({ learn, level })}>Los geht's</button>
-          <button class="lr-onb-back" onClick={() => setStep(0)}>← zurück</button>
+          <button class="lr-onb-next" onClick={() => setStep(2)}>{t('common.next')}</button>
+          <button class="lr-onb-back" onClick={() => setStep(0)}>{t('common.back')}</button>
+        </>
+      ) : (
+        <>
+          <h1 class="lr-onb-h">{t('onb.levelH')}</h1>
+          <p class="lr-onb-p">{t('onb.levelP')}</p>
+          <div class="lr-onb-levels">
+            {(['A1', 'A2', 'B1', 'B2', 'C1'] as CefrLevel[]).map((l) => (
+              <button class={`lr-onb-level ${level === l ? 'sel' : ''}`} onClick={() => setLevel(l)}>
+                <span class="lr-onb-level-name">{l}</span>
+                <span class="lr-onb-level-hint">{t(`onb.hint.${l}`)}</span>
+              </button>
+            ))}
+          </div>
+          <button class="lr-onb-next" onClick={() => onDone({ native: nat, learn, level })}>{t('common.start')}</button>
+          <button class="lr-onb-back" onClick={() => setStep(1)}>{t('common.back')}</button>
         </>
       )}
     </main>
@@ -2250,15 +2263,28 @@ function SettingsTab({ settings, onPatch }: {
     input.value = '';
     if (!file) return;
     const ok = importData(await file.text());
-    if (ok) { alert('Importiert ✓ — die App wird neu geladen.'); location.reload(); }
-    else alert('Import fehlgeschlagen — ist das eine Learny-Sicherung (.json)?');
+    if (ok) { alert(t('set.importOk')); location.reload(); }
+    else alert(t('set.importFail'));
   }
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Einstellungen</h1>
+      <h1 class="tab-screen-title">{t('set.title')}</h1>
 
       <div class="set-group">
-        <p class="set-label">Sprache lernen</p>
+        <p class="set-label">{t('set.uiLang')}</p>
+        <p class="sl-muted" style={{ margin: '0 0 10px' }}>{t('set.uiLangHint')}</p>
+        <div class="set-grid">
+          {LANGUAGES.map((l) => (
+            <button class={`set-choice ${settings.native === l ? 'sel' : ''}`}
+              onClick={() => onPatch(l === settings.learn ? { native: l, learn: LANGUAGES.find((x) => x !== l) as Language } : { native: l })}>
+              {LANG_LABELS[l]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="set-group">
+        <p class="set-label">{t('set.learn')}</p>
         <div class="set-grid">
           {LANGUAGES.filter((l) => l !== settings.native).map((l) => (
             <button class={`set-choice ${settings.learn === l ? 'sel' : ''}`} onClick={() => onPatch({ learn: l })}>
@@ -2269,7 +2295,7 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
-        <p class="set-label">Niveau</p>
+        <p class="set-label">{t('set.level')}</p>
         <div class="set-grid">
           {LEVELS.map((l) => (
             <button class={`set-choice ${settings.level === l ? 'sel' : ''}`} onClick={() => onPatch({ level: l })}>
@@ -2280,7 +2306,7 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
-        <p class="set-label">Theme</p>
+        <p class="set-label">{t('set.theme')}</p>
         <div class="theme-grid">
           {THEMES.map((t) => (
             <button class={`theme-card ${settings.theme === t.id ? 'sel' : ''}`} onClick={() => onPatch({ theme: t.id })}>
@@ -2293,29 +2319,26 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
-        <p class="set-label">Daten · Sicherung</p>
-        <p class="sl-muted" style={{ margin: '0 0 10px' }}>
-          Dein Fortschritt (Streak, Route, Vokabeln) liegt nur auf diesem Gerät. Exportiere ihn vor
-          App-Löschen oder Handywechsel — und importiere ihn am neuen Gerät.
-        </p>
+        <p class="set-label">{t('set.backup')}</p>
+        <p class="sl-muted" style={{ margin: '0 0 10px' }}>{t('set.backupHint')}</p>
         <div class="set-grid">
-          <button class="set-choice" onClick={doExport}>⤓ Exportieren</button>
+          <button class="set-choice" onClick={doExport}>{t('set.export')}</button>
           <label class="set-choice" style={{ textAlign: 'center', cursor: 'pointer' }}>
-            ⤒ Importieren
+            {t('set.import')}
             <input type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={doImport} />
           </label>
         </div>
       </div>
 
       <div class="set-group">
-        <p class="set-label">App</p>
+        <p class="set-label">{t('set.app')}</p>
         <div class="set-version">
-          <span>Version <b>{__APP_VERSION__}</b></span>
+          <span>{t('set.version')} <b>{__APP_VERSION__}</b></span>
           <UpdateCheck />
         </div>
       </div>
 
-      <p class="sl-muted">Learny · Teil der Sidelearn-Familie · Texte: Wikipedia (CC BY-SA)</p>
+      <p class="sl-muted">{t('set.foot')}</p>
     </main>
   );
 }
@@ -2339,7 +2362,7 @@ function UpdateCheck() {
   }
   return (
     <button class="set-update" onClick={check} disabled={state === 'checking'}>
-      {state === 'checking' ? 'Suche …' : state === 'current' ? 'Aktuell ✓' : 'Auf Updates prüfen'}
+      {state === 'checking' ? t('set.update.checking') : state === 'current' ? t('set.update.current') : t('set.update.idle')}
     </button>
   );
 }

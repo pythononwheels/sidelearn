@@ -3,7 +3,7 @@
  * localStorage is plenty for v1; can move to IndexedDB later.
  */
 
-import { type Language } from '@/core/config';
+import { LANGUAGES, type Language } from '@/core/config';
 import { type CefrLevel } from '@/core/difficulty/banding';
 import { type ThemeId, isThemeId } from './theme';
 
@@ -18,7 +18,18 @@ export interface PwaSettings {
 const SETTINGS_KEY = 'sl_pwa_settings';
 const PROGRESS_KEY = 'sl_pwa_progress';
 
-const DEFAULTS: PwaSettings = { learn: 'fr', native: 'de', level: 'A2', theme: 'jelly', onboarded: false };
+// First-run UI/native language guess from the browser; the onboarding lets the
+// user change it. Falls back to German.
+function detectNative(): Language {
+  try {
+    const l = (navigator.language || 'de').slice(0, 2).toLowerCase();
+    return (LANGUAGES as readonly string[]).includes(l) ? (l as Language) : 'de';
+  } catch {
+    return 'de';
+  }
+}
+const NAT = detectNative();
+const DEFAULTS: PwaSettings = { learn: NAT === 'fr' ? 'en' : 'fr', native: NAT, level: 'A2', theme: 'jelly', onboarded: false };
 
 export function getSettings(): PwaSettings {
   try {

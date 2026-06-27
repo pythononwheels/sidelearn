@@ -1,0 +1,128 @@
+/**
+ * Tiny UI-i18n for Learny. The UI language follows the user's *native* language
+ * (settings.native) — your mother tongue is the app's language. `de` and `en`
+ * are authored in full; `fr`/`es`/`nl` fall back to `en` until translated.
+ *
+ * Usage:  t('tab.home')               → "Home"
+ *         t('home.dayStreak', {n: 5}) → "Tag 5 — stark!"  (de) / "Day 5 — great!" (en)
+ *
+ * Components read t() during render; the language is set once per render at the
+ * App root via setUiLang(settings.native), so any settings change re-renders the
+ * whole tree in the right language.
+ */
+
+type Dict = Record<string, string>;
+
+const de: Dict = {
+  // shared
+  'common.next': 'Weiter →',
+  'common.back': '← zurück',
+  'common.start': "Los geht's",
+
+  // tab bar
+  'tab.home': 'Home',
+  'tab.archive': 'Archiv',
+  'tab.stream': 'Stream',
+  'tab.report': 'Report',
+  'tab.more': 'Mehr',
+
+  // onboarding
+  'onb.welcome': 'Willkommen bei Learny',
+  'onb.uiH': 'In welcher Sprache möchtest du Learny nutzen?',
+  'onb.uiP': 'Das ist die Sprache der App und deiner Übersetzungen — deine Muttersprache.',
+  'onb.langH': 'Welche Sprache möchtest du lernen?',
+  'onb.langP': 'Lies jeden Tag echte Texte — vereinfacht auf dein Sprachniveau.',
+  'onb.levelH': 'Wie gut bist du schon?',
+  'onb.levelP': 'Kein Stress — du kannst dein Sprachniveau jederzeit ändern.',
+  'onb.hint.A1': 'Ganz neu — erste Wörter & Sätze',
+  'onb.hint.A2': 'Anfänger:in — einfache Sätze',
+  'onb.hint.B1': 'Mittelstufe — Alltagstexte',
+  'onb.hint.B2': 'Fortgeschritten — komplexere Texte',
+  'onb.hint.C1': 'Sehr gut — anspruchsvolle Texte',
+
+  // settings
+  'set.title': 'Einstellungen',
+  'set.uiLang': 'App-Sprache',
+  'set.uiLangHint': 'Sprache der App & Übersetzungen (deine Muttersprache).',
+  'set.learn': 'Sprache lernen',
+  'set.level': 'Sprachniveau',
+  'set.theme': 'Theme',
+  'set.backup': 'Daten · Sicherung',
+  'set.backupHint':
+    'Dein Fortschritt (Streak, Route, Vokabeln) liegt nur auf diesem Gerät. Exportiere ihn vor App-Löschen oder Handywechsel — und importiere ihn am neuen Gerät.',
+  'set.export': '⤓ Exportieren',
+  'set.import': '⤒ Importieren',
+  'set.app': 'App',
+  'set.version': 'Version',
+  'set.update.idle': 'Auf Updates prüfen',
+  'set.update.checking': 'Suche …',
+  'set.update.current': 'Aktuell ✓',
+  'set.foot': 'Learny · Teil der Sidelearn-Familie · Texte: Wikipedia (CC BY-SA)',
+  'set.importOk': 'Importiert ✓ — die App wird neu geladen.',
+  'set.importFail': 'Import fehlgeschlagen — ist das eine Learny-Sicherung (.json)?',
+};
+
+const en: Dict = {
+  'common.next': 'Next →',
+  'common.back': '← back',
+  'common.start': "Let's go",
+
+  'tab.home': 'Home',
+  'tab.archive': 'Archive',
+  'tab.stream': 'Stream',
+  'tab.report': 'Report',
+  'tab.more': 'More',
+
+  'onb.welcome': 'Welcome to Learny',
+  'onb.uiH': 'Which language should Learny be in?',
+  'onb.uiP': 'This is the language of the app and your translations — your native language.',
+  'onb.langH': 'Which language do you want to learn?',
+  'onb.langP': 'Read real texts every day — simplified to your level.',
+  'onb.levelH': 'How good are you already?',
+  'onb.levelP': 'No stress — you can change your level anytime.',
+  'onb.hint.A1': 'Brand new — first words & sentences',
+  'onb.hint.A2': 'Beginner — simple sentences',
+  'onb.hint.B1': 'Intermediate — everyday texts',
+  'onb.hint.B2': 'Advanced — more complex texts',
+  'onb.hint.C1': 'Very good — demanding texts',
+
+  'set.title': 'Settings',
+  'set.uiLang': 'App language',
+  'set.uiLangHint': 'Language of the app & translations (your native language).',
+  'set.learn': 'Learning language',
+  'set.level': 'Level',
+  'set.theme': 'Theme',
+  'set.backup': 'Data · Backup',
+  'set.backupHint':
+    'Your progress (streak, route, vocabulary) lives only on this device. Export it before deleting the app or switching phones — and import it on the new one.',
+  'set.export': '⤓ Export',
+  'set.import': '⤒ Import',
+  'set.app': 'App',
+  'set.version': 'Version',
+  'set.update.idle': 'Check for updates',
+  'set.update.checking': 'Checking …',
+  'set.update.current': 'Up to date ✓',
+  'set.foot': 'Learny · part of the Sidelearn family · Texts: Wikipedia (CC BY-SA)',
+  'set.importOk': 'Imported ✓ — the app will reload.',
+  'set.importFail': 'Import failed — is this a Learny backup (.json)?',
+};
+
+const DICTS: Record<string, Dict> = { de, en };
+
+let current = 'de';
+
+/** Set the active UI language (call once per render at the App root). */
+export function setUiLang(lang: string): void {
+  current = lang;
+}
+
+export function uiLang(): string {
+  return current;
+}
+
+/** Translate a key, interpolating {placeholders}. Falls back current → en → de → key. */
+export function t(key: string, vars?: Record<string, string | number>): string {
+  const s = DICTS[current]?.[key] ?? en[key] ?? de[key] ?? key;
+  if (!vars) return s;
+  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
