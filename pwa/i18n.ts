@@ -189,6 +189,34 @@ const de: Dict = {
   'sr.progress': 'Satz {n} / {total}',
   'sr.fullTextArrow': 'Ganzer Text →',
   'sr.readFull': 'Ganzen Text lesen →',
+
+  // shared (lesson/digest/tests)
+  'common.lessonUnavailable': 'Lektion nicht verfügbar.',
+  'common.done': 'Geschafft',
+  'common.scoreCorrect': '{c} / {a} richtig',
+  'common.toOverview': 'Zur Übersicht',
+  'common.sourcePre': 'Quelle: ',
+
+  // digest (Kurzfassung)
+  'digest.title': 'Kurzfassung',
+  'digest.generating': 'Wir erstellen die Kurzfassung … einen Moment.',
+  'digest.none': 'Für diesen Artikel gibt es gerade keine Kurzfassung — lies ihn als ganzen Artikel.',
+  'digest.readFull': 'Ganzen Artikel lesen',
+  'digest.hintPre': 'Tippe ein ',
+  'digest.hintMark': 'markiertes',
+  'digest.hintPost': ' Wort an — oder hol dir Satz für Satz die Übersetzung.',
+  'digest.startQuestions': 'Fragen starten',
+  'digest.logDetail': 'Kurzfassung {c}/{a}',
+
+  // cloze (Lückentext)
+  'cloze.title': 'Lückentext',
+  'cloze.dailyLesson': 'Tageslektion',
+  'cloze.logTitle': 'Lückentext: {title}',
+  'cloze.empty': 'Gerade kein Lückentext verfügbar — schau, dass es eine Tageslektion gibt, und versuch es nochmal.',
+  'cloze.progress': 'Lücke {n} / {total} · {title}',
+  'cloze.tapHint': 'Tippe auf das fehlende Wort',
+  'cloze.resOk': 'Stark — richtig!',
+  'cloze.resNo': 'Schade — richtig wäre „{answer}".',
 };
 
 const en: Dict = {
@@ -351,6 +379,31 @@ const en: Dict = {
   'sr.progress': 'Sentence {n} / {total}',
   'sr.fullTextArrow': 'Full text →',
   'sr.readFull': 'Read the whole text →',
+
+  'common.lessonUnavailable': 'Lesson not available.',
+  'common.done': 'Done',
+  'common.scoreCorrect': '{c} / {a} correct',
+  'common.toOverview': 'To overview',
+  'common.sourcePre': 'Source: ',
+
+  'digest.title': 'Summary',
+  'digest.generating': 'Creating the summary … one moment.',
+  'digest.none': "There's no summary for this article right now — read the full article instead.",
+  'digest.readFull': 'Read the full article',
+  'digest.hintPre': 'Tap a ',
+  'digest.hintMark': 'highlighted',
+  'digest.hintPost': ' word — or get the translation sentence by sentence.',
+  'digest.startQuestions': 'Start questions',
+  'digest.logDetail': 'Summary {c}/{a}',
+
+  'cloze.title': 'Cloze',
+  'cloze.dailyLesson': "Today's lesson",
+  'cloze.logTitle': 'Cloze: {title}',
+  'cloze.empty': "No cloze available right now — make sure there's a daily lesson and try again.",
+  'cloze.progress': 'Gap {n} / {total} · {title}',
+  'cloze.tapHint': 'Tap the missing word',
+  'cloze.resOk': 'Great — correct!',
+  'cloze.resNo': 'Too bad — the answer is “{answer}”.',
 };
 
 const DICTS: Record<string, Dict> = { de, en };

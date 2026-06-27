@@ -1299,11 +1299,11 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     markDailyDone('rubrik'); // digests are rubrik/archive reads → tick the daily quest's "rubrik" task
     logActivity({
       type: 'lesson', level: settings.level, title: article.title,
-      detail: score.answered > 0 ? `Kurzfassung ${score.correct}/${score.answered}` : 'Kurzfassung',
+      detail: score.answered > 0 ? t('digest.logDetail', { c: score.correct, a: score.answered }) : t('digest.title'),
     });
   }
 
-  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">Lektion nicht verfügbar.</p></Frame>;
+  if (error) return <Frame title={article.title} onBack={onBack}><p class="sl-muted">{t('common.lessonUnavailable')}</p></Frame>;
   if (!lesson) return <Frame title={article.title} onBack={onBack}><Dots /></Frame>;
 
   const hasOwn = !!lesson.digest?.trim();
@@ -1314,15 +1314,15 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     if (genState !== 'done') {
       return (
         <Frame title={article.title} onBack={onBack}>
-          <p class="sl-qlabel">Kurzfassung</p>
-          <section class="sl-done"><Dots /><p class="sl-muted" style={{ marginTop: '12px' }}>Wir erstellen die Kurzfassung … einen Moment.</p></section>
+          <p class="sl-qlabel">{t('digest.title')}</p>
+          <section class="sl-done"><Dots /><p class="sl-muted" style={{ marginTop: '12px' }}>{t('digest.generating')}</p></section>
         </Frame>
       );
     }
     return (
       <Frame title={article.title} onBack={onBack}>
-        <p class="sl-muted">Für diesen Artikel gibt es gerade keine Kurzfassung — lies ihn als ganzen Artikel.</p>
-        <button class="sl-read" onClick={() => onOpen(article, false)}>Ganzen Artikel lesen</button>
+        <p class="sl-muted">{t('digest.none')}</p>
+        <button class="sl-read" onClick={() => onOpen(article, false)}>{t('digest.readFull')}</button>
       </Frame>
     );
   }
@@ -1331,15 +1331,15 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
     <Frame title={article.title} onBack={onBack}>
       {phase === 'read' && (
         <>
-          <p class="sl-qlabel">Kurzfassung</p>
-          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> Tippe ein <span class="sl-hint-mark">markiertes</span> Wort an — oder hol dir Satz für Satz die Übersetzung.</p>
+          <p class="sl-qlabel">{t('digest.title')}</p>
+          <p class="sl-hint"><span class="sl-hint-ico"><IconBulb /></span> {t('digest.hintPre')}<span class="sl-hint-mark">{t('digest.hintMark')}</span>{t('digest.hintPost')}</p>
           <SentenceReader
             text={digest}
             settings={settings}
             isHard={isHard}
             onWord={(word, sentence, x, y) => setPop({ word, sentence, x, y })}
             onFinish={() => { if (questions.length) setPhase('quiz'); else { creditOnce(); setPhase('done'); } }}
-            finishLabel={questions.length ? 'Fragen starten' : 'Fertig ✓'}
+            finishLabel={questions.length ? t('digest.startQuestions') : t('common.doneCheck')}
           />
         </>
       )}
@@ -1348,7 +1348,7 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
         const cur = questions[qIdx]!;
         return (
           <>
-            <p class="sl-progress">Frage {qIdx + 1} / {questions.length}</p>
+            <p class="sl-progress">{t('trainer.qProgress', { n: qIdx + 1, total: questions.length })}</p>
             <Quiz
               q={cur}
               answer={answer}
@@ -1374,16 +1374,16 @@ function DigestView({ article, settings, onOpen, onBack, onHome }: {
       {phase === 'done' && (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Geschafft</h2>
-          {score.answered > 0 && <p class="sl-done-score">{score.correct} / {score.answered} richtig</p>}
+          <h2>{t('common.done')}</h2>
+          {score.answered > 0 && <p class="sl-done-score">{t('common.scoreCorrect', { c: score.correct, a: score.answered })}</p>}
           <div class="sl-done-actions">
-            <button class="sl-read" onClick={onHome}>Zur Übersicht</button>
+            <button class="sl-read" onClick={onHome}>{t('common.toOverview')}</button>
           </div>
         </section>
       )}
 
       <footer class="sl-credit">
-        Quelle: <a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
+        {t('common.sourcePre')}<a href={lesson.url} target="_blank" rel="noopener noreferrer">Wikipedia</a> · CC BY-SA
       </footer>
 
       {pop && <WordPopover pop={pop} settings={settings} onClose={() => setPop(null)} />}
@@ -1438,7 +1438,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
         clozeText.current += ' ' + exText; // so the completion scan credits these targets
       }
       const qs = shuffleInPlace([...articleQs, ...iqs]).slice(0, 8);
-      setTitle(lessons.length > 1 ? 'Tageslektion' : lessons[0]!.title);
+      setTitle(lessons.length > 1 ? t('cloze.dailyLesson') : lessons[0]!.title);
       setQuestions(qs.length ? qs : buildClozeQuestions(text, vocab, pool, Math.random, 8));
     })();
     return () => { alive = false; };
@@ -1468,32 +1468,32 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       credited.current = true;
       completeActivity(settings.level, 'cloze');
       markDailyDone('cloze');
-      logActivity({ type: 'lesson', level: settings.level, title: `Lückentext: ${title}`, detail: 'Lückentext' });
-      void creditWordsFromText(settings, clozeText.current, `Lückentext: ${title}`);
+      logActivity({ type: 'lesson', level: settings.level, title: t('cloze.logTitle', { title }), detail: t('cloze.title') });
+      void creditWordsFromText(settings, clozeText.current, t('cloze.logTitle', { title }));
     }
   }, [done]);
 
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Lückentext</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('cloze.title')}</span>
       </header>
 
       {questions === null ? (
         <Dots />
       ) : questions.length === 0 ? (
-        <p class="sl-muted">Gerade kein Lückentext verfügbar — schau, dass es eine Tageslektion gibt, und versuch es nochmal.</p>
+        <p class="sl-muted">{t('cloze.empty')}</p>
       ) : done ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Geschafft</h2>
-          <p>{score} von {questions.length} richtig.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <h2>{t('common.done')}</h2>
+          <p>{t('trainer.doneP', { score, total: questions.length })}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : q ? (
         <>
-          <p class="sl-progress">Lücke {pos + 1} / {questions.length} · {title}</p>
+          <p class="sl-progress">{t('cloze.progress', { n: pos + 1, total: questions.length, title })}</p>
           {/* Three zones: sentence card · translate · options */}
           <div class="cloze-card">
             <p class="sl-quiz-q cloze-q">{renderCloze(q.prompt)}</p>
@@ -1502,7 +1502,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
             <TranslateReveal text={q.prompt} settings={settings} />
           </div>
           <div class={`cloze-opts ${picked !== null ? 'answered' : ''}`}>
-            <p class="cloze-hint">{picked === null ? 'Tippe auf das fehlende Wort' : ' '}</p>
+            <p class="cloze-hint">{picked === null ? t('cloze.tapHint') : ' '}</p>
             <div class="sl-quiz-opts cloze-opts-list">
               {q.options.map((opt) => {
                 let cls = '';
@@ -1519,13 +1519,13 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
             <div class={`cloze-result ${picked === q.answer ? 'ok' : 'no'}`}>
               <Gurki pose={picked === q.answer ? 'party' : 'sad'} size={48} />
               <span class="cloze-result-txt">
-                {picked === q.answer ? 'Stark — richtig!' : `Schade — richtig wäre „${q.answer}".`}
+                {picked === q.answer ? t('cloze.resOk') : t('cloze.resNo', { answer: q.answer })}
               </span>
             </div>
           )}
           {picked !== null && (
             <button class="sl-read cloze-next" onClick={next}>
-              {pos + 1 >= questions.length ? 'Fertig ✓' : 'Weiter →'}
+              {pos + 1 >= questions.length ? t('common.doneCheck') : t('common.continueArrow')}
             </button>
           )}
         </>
