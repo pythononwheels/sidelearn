@@ -459,10 +459,10 @@ function ArticleList({ articles, next, allDone, onOpen }: {
               )}
               <span class="lr-item-body">
                 <span class="lr-item-title">{a.title}</span>
-                <span class="lr-item-sub">{a.summary || `${a.paragraphs} Absätze`}</span>
+                <span class="lr-item-sub">{a.summary || t('common.paragraphs', { n: a.paragraphs })}</span>
               </span>
               <span class={`lr-item-state ${done ? 'done' : ''}`}>
-                {done ? '✓' : started ? 'weiter ›' : isNext ? 'Start ›' : 'lesen ›'}
+                {done ? '✓' : started ? t('common.readMore') : isNext ? t('common.readStart') : t('common.readGo')}
               </span>
             </button>
           </li>
@@ -713,7 +713,7 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
     if (done && !credited.current) {
       credited.current = true;
       markDailyDone('vocab');
-      logActivity({ type: 'lesson', level: settings.level, title: 'Vokabeltest', detail: `${score}/${cards?.length ?? 0} richtig` });
+      logActivity({ type: 'lesson', level: settings.level, title: t('trainer.title'), detail: t('trainer.logDetail', { score, total: cards?.length ?? 0 }) });
     }
   }, [done]);
 
@@ -743,8 +743,8 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Vokabeltest</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('trainer.title')}</span>
       </header>
 
       {cards === null ? (
@@ -752,21 +752,21 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
       ) : cards.length === 0 ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconCheck /></span>
-          <h2>Alles wiederholt!</h2>
-          <p class="sl-muted">Gerade sind keine Wörter fällig. Lies eine Lektion und komm später wieder — die Wiederholungen kommen über die Tage verteilt.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <h2>{t('trainer.allReviewedH')}</h2>
+          <p class="sl-muted">{t('trainer.allReviewedP')}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : done ? (
         <section class="sl-done">
           <span class="sl-done-ico"><IconSparkles /></span>
-          <h2>Session fertig</h2>
-          <p>{score} von {cards.length} richtig.</p>
-          <button class="sl-read" onClick={onBack}>Zurück</button>
+          <h2>{t('trainer.doneH')}</h2>
+          <p>{t('trainer.doneP', { score, total: cards.length })}</p>
+          <button class="sl-read" onClick={onBack}>{t('common.backBtn')}</button>
         </section>
       ) : card ? (
         <>
-          <p class="sl-progress">Frage {pos + 1} / {cards.length}</p>
-          <p class="mc-prompt">Was bedeutet <b>{card.word}</b>?{card.pos ? <span class="dict-pos"> · {card.pos}</span> : null}</p>
+          <p class="sl-progress">{t('trainer.qProgress', { n: pos + 1, total: cards.length })}</p>
+          <p class="mc-prompt">{t('trainer.promptPre')}<b>{card.word}</b>{t('trainer.promptPost')}{card.pos ? <span class="dict-pos"> · {card.pos}</span> : null}</p>
           <div class={`sl-quiz-opts mc-opts ${picked !== null ? 'answered' : ''}`}>
             {card.options.map((opt, i) => {
               const cls = picked === null ? '' : i === card.correct ? 'correct' : i === picked ? 'wrong' : 'dim';
@@ -776,14 +776,14 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
             })}
           </div>
           {picked === null ? (
-            <button class="sl-read ghost mc-btn" onClick={dontKnow}>Weiß nicht</button>
+            <button class="sl-read ghost mc-btn" onClick={dontKnow}>{t('trainer.dontKnow')}</button>
           ) : (
             <>
               {(() => {
                 const ok = picked === card.correct;
                 const dunno = picked === -1;
                 const pose: Pose = ok ? 'party' : dunno ? 'think' : 'sad';
-                const msg = ok ? 'Aaah — richtig!' : dunno ? 'Schau’s dir an — nächstes Mal sitzt’s!' : 'Ohh — leider nicht.';
+                const msg = ok ? t('trainer.resOk') : dunno ? t('trainer.resDunno') : t('trainer.resNo');
                 return (
                   <div class={`mc-result ${ok ? 'ok' : dunno ? 'dunno' : 'no'}`}>
                     <Gurki pose={pose} size={50} />
@@ -798,9 +798,9 @@ function TrainerView({ settings, onBack }: { settings: PwaSettings; onBack: () =
                     {s.ex && <span class="dict-sense-ex">„{s.ex}"{s.exd ? <span class="dict-sense-exd"> — {s.exd}</span> : null}</span>}
                   </div>
                 ))}
-                {card.rich?.alt?.length ? <p class="mc-alt">auch: {card.rich.alt.join(', ')}</p> : null}
+                {card.rich?.alt?.length ? <p class="mc-alt">{t('common.also', { alt: card.rich.alt.join(', ') })}</p> : null}
               </div>
-              <button class="sl-read mc-btn" onClick={next}>{pos + 1 >= cards.length ? 'Fertig ✓' : 'Weiter'}</button>
+              <button class="sl-read mc-btn" onClick={next}>{pos + 1 >= cards.length ? t('common.doneCheck') : t('common.continue')}</button>
             </>
           )}
         </>
@@ -858,49 +858,48 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={() => (choice ? setChoice(null) : area ? setArea(null) : onBack())} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Artikelrubriken</span>
+        <button class="sl-back" onClick={() => (choice ? setChoice(null) : area ? setArea(null) : onBack())} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('tile.topics')}</span>
       </header>
 
       {choice ? (
         <section class="dg-choose">
           <p class="lr-section" style={{ marginTop: '4px' }}>{choice.title}</p>
-          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>Wie möchtest du lesen?</p>
+          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>{t('surprise.howRead')}</p>
           <button class="dg-opt" onClick={() => onOpen(choice, false)}>
             <span class="dg-opt-ico full"><IconNewspaper /></span>
-            <span class="dg-opt-body"><b>Ganzer Artikel</b><small>8 Absätze · mit Quiz pro Absatz</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.fullArticle')}</b><small>{t('surprise.fullArticleSub')}</small></span>
           </button>
           <button class="dg-opt" onClick={() => onDigest(choice)}>
             <span class="dg-opt-ico digest"><IconBolt /></span>
-            <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.digest')}</b><small>{t('surprise.digestSub')}</small></span>
           </button>
-          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Zurück zur Liste</button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>{t('surprise.backToList')}</button>
         </section>
       ) : loading ? (
         <section class="sl-done">
           <Dots />
           <p class="sl-muted" style={{ marginTop: '12px' }}>
-            Wir suchen einen {AREAS.find((a) => a.id === loading)?.label}-Artikel und
-            vereinfachen ihn auf {settings.level} … einen Moment.
+            {t('surprise.loading', { area: t(`rubrik.${loading}`), level: settings.level })}
           </p>
         </section>
       ) : area ? (
         <>
           <div class="ch-rubrik-head" style={{ marginTop: '4px' }}>
             <span class={`lr-tile-ico ${meta?.color ?? ''}`}>{meta?.icon}</span>
-            <span class="ch-rubrik-label">{meta?.label}</span>
+            <span class="ch-rubrik-label">{meta ? t(`rubrik.${meta.id}`) : ''}</span>
           </div>
           <button class="sl-read" style={{ width: '100%', marginTop: '12px' }} onClick={() => surprise(area)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><IconDice /> Überraschung — neuer Artikel</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><IconDice /> {t('surprise.surpriseBtn')}</span>
           </button>
-          {error && <p class="sl-muted" style={{ marginTop: '12px' }}>Das hat nicht geklappt. Bitte nochmal versuchen.</p>}
+          {error && <p class="sl-muted" style={{ marginTop: '12px' }}>{t('surprise.error')}</p>}
           {list === null ? (
             <div style={{ marginTop: '18px' }}><Dots /></div>
           ) : list.length === 0 ? (
-            <p class="sl-muted" style={{ marginTop: '18px' }}>Hier ist noch nichts vorbereitet — hol dir oben eine Überraschung.</p>
+            <p class="sl-muted" style={{ marginTop: '18px' }}>{t('surprise.empty')}</p>
           ) : (
             <>
-              <p class="lr-section" style={{ marginTop: '20px' }}>Aus den letzten 14 Tagen</p>
+              <p class="lr-section" style={{ marginTop: '20px' }}>{t('surprise.last14')}</p>
               <ul class="lr-list">
                 {[...list].sort((a, b) => Number(isCompleted(a.url)) - Number(isCompleted(b.url))).map((a) => {
                   const done = isCompleted(a.url);
@@ -911,7 +910,7 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
                           ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
                           : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
                         <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
-                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? 'gelesen ✓' : 'lesen ›'}</span>
+                        <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? t('common.readDone') : t('common.readGo')}</span>
                       </button>
                     </li>
                   );
@@ -922,19 +921,18 @@ function SurpriseView({ settings, onOpen, onDigest, onBack }: {
         </>
       ) : (
         <>
-          <p class="lr-section" style={{ marginTop: '4px' }}>Wähle einen Bereich.</p>
+          <p class="lr-section" style={{ marginTop: '4px' }}>{t('surprise.chooseArea')}</p>
           <div class="lr-tiles" style={{ marginTop: '10px' }}>
             {AREAS.map((a) => (
               <button class="lr-tile" onClick={() => openArea(a.id)}>
                 <span class={`lr-tile-ico ${a.color}`}>{a.icon}</span>
-                <span class="lr-tile-t">{a.label}</span>
-                <span class="lr-tile-s">{a.sub}</span>
+                <span class="lr-tile-t">{t(`rubrik.${a.id}`)}</span>
+                <span class="lr-tile-s">{t(`rubrik.${a.id}.sub`)}</span>
               </button>
             ))}
           </div>
           <p class="sl-muted" style={{ marginTop: '18px' }}>
-            Frisch aus Wikipedia, auf dein Sprachniveau gebracht — die zuletzt vorbereiteten Artikel
-            der Rubrik plus jederzeit eine neue Überraschung.
+            {t('surprise.intro')}
           </p>
         </>
       )}
@@ -992,11 +990,11 @@ const ALL_BANDS: CefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 function relTime(iso?: string): string {
   if (!iso) return '';
   const min = (Date.now() - new Date(iso).getTime()) / 60000;
-  if (min < 1.5) return 'gerade eben';
-  if (min < 60) return `vor ${Math.round(min)} Min`;
+  if (min < 1.5) return t('time.justNow');
+  if (min < 60) return t('time.minAgo', { n: Math.round(min) });
   const h = min / 60;
-  if (h < 24) return `vor ${Math.round(h)} Std`;
-  return `vor ${Math.round(h / 24)} Tg`;
+  if (h < 24) return t('time.hourAgo', { n: Math.round(h) });
+  return t('time.dayAgo', { n: Math.round(h / 24) });
 }
 
 function StreamTab({ settings }: { settings: PwaSettings }) {
