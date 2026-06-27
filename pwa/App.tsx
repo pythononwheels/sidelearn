@@ -518,18 +518,18 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
   function questMeta(task: QuestTask): QTask {
     const open = (a: typeof next, lvl?: CefrLevel) => { if (a) onOpen({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail }, true, lvl); };
     switch (task) {
-      case 'cloze': return { task, label: 'Mach einen Lückentext', icon: <IconGap />, done: dailyDone('cloze'), onClick: onCloze };
-      case 'vocab': return { task, label: 'Mach einen Vokabeltest', icon: <IconCards />, done: dailyDone('vocab'), onClick: onTrainer };
-      case 'rubrik': return { task, label: 'Lies einen Rubrik-Artikel', icon: <IconDice />, done: dailyDone('rubrik'), onClick: onSurprise };
+      case 'cloze': return { task, label: t('quest.cloze'), icon: <IconGap />, done: dailyDone('cloze'), onClick: onCloze };
+      case 'vocab': return { task, label: t('quest.vocab'), icon: <IconCards />, done: dailyDone('vocab'), onClick: onTrainer };
+      case 'rubrik': return { task, label: t('quest.rubrik'), icon: <IconDice />, done: dailyDone('rubrik'), onClick: onSurprise };
       case 'article_plus1': {
         const nl = nextLevel(settings.level);
         const plus = articles.length > 1 ? articles[1] : undefined;
         const can = nl !== settings.level && !!plus; // a +1 read needs a higher level + a 2nd article
-        return { task, label: can ? 'Lies einen +1-Artikel' : 'Lies einen Artikel', badge: can ? nl : undefined, icon: <IconNewspaper />,
+        return { task, label: can ? t('quest.articlePlus1') : t('quest.article'), badge: can ? nl : undefined, icon: <IconNewspaper />,
           done: can ? dailyDone('article_plus1') : dailyDone('article'),
           onClick: () => open(plus ?? next, can ? nl : undefined) };
       }
-      default: return { task, label: 'Lies einen Artikel', icon: <IconNewspaper />, done: dailyDone('article'),
+      default: return { task, label: t('quest.article'), icon: <IconNewspaper />, done: dailyDone('article'),
         onClick: () => open(next, stretchReadLevel(articles, next?.url ?? '', settings.level)) };
     }
   }
@@ -548,11 +548,11 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
     } catch { /* ignore */ }
   }, [questComplete]);
 
-  const [hype] = useState(() => HYPE[Math.floor(Math.random() * HYPE.length)]);
+  const [hypeIdx] = useState(() => Math.floor(Math.random() * HYPE.length));
   const pose: Pose = questComplete ? 'party' : 'yay';
   const bubble = questComplete
-    ? 'Tagesquest geschafft — Gurki ist stolz!'
-    : questDone > 0 ? 'Stark — noch eine Aufgabe!' : hype;
+    ? t('home.bubbleDone')
+    : questDone > 0 ? t('home.bubbleOne') : t(`hype.${hypeIdx}`);
 
   return (
     <main class="sl-main with-nav h2" key={tick}>
@@ -576,25 +576,25 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
         <div class="h2-ring" style={{ background: `conic-gradient(var(--ll-ring, var(--ll-accent)) ${levelPct}%, var(--ll-border) 0)` }}>
           <div class="h2-ring-in"><Gurki pose={pose} size={92} /></div>
         </div>
-        <b class="h2-title">{stats.streak > 0 ? `Tag ${stats.streak} — stark!` : 'Willkommen zurück!'}</b>
+        <b class="h2-title">{stats.streak > 0 ? t('home.dayN', { n: stats.streak }) : t('home.welcomeBack')}</b>
         <div class="h2-lvlbar">
           <span class="h2-lvl-end">{lvlL}</span>
           <div class="h2-lvl-track"><i style={{ width: `${levelPct}%` }} /></div>
           <span class="h2-lvl-end next">{lvlR}</span>
         </div>
-        <span class="h2-sub">{prog.atAufstieg ? `Aufstiegstest bereit · Level ${prog.level}` : `${prog.level}.${prog.etappeDisplay} · ${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} neue Wörter`}{articles.length > 0 ? ` · Tagesquest ${questDone}/${questTasks.length}` : ''}</span>
+        <span class="h2-sub">{prog.atAufstieg ? t('home.aufstiegReady', { level: prog.level }) : t('home.subStage', { stage: `${prog.level}.${prog.etappeDisplay}`, cleared: Math.min(batchCleared, ETAPPE_GOAL), goal: ETAPPE_GOAL })}{articles.length > 0 ? t('home.subQuest', { done: questDone, total: questTasks.length }) : ''}</span>
         <div class="h2-bubble">{bubble}</div>
       </section>
 
       {loading ? (
         <Dots />
       ) : articles.length === 0 ? (
-        <div class="h2-card empty">Heute noch keine Lektion für {LANG_LABELS[settings.learn]}. Schau später wieder vorbei.</div>
+        <div class="h2-card empty">{t('home.empty', { lang: LANG_LABELS[settings.learn] })}</div>
       ) : (
         <>
           <div class={`quest-card ${questComplete ? 'done' : ''}`}>
             <div class="quest-head">
-              <span class="quest-title"><IconTarget />{questComplete ? 'Tagesquest geschafft!' : 'Tagesquest'}</span>
+              <span class="quest-title"><IconTarget />{questComplete ? t('home.questDoneTitle') : t('home.questTitle')}</span>
               <span class="quest-count">{questDone}/{questTasks.length}{questComplete ? ' ✓' : ''}</span>
             </div>
             <div class="quest-tasks">
@@ -607,38 +607,38 @@ function HomeTab({ settings, onPatch, onOpen, onTrainer, onDict, onSurprise, onC
               ))}
             </div>
           </div>
-          <p class="lr-credit-line">Aus den meistgelesenen Wikipedia-Artikeln des Tages · CC BY-SA</p>
+          <p class="lr-credit-line">{t('home.credit')}</p>
         </>
       )}
 
       <div class="lr-tiles four">
-        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">Artikelrubriken</span></button>
-        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico t-luecke"><IconGap /></span><span class="lr-tile-t">Lückentext</span></button>
-        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">Vokabeltest</span></button>
-        <button class="lr-tile" onClick={onDict}><span class="lr-tile-ico t-dict"><IconBook /></span><span class="lr-tile-t">Wörterbuch</span></button>
+        <button class="lr-tile" onClick={onSurprise}><span class="lr-tile-ico t-zufall"><IconDice /></span><span class="lr-tile-t">{t('tile.topics')}</span></button>
+        <button class="lr-tile" onClick={onCloze}><span class="lr-tile-ico t-luecke"><IconGap /></span><span class="lr-tile-t">{t('tile.cloze')}</span></button>
+        <button class="lr-tile" onClick={onTrainer}><span class="lr-tile-ico t-vokab"><IconCards /></span><span class="lr-tile-t">{t('tile.vocab')}</span></button>
+        <button class="lr-tile" onClick={onDict}><span class="lr-tile-ico t-dict"><IconBook /></span><span class="lr-tile-t">{t('tile.dict')}</span></button>
       </div>
 
       <button class="mini-head" onClick={onRoute}>
-        <span class="mini-head-t">Dein Lernpfad</span>
+        <span class="mini-head-t">{t('home.yourPath')}</span>
         <span class="mini-head-s">{prog.label}</span>
       </button>
       <div class="route mini">
         <div class={`rn l ${etappeReady && !prog.atAufstieg ? 'done' : 'current'} ${weeklyNext === 'vocab' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot">{etappeReady && !prog.atAufstieg ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
-            <span class="rn-title">Lerne neue Wörter</span>
-            <span class="rn-sub">{prog.atAufstieg ? 'Wortschatz wiederholen · tippen' : `${Math.min(batchCleared, ETAPPE_GOAL)}/${ETAPPE_GOAL} diese Woche · tippen`}</span>
+            <span class="rn-title">{t('home.learnWords')}</span>
+            <span class="rn-sub">{prog.atAufstieg ? t('home.reviewVocab') : t('home.weekWords', { cleared: Math.min(batchCleared, ETAPPE_GOAL), goal: ETAPPE_GOAL })}</span>
           </button>
         </div>
         <div class={`rn r ${etappeReady ? 'current' : 'locked'} ${weeklyNext === 'check' ? 'pulse' : ''}`}>
           <div class="rn-rail"><span class="rn-dot" style={etappeReady ? undefined : CHEST_DOT}><IconChest /></span></div>
           <button class="rn-card" disabled={!etappeReady} onClick={() => etappeReady && onTest()}>
-            <span class="rn-title">{prog.atAufstieg ? 'Aufstiegstest' : 'Etappen-Check'}</span>
-            <span class="rn-sub">{etappeReady ? 'freigeschaltet · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
+            <span class="rn-title">{prog.atAufstieg ? t('test.aufstieg') : t('test.etappe')}</span>
+            <span class="rn-sub">{etappeReady ? t('home.unlocked') : t('home.fromWords', { goal: ETAPPE_GOAL })}</span>
           </button>
         </div>
       </div>
-      <button class="mini-all" onClick={onRoute}><IconRoute />Ganzen Lernpfad ansehen →</button>
+      <button class="mini-all" onClick={onRoute}><IconRoute />{t('home.seeFullPath')}</button>
     </main>
   );
 }
