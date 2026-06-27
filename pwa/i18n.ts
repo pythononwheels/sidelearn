@@ -261,6 +261,38 @@ const de: Dict = {
   'time.daysAgo': 'vor {n} Tagen',
   'time.lastWeek': 'letzte Woche',
   'time.weeksAgo': 'vor {n} Wochen',
+
+  // route (full learning path)
+  'route.title': 'Lernpfad',
+  'route.headStage': 'Etappe {n}/{total} → {next}',
+  'route.subLevel': 'Sprachniveau {level}.{n}',
+  'route.subLevelWeek': 'Sprachniveau {level}.{n} — diese Woche',
+  'route.mileSub': '{words} Wörter · {articles} Artikel · Check ✓',
+  'route.mileDone': 'geschafft',
+  'route.etappeCheckReady': 'kurzer Test über die neuen Wörter · tippen',
+  'route.etappeN': 'Etappe {n}',
+  'route.mileLabel': 'Meilenstein · {goal} Wörter',
+  'route.wordsCheck': '{goal} Wörter + Check',
+  'route.aufstiegTo': 'Aufstiegstest → {next}',
+  'route.aufstiegReadySub': 'alle Wörter für {next} · tippen',
+  'route.aufstiegLockedSub': 'nach Etappe 10',
+
+  // calendar (archive day picker)
+  'cal.prevAria': 'Früher',
+  'cal.nextAria': 'Später',
+  'cal.wd.0': 'Mo', 'cal.wd.1': 'Di', 'cal.wd.2': 'Mi', 'cal.wd.3': 'Do', 'cal.wd.4': 'Fr', 'cal.wd.5': 'Sa', 'cal.wd.6': 'So',
+  'cal.month.0': 'Januar', 'cal.month.1': 'Februar', 'cal.month.2': 'März', 'cal.month.3': 'April',
+  'cal.month.4': 'Mai', 'cal.month.5': 'Juni', 'cal.month.6': 'Juli', 'cal.month.7': 'August',
+  'cal.month.8': 'September', 'cal.month.9': 'Oktober', 'cal.month.10': 'November', 'cal.month.11': 'Dezember',
+
+  // archive (Archiv tab)
+  'archive.readTitle': 'Lesen',
+  'archive.subtitle': 'Heutige & frühere Tageslektionen',
+  'archive.today': 'Heute',
+  'archive.calendar': 'Kalender ▾',
+  'archive.readCount': '{done}/{goal} gelesen',
+  'archive.noLessons': 'Keine Lektionen für diesen Tag.',
+  'archive.fromRubrics': 'Aus den Rubriken',
 };
 
 const en: Dict = {
@@ -488,6 +520,35 @@ const en: Dict = {
   'time.daysAgo': '{n} days ago',
   'time.lastWeek': 'last week',
   'time.weeksAgo': '{n} weeks ago',
+
+  'route.title': 'Learning path',
+  'route.headStage': 'Stage {n}/{total} → {next}',
+  'route.subLevel': 'Level {level}.{n}',
+  'route.subLevelWeek': 'Level {level}.{n} — this week',
+  'route.mileSub': '{words} words · {articles} articles · check ✓',
+  'route.mileDone': 'done',
+  'route.etappeCheckReady': 'quick test on the new words · tap',
+  'route.etappeN': 'Stage {n}',
+  'route.mileLabel': 'Milestone · {goal} words',
+  'route.wordsCheck': '{goal} words + check',
+  'route.aufstiegTo': 'Level-up test → {next}',
+  'route.aufstiegReadySub': 'all words for {next} · tap',
+  'route.aufstiegLockedSub': 'after stage 10',
+
+  'cal.prevAria': 'Earlier',
+  'cal.nextAria': 'Later',
+  'cal.wd.0': 'Mon', 'cal.wd.1': 'Tue', 'cal.wd.2': 'Wed', 'cal.wd.3': 'Thu', 'cal.wd.4': 'Fri', 'cal.wd.5': 'Sat', 'cal.wd.6': 'Sun',
+  'cal.month.0': 'January', 'cal.month.1': 'February', 'cal.month.2': 'March', 'cal.month.3': 'April',
+  'cal.month.4': 'May', 'cal.month.5': 'June', 'cal.month.6': 'July', 'cal.month.7': 'August',
+  'cal.month.8': 'September', 'cal.month.9': 'October', 'cal.month.10': 'November', 'cal.month.11': 'December',
+
+  'archive.readTitle': 'Read',
+  'archive.subtitle': 'Today’s & earlier daily lessons',
+  'archive.today': 'Today',
+  'archive.calendar': 'Calendar ▾',
+  'archive.readCount': '{done}/{goal} read',
+  'archive.noLessons': 'No lessons for this day.',
+  'archive.fromRubrics': 'From the topics',
 };
 
 const DICTS: Record<string, Dict> = { de, en };

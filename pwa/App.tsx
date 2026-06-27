@@ -1901,8 +1901,8 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
         <div class={`rn done ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot"><IconCheck /></span></div>
           <span class="rn-card">
-            <span class="rn-title">Sprachniveau {level}.{e + 1}</span>
-            <span class="rn-sub">{m ? `${m.words} Wörter · ${m.articles} Artikel · Check ✓` : 'geschafft'}</span>
+            <span class="rn-title">{t('route.subLevel', { level, n: e + 1 })}</span>
+            <span class="rn-sub">{m ? t('route.mileSub', { words: m.words, articles: m.articles }) : t('route.mileDone')}</span>
           </span>
         </div>,
       );
@@ -1910,20 +1910,20 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
       rows.push(
         <div class={`rn head ${side()}`} key={`h${e}`}>
           <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
-          <span class="rn-card flat"><span class="rn-title">Sprachniveau {level}.{e + 1} — diese Woche</span></span>
+          <span class="rn-card flat"><span class="rn-title">{t('route.subLevelWeek', { level, n: e + 1 })}</span></span>
         </div>,
         <div class={`rn ${ready ? 'done' : 'current'} ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot">{ready ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
-            <span class="rn-title">Lerne neue Wörter</span>
-            <span class="rn-sub">{Math.min(cleared, ETAPPE_GOAL)}/{ETAPPE_GOAL} diese Woche · tippen</span>
+            <span class="rn-title">{t('home.learnWords')}</span>
+            <span class="rn-sub">{t('home.weekWords', { cleared: Math.min(cleared, ETAPPE_GOAL), goal: ETAPPE_GOAL })}</span>
           </button>
         </div>,
         <div class={`rn ${ready ? 'current' : 'locked'} ${ready ? 'pulse' : ''} ${side()}`} key={`t${e}`}>
           <div class="rn-rail"><span class="rn-dot" style={ready ? undefined : CHEST_DOT}><IconChest /></span></div>
           <button class="rn-card" disabled={!ready} onClick={() => ready && onTest()}>
-            <span class="rn-title">Etappen-Check</span>
-            <span class="rn-sub">{ready ? 'kurzer Test über die neuen Wörter · tippen' : `ab ${ETAPPE_GOAL} Wörtern`}</span>
+            <span class="rn-title">{t('test.etappe')}</span>
+            <span class="rn-sub">{ready ? t('route.etappeCheckReady') : t('home.fromWords', { goal: ETAPPE_GOAL })}</span>
           </button>
         </div>,
       );
@@ -1933,7 +1933,7 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
       rows.push(
         <div class={`rn locked ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot" style={milestone ? CHEST_DOT : pastelDot(e)}>{milestone ? <IconChest /> : n}</span></div>
-          <span class="rn-card"><span class="rn-title">Etappe {n}</span><span class="rn-sub">{milestone ? `Meilenstein · ${ETAPPE_GOAL} Wörter` : `${ETAPPE_GOAL} Wörter + Check`}</span></span>
+          <span class="rn-card"><span class="rn-title">{t('route.etappeN', { n })}</span><span class="rn-sub">{milestone ? t('route.mileLabel', { goal: ETAPPE_GOAL }) : t('route.wordsCheck', { goal: ETAPPE_GOAL })}</span></span>
         </div>,
       );
     }
@@ -1942,8 +1942,8 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
     <div class={`rn ${prog.atAufstieg ? 'current' : 'locked'} ${prog.atAufstieg ? 'pulse' : ''} ${side()}`} key="auf">
       <div class="rn-rail"><span class="rn-dot" ref={prog.atAufstieg ? curRef : undefined} style={prog.atAufstieg ? undefined : CHEST_DOT}><IconChest /></span></div>
       <button class="rn-card" disabled={!prog.atAufstieg} onClick={() => prog.atAufstieg && onTest()}>
-        <span class="rn-title">Aufstiegstest → {prog.nextLevel}</span>
-        <span class="rn-sub">{prog.atAufstieg ? `alle Wörter für ${prog.nextLevel} · tippen` : 'nach Etappe 10'}</span>
+        <span class="rn-title">{t('route.aufstiegTo', { next: prog.nextLevel })}</span>
+        <span class="rn-sub">{prog.atAufstieg ? t('route.aufstiegReadySub', { next: prog.nextLevel }) : t('route.aufstiegLockedSub')}</span>
       </button>
     </div>,
   );
@@ -1951,11 +1951,11 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
   return (
     <main class="sl-main with-nav">
       <header class="sl-lessonhead">
-        <button class="sl-back" onClick={onBack} aria-label="Zurück">←</button>
-        <span class="sl-lessontitle">Lernpfad</span>
+        <button class="sl-back" onClick={onBack} aria-label={t('common.backAria')}>←</button>
+        <span class="sl-lessontitle">{t('route.title')}</span>
       </header>
       <div class="rt-head">
-        <b>{level}</b><span>Etappe {prog.etappeDisplay}/{ETAPPEN_PER_LEVEL} → {prog.nextLevel}</span>
+        <b>{level}</b><span>{t('route.headStage', { n: prog.etappeDisplay, total: ETAPPEN_PER_LEVEL, next: prog.nextLevel })}</span>
         {levelIdx > 0 && <span class="rt-prev">{STAGE_LEVELS.slice(0, levelIdx).join(' ✓ ')} ✓</span>}
       </div>
       <div class="route">{rows}</div>
@@ -1990,11 +1990,11 @@ function DayCalendar({ available, sel, today, onPick }: {
   return (
     <div class="cal">
       <div class="cal-head">
-        <button class="cal-nav" disabled={!canPrev} onClick={() => canPrev && shift(-1)} aria-label="Früher">‹</button>
-        <span class="cal-title">{CAL_MONTHS[m - 1]} {y}</span>
-        <button class="cal-nav" disabled={!canNext} onClick={() => canNext && shift(1)} aria-label="Später">›</button>
+        <button class="cal-nav" disabled={!canPrev} onClick={() => canPrev && shift(-1)} aria-label={t('cal.prevAria')}>‹</button>
+        <span class="cal-title">{t(`cal.month.${m - 1}`)} {y}</span>
+        <button class="cal-nav" disabled={!canNext} onClick={() => canNext && shift(1)} aria-label={t('cal.nextAria')}>›</button>
       </div>
-      <div class="cal-grid cal-wd">{CAL_WD.map((w) => <span class="cal-wdl">{w}</span>)}</div>
+      <div class="cal-grid cal-wd">{CAL_WD.map((_, i) => <span class="cal-wdl">{t(`cal.wd.${i}`)}</span>)}</div>
       <div class="cal-grid">
         {cells.map((d, i) => {
           if (d === null) return <span class="cal-cell empty" key={`e${i}`} />;
@@ -2068,21 +2068,21 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
     return (
       <main class="sl-main with-nav">
         <header class="sl-lessonhead">
-          <button class="sl-back" onClick={() => setChoice(null)} aria-label="Zurück">←</button>
-          <span class="sl-lessontitle">Lesen</span>
+          <button class="sl-back" onClick={() => setChoice(null)} aria-label={t('common.backAria')}>←</button>
+          <span class="sl-lessontitle">{t('archive.readTitle')}</span>
         </header>
         <section class="dg-choose">
           <p class="lr-section" style={{ marginTop: '4px' }}>{choice.title}</p>
-          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>Wie möchtest du lesen?</p>
+          <p class="sl-muted" style={{ margin: '2px 0 16px' }}>{t('surprise.howRead')}</p>
           <button class="dg-opt" onClick={() => { onOpen(toRef(choice), false); setChoice(null); }}>
             <span class="dg-opt-ico full"><IconNewspaper /></span>
-            <span class="dg-opt-body"><b>Ganzer Artikel</b><small>8 Absätze · mit Quiz pro Absatz</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.fullArticle')}</b><small>{t('surprise.fullArticleSub')}</small></span>
           </button>
           <button class="dg-opt" onClick={() => { onDigest(toRef(choice)); setChoice(null); }}>
             <span class="dg-opt-ico digest"><IconBolt /></span>
-            <span class="dg-opt-body"><b>Kurzfassung</b><small>kompakte Summary · 3 Fragen am Ende</small></span>
+            <span class="dg-opt-body"><b>{t('surprise.digest')}</b><small>{t('surprise.digestSub')}</small></span>
           </button>
-          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>Zurück</button>
+          <button class="sl-read ghost" style={{ marginTop: '10px' }} onClick={() => setChoice(null)}>{t('common.backBtn')}</button>
         </section>
       </main>
     );
@@ -2090,11 +2090,11 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
 
   return (
     <main class="sl-main with-nav">
-      <h1 class="tab-screen-title">Archiv</h1>
-      <p class="lr-section">Heutige & frühere Tageslektionen</p>
+      <h1 class="tab-screen-title">{t('tab.archive')}</h1>
+      <p class="lr-section">{t('archive.subtitle')}</p>
       {days.length > 0 && (
         <div class="lr-pick day-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => { setSel(undefined); setOlderOpen(false); }}>Heute</button>
+          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => { setSel(undefined); setOlderOpen(false); }}>{t('archive.today')}</button>
           {recent.map((d) => (
             <button class={`pill-day ${sel === d ? 'on' : ''}`} onClick={() => { setSel(d); setOlderOpen(false); }}>
               {d.slice(5)}
@@ -2103,7 +2103,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
           {older.length > 0 && (
             <div class="day-older">
               <button class={`pill-day older ${selOlder ? 'on' : ''}`} onClick={() => setOlderOpen((o) => !o)} aria-expanded={olderOpen}>
-                {selOlder ? `${sel!.slice(5)} ▾` : 'Kalender ▾'}
+                {selOlder ? `${sel!.slice(5)} ▾` : t('archive.calendar')}
               </button>
               {olderOpen && (
                 <DayCalendar
@@ -2118,19 +2118,19 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
         </div>
       )}
       {daily && articles.length > 0 && (
-        <p class="lr-section" style={{ marginTop: 0 }}>{doneCount}/{goal} gelesen</p>
+        <p class="lr-section" style={{ marginTop: 0 }}>{t('archive.readCount', { done: doneCount, goal })}</p>
       )}
       {loading ? (
         <Dots />
       ) : articles.length === 0 ? (
-        <p class="sl-muted">Keine Lektionen für diesen Tag.</p>
+        <p class="sl-muted">{t('archive.noLessons')}</p>
       ) : (
         <ArticleList articles={articles} next={next} allDone={doneCount >= goal} onOpen={onOpen} />
       )}
 
       {groups.length > 0 && (
         <>
-          <p class="lr-section" style={{ marginTop: '22px' }}>Aus den Rubriken</p>
+          <p class="lr-section" style={{ marginTop: '22px' }}>{t('archive.fromRubrics')}</p>
           {groups.map((g) => {
             const open = openAreas.has(g.meta.id);
             const seen = g.items.filter((a) => isCompleted(a.url)).length;
@@ -2138,7 +2138,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
               <div class="ch-rubrik" key={g.meta.id}>
                 <button class={`ch-rubrik-head ${open ? 'open' : ''}`} onClick={() => toggleArea(g.meta.id)} aria-expanded={open}>
                   <span class={`lr-tile-ico ${g.meta.color}`}>{g.meta.icon}</span>
-                  <span class="ch-rubrik-label">{g.meta.label}</span>
+                  <span class="ch-rubrik-label">{t(`rubrik.${g.meta.id}`)}</span>
                   <span class="ch-rubrik-count">{seen > 0 ? `${seen}/${g.items.length}` : g.items.length}</span>
                   <span class="ch-rubrik-chev">›</span>
                 </button>
@@ -2153,7 +2153,7 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
                               ? <img class="lr-thumb" src={a.thumbnail} alt="" loading="lazy" />
                               : <span class="lr-thumb lr-thumb-ph">{a.title.slice(0, 1)}</span>}
                             <span class="lr-item-body"><span class="lr-item-title">{a.title}</span></span>
-                            <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : 'lesen ›'}</span>
+                            <span class={`lr-item-state ${done ? 'done' : ''}`}>{done ? '✓' : t('common.readGo')}</span>
                           </button>
                         </li>
                       );
