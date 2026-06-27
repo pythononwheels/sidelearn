@@ -205,7 +205,7 @@
       </div>
     </div>
     <div class="phone real">
-      <img src="shots/home.webp" width="800" height="1740" alt="Learny Startscreen — Tagesquest, Streak und Fortschritt" />
+      <img data-shot="home" src="shots/home-de.webp" width="800" height="1740" alt="Learny Startscreen — Tagesquest, Streak und Fortschritt" />
     </div>
   </header>
 
@@ -404,6 +404,10 @@
     });
     document.querySelectorAll('#lang button').forEach(function(b){
       b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+    });
+    // swap app screenshots to the matching UI language
+    document.querySelectorAll('img[data-shot]').forEach(function(im){
+      im.src = 'shots/' + im.getAttribute('data-shot') + '-' + lang + '.webp';
     });
     try { localStorage.setItem('learny_lang', lang); } catch(e){}
   }

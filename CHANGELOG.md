@@ -14,6 +14,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - Verifiziert: Playwright-EN-Rundgang über 12 Flächen → 0 deutsche Reste; DE rendert unverändert; `tsc`
   clean, Build grün. Stream-„nicht unterstützt"-Meldung auf alle 5 Sprachen aktualisiert.
 
+## [Unreleased] — 2026-06-28 — Landing: Mastodon-Shoutout + sprachspezifische Screenshots
+
+- **Sprachspezifische Screenshots**: pro UI-Sprache ein eigener Satz (`shots/<view>-de.webp` /
+  `-en.webp`), der mit dem DE/EN-Toggle umschaltet (Hero + alle modi-Sektionen). Neu geschossen mit
+  der jetzt zweisprachigen App.
+- **Mastodon-Shoutout** auf der modi-Seite (Logo + Link) inkl. Harvest-Hinweis (alle 15 Min, ~200
+  Posts/Sprache von öffentlichen Mastodon-Servern, nach Sprachniveau einsortiert); Social-Stream-Sektion
+  vor den Lernpfad gezogen; Feature-Tiles verlinken direkt auf die passende modi-Sektion;
+  „Artikelrubriken" → „Wikipedia Article topics".
+
 ## [Unreleased] — 2026-06-27 — Landing: echte Screenshots + „So funktioniert's"-Seite
 
 - **Hero-Mock → echter Screenshot**: Der CSS-gebaute Phone-Dummy oben rechts auf der Landing weicht

@@ -130,7 +130,7 @@
         <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="s1b">Streak &amp; XP halten dich spielerisch dran</span></li>
       </ul>
     </div>
-    <div class="shot reveal"><div class="device"><img src="shots/home.webp" width="800" height="1740" alt="Startscreen mit Tagesquest" loading="lazy" /></div></div>
+    <div class="shot reveal"><div class="device"><img data-shot="home" src="shots/home-de.webp" width="800" height="1740" alt="Startscreen mit Tagesquest" loading="lazy" /></div></div>
   </section>
 
   <section class="feature" id="lesen">
@@ -143,7 +143,7 @@
         <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="s2b">Sprachniveau jederzeit umschaltbar (A1–C1)</span></li>
       </ul>
     </div>
-    <div class="shot reveal"><div class="device"><img src="shots/article.webp" width="800" height="1740" alt="Artikel lesen mit Tap-Übersetzung" loading="lazy" /></div></div>
+    <div class="shot reveal"><div class="device"><img data-shot="article" src="shots/article-de.webp" width="800" height="1740" alt="Artikel lesen mit Tap-Übersetzung" loading="lazy" /></div></div>
   </section>
 
   <section class="feature" id="luecke">
@@ -152,7 +152,7 @@
       <h2 data-i18n="s3h">Lückentexte</h2>
       <p data-i18n="s3p">Setze fehlende Wörter aus dem Tagesstoff ein. Vier Optionen, sofortiges Feedback und auf Wunsch die Übersetzung — so verankert sich neuer Wortschatz im echten Kontext statt auf Karteikarten.</p>
     </div>
-    <div class="shot reveal"><div class="device"><img src="shots/cloze.webp" width="800" height="1740" alt="Lückentext-Übung" loading="lazy" /></div></div>
+    <div class="shot reveal"><div class="device"><img data-shot="cloze" src="shots/cloze-de.webp" width="800" height="1740" alt="Lückentext-Übung" loading="lazy" /></div></div>
   </section>
 
   <section class="feature" id="vokabeln">
@@ -161,7 +161,7 @@
       <h2 data-i18n="s4h">Dein Vokabel-Deck</h2>
       <p data-i18n="s4p">Gemerkte Wörter kommen als Quiz zurück — im richtigen Moment wiederholt (Spaced Repetition), damit sie wirklich sitzen bleiben. Mit Beispielsätzen aus echten Sätzen.</p>
     </div>
-    <div class="shot reveal"><div class="device"><img src="shots/vocab.webp" width="800" height="1740" alt="Vokabeltest" loading="lazy" /></div></div>
+    <div class="shot reveal"><div class="device"><img data-shot="vocab" src="shots/vocab-de.webp" width="800" height="1740" alt="Vokabeltest" loading="lazy" /></div></div>
   </section>
 
   <section class="feature" id="stream">
@@ -179,7 +179,7 @@
         <span data-i18n="s6shout">Shoutout an die offene Mastodon-Community</span>
       </a>
     </div>
-    <div class="shot reveal"><div class="device"><img src="shots/stream.webp" width="800" height="1740" alt="Social Stream" loading="lazy" /></div></div>
+    <div class="shot reveal"><div class="device"><img data-shot="stream" src="shots/stream-de.webp" width="800" height="1740" alt="Social Stream" loading="lazy" /></div></div>
   </section>
 
   <section class="feature" id="pfad">
@@ -188,7 +188,7 @@
       <h2 data-i18n="s5h">Etappe für Etappe — A1 bis C1</h2>
       <p data-i18n="s5p">5 Level, je 10 Etappen. Lesen, Lernen, Testen — am Ende jeder Etappe wartet der Aufstiegstest. Dein Fortschritt ist immer als klarer Pfad sichtbar, kein Punktechaos.</p>
     </div>
-    <div class="shot reveal"><div class="device"><img src="shots/route.webp" width="800" height="1740" alt="Lernpfad" loading="lazy" /></div></div>
+    <div class="shot reveal"><div class="device"><img data-shot="route" src="shots/route-de.webp" width="800" height="1740" alt="Lernpfad" loading="lazy" /></div></div>
   </section>
 
   <section class="closer">
@@ -257,6 +257,9 @@
     });
     document.querySelectorAll('#lang button').forEach(function(b){
       b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+    });
+    document.querySelectorAll('img[data-shot]').forEach(function(im){
+      im.src = 'shots/' + im.getAttribute('data-shot') + '-' + lang + '.webp';
     });
     try { localStorage.setItem('learny_lang', lang); } catch(e){}
   }
