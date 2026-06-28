@@ -32,7 +32,7 @@ import {
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
-import { t, setUiLang } from './i18n';
+import { t, setUiLang, tFor, UI_LANGS } from './i18n';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
 import { seedVocab, nextLevelTargets, type SeedWord } from './seedvocab';
@@ -334,7 +334,8 @@ const IconFlame = () => (<svg {...svg}><path d="M12 2c1 4 4 5 4 9a4 4 0 0 1-8 0c
 
 type Pose = 'yay' | 'sad' | 'party' | 'think';
 const Gurki = ({ pose = 'yay', size = 92 }: { pose?: Pose; size?: number }) => (
-  <img class="gurki" src={`/gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
+  // base-aware (app is served under /app/; the pose pngs live in src/public/gurki)
+  <img class="gurki" src={`${import.meta.env.BASE_URL}gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
 );
 
 // Greeting bubbles live in i18n as hype.0 … hype.{HYPE_COUNT-1}.
@@ -353,6 +354,14 @@ function Onboarding({
   const [nat, setNat] = useState<Language>(settings.native);
   const [learn, setLearn] = useState<Language>(settings.learn === settings.native ? (LANGUAGES.find((l) => l !== settings.native) as Language) : settings.learn);
   const [level, setLevel] = useState<CefrLevel>(settings.level);
+  // Step 0 shows the "this is your native language" hint cycling through every
+  // UI language (2.5s each) — so a speaker of any language sees it in theirs.
+  const [hintI, setHintI] = useState(0);
+  useEffect(() => {
+    if (step !== 0) return;
+    const id = setInterval(() => setHintI((i) => (i + 1) % UI_LANGS.length), 2500);
+    return () => clearInterval(id);
+  }, [step]);
 
   // UI language follows the (in-progress) native pick, so onboarding itself
   // switches language live as you choose.
@@ -364,11 +373,11 @@ function Onboarding({
 
   return (
     <main class="lr-onb">
-      <div class="lr-onb-logo" />
+      <div class="lr-onb-logo"><Gurki pose="yay" size={64} /></div>
       {step === 0 ? (
         <>
           <h1 class="lr-onb-h">{t('onb.welcome')}</h1>
-          <p class="lr-onb-p">{t('onb.uiP')}</p>
+          <p class="lr-onb-p lr-onb-hint" key={hintI} lang={UI_LANGS[hintI] ?? 'de'}>{tFor(UI_LANGS[hintI] ?? 'de', 'onb.uiP')}</p>
           <div class="lr-onb-grid">
             {LANGUAGES.map((l) => (
               <button class={`lr-onb-choice ${nat === l ? 'sel' : ''}`} onClick={() => pickNative(l)}>
@@ -1397,6 +1406,8 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [optTrans, setOptTrans] = useState<Record<string, string> | null>(null);
+  const [optBusy, setOptBusy] = useState(false);
   const clozeText = useRef('');
 
   useEffect(() => {
@@ -1448,11 +1459,32 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
   }
   function next() {
     setPicked(null);
+    setOptTrans(null);
     setPos((p) => p + 1);
   }
 
   const q = questions?.[pos];
   const done = questions !== null && questions.length > 0 && pos >= questions.length;
+
+  // "Translate options" — reveal the meaning of ALL option words at once (for
+  // when you don't know any of them). Dictionary-first (richdict → offline dict),
+  // server only as a last resort, so the shown meanings are corroborated.
+  async function translateOptWord(w: string): Promise<string> {
+    const rich = await richLookup(w, settings.learn, settings.native);
+    if (rich?.s[0]?.t) return rich.s[0].t;
+    const info = await resolveWord(w, settings.learn, settings.native, settings.level);
+    if (info.senses[0]?.translations[0]) return info.senses[0].translations[0];
+    const sv = await fetchWordTranslation(SERVER, settings.learn, settings.native, w, q?.prompt ?? '');
+    return sv?.translation ?? '';
+  }
+  async function revealOpts() {
+    if (optTrans) { setOptTrans(null); return; }
+    if (!q) return;
+    setOptBusy(true);
+    const pairs = await Promise.all(q.options.map(async (o) => [o, await translateOptWord(o)] as const));
+    setOptTrans(Object.fromEntries(pairs));
+    setOptBusy(false);
+  }
 
   // Completing a Lückentext-Runde advances a 'cloze' route node (once).
   const credited = useRef(false);
@@ -1501,12 +1533,18 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
                 let cls = '';
                 if (picked !== null) cls = opt === q.answer ? 'correct' : opt === picked ? 'wrong' : 'dim';
                 return (
-                  <button class={`sl-quiz-opt ${cls}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
-                    {opt}
+                  <button class={`sl-quiz-opt ${cls} ${optTrans ? 'has-trans' : ''}`} disabled={picked !== null} onClick={(e) => choose(opt, e)}>
+                    <span class="opt-w">{opt}</span>
+                    {optTrans?.[opt] ? <span class="opt-trans">{optTrans[opt]}</span> : null}
                   </button>
                 );
               })}
             </div>
+            {picked === null && (
+              <button class="cloze-opttrans" onClick={revealOpts} disabled={optBusy}>
+                {optBusy ? t('cloze.translating') : optTrans ? t('cloze.optsHide') : t('cloze.optsTranslate')}
+              </button>
+            )}
           </div>
           {picked !== null && (
             <div class={`cloze-result ${picked === q.answer ? 'ok' : 'no'}`}>
