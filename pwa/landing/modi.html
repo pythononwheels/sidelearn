@@ -74,6 +74,11 @@
   .closer{text-align:center;padding:60px 0 78px;border-top:1px solid var(--border)}
   .closer h2{font-size:32px;margin-bottom:8px}
   .closer p{color:var(--soft);font-size:18px;margin-bottom:24px}
+  .closer .inst-h{color:var(--text);font-weight:700;font-size:16px;margin:6px 0 12px}
+  .modi-inst{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:9px;text-align:left;width:max-content;max-width:100%;margin:0 auto 24px}
+  .modi-inst li{counter-increment:s;display:flex;align-items:center;gap:11px;color:var(--soft);font-weight:600;font-size:16px}
+  .modi-inst li::before{content:counter(s);flex:none;width:27px;height:27px;border-radius:8px;background:var(--grad);color:#fff;font-family:var(--head);font-weight:800;font-size:14px;display:grid;place-items:center}
+  .modi-inst b{color:var(--text)}
 
   @media(max-width:820px){
     .intro h1{font-size:34px}
@@ -194,6 +199,12 @@
   <section class="closer">
     <h2 data-i18n="closeH">Klingt gut?</h2>
     <p data-i18n="closeP">Kein Account, kein Tracking — alles bleibt auf deinem Gerät.</p>
+    <p class="inst-h" data-i18n="instH">So holst du Learny auf den Homescreen:</p>
+    <ol class="modi-inst">
+      <li data-i18n="inst1">Learny öffnen</li>
+      <li data-i18n="inst2">Auf <b>Teilen</b> tippen</li>
+      <li data-i18n="inst3"><b>„Zum Home-Bildschirm"</b> wählen</li>
+    </ol>
     <a class="btn" href="/app/" data-i18n="closeBtn">Learny öffnen</a>
   </section>
 
@@ -222,7 +233,8 @@
       s6harvest:"Alle 15 Minuten holt Learny rund 200 frische Beiträge je Sprache von öffentlichen Mastodon-Servern — über viele Hashtags — und sortiert sie automatisch nach Sprachniveau.",
       s6a:"Filter nach Rubrik & Sprachniveau (A1–C2)", s6b:"Englisch, Französisch, Niederländisch, Spanisch, Italienisch",
       s6shout:"Shoutout an die offene Mastodon-Community",
-      closeH:"Klingt gut?", closeP:"Kein Account, kein Tracking — alles bleibt auf deinem Gerät.", closeBtn:"Learny öffnen"
+      closeH:"Klingt gut?", closeP:"Kein Account, kein Tracking — alles bleibt auf deinem Gerät.", closeBtn:"Learny öffnen",
+      instH:"So holst du Learny auf den Homescreen:", inst1:"Learny öffnen", inst2:"Auf <b>Teilen</b> tippen", inst3:'<b>„Zum Home-Bildschirm"</b> wählen'
     },
     en:{
       back:"← Back", kick:"How it works",
@@ -246,7 +258,8 @@
       s6harvest:"Every 15 minutes Learny pulls ~200 fresh posts per language from public Mastodon servers — across many hashtags — and sorts them by level automatically.",
       s6a:"Filter by topic & level (A1–C2)", s6b:"English, French, Dutch, Spanish, Italian",
       s6shout:"Shoutout to the open Mastodon community",
-      closeH:"Sounds good?", closeP:"No account, no tracking — everything stays on your device.", closeBtn:"Open Learny"
+      closeH:"Sounds good?", closeP:"No account, no tracking — everything stays on your device.", closeBtn:"Open Learny",
+      instH:"Add Learny to your home screen:", inst1:"Open Learny", inst2:"Tap <b>Share</b>", inst3:'Choose <b>“Add to Home Screen”</b>'
     }
   };
   function applyLang(lang){

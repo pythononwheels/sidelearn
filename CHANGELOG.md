@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased] — 2026-06-29 — Landing-Feinschliff
+
+- **modi-Seite**: Install-Schritte im Footer (App öffnen → Teilen → „Zum Home-Bildschirm") vor dem
+  „Learny öffnen"-Button.
+- **Screenshots aktualisiert**: `home-en` / `cloze-en` zeigen jetzt „Fill the gap" (nach dem Cloze-Rename);
+  `stream-de` = der alte Mastodon-Anime-Shot zurück.
+
 ## [0.6.130] — 2026-06-28 — Lernpfad: Tages-Zusammenfassung
 
 - Im Lernpfad zeigt das **aktuelle Etappen-Fenster** (seit dem letzten Meilenstein) jetzt pro
