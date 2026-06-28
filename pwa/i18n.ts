@@ -267,6 +267,10 @@ const de: Dict = {
 
   // route (full learning path)
   'route.title': 'Lernpfad',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOK',
+  'route.dayGap': 'LÜC',
+  'route.dayDone': 'Geschafft am {date}',
   'route.headStage': 'Etappe {n}/{total} → {next}',
   'route.subLevel': 'Sprachniveau {level}.{n}',
   'route.subLevelWeek': 'Sprachniveau {level}.{n} — diese Woche',
@@ -584,6 +588,10 @@ const en: Dict = {
   'time.weeksAgo': '{n} weeks ago',
 
   'route.title': 'Learning path',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOC',
+  'route.dayGap': 'GAP',
+  'route.dayDone': 'Done on {date}',
   'route.headStage': 'Stage {n}/{total} → {next}',
   'route.subLevel': 'Level {level}.{n}',
   'route.subLevelWeek': 'Level {level}.{n} — this week',
@@ -893,6 +901,10 @@ const nl: Dict = {
   'time.weeksAgo': '{n} weken geleden',
 
   'route.title': 'Leerpad',
+  'route.dayDone': 'Behaald op {date}',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'WRD',
+  'route.dayGap': 'GAT',
   'route.headStage': 'Etappe {n}/{total} → {next}',
   'route.subLevel': 'Niveau {level}.{n}',
   'route.subLevelWeek': 'Niveau {level}.{n} — deze week',
@@ -1202,6 +1214,10 @@ const fr: Dict = {
   'time.weeksAgo': 'il y a {n} semaines',
 
   'route.title': 'Parcours',
+  'route.dayDone': 'Réussi le {date}',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOC',
+  'route.dayGap': 'TRO',
   'route.headStage': 'Étape {n}/{total} → {next}',
   'route.subLevel': 'Niveau {level}.{n}',
   'route.subLevelWeek': 'Niveau {level}.{n} — cette semaine',
@@ -1511,6 +1527,10 @@ const es: Dict = {
   'time.weeksAgo': 'hace {n} semanas',
 
   'route.title': 'Ruta de aprendizaje',
+  'route.dayDone': 'Logrado el {date}',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOC',
+  'route.dayGap': 'HUE',
   'route.headStage': 'Etapa {n}/{total} → {next}',
   'route.subLevel': 'Nivel {level}.{n}',
   'route.subLevelWeek': 'Nivel {level}.{n} — esta semana',
@@ -1820,6 +1840,10 @@ const it: Dict = {
   'time.weeksAgo': '{n} settimane fa',
 
   'route.title': 'Percorso',
+  'route.dayDone': 'Completato il {date}',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOC',
+  'route.dayGap': 'FRA',
   'route.headStage': 'Tappa {n}/{total} → {next}',
   'route.subLevel': 'Livello {level}.{n}',
   'route.subLevelWeek': 'Livello {level}.{n} — questa settimana',

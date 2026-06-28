@@ -3,6 +3,7 @@ import { registerSW } from 'virtual:pwa-register';
 import '@/ui/tokens.css';
 import './app.css';
 import { App } from './App';
+import { devSeed } from './devseed';
 
 // Register the SW. onNeedRefresh fires only when a NEW version is waiting (not
 // on first install), so the in-app banner shows only for real updates.
@@ -32,4 +33,7 @@ w.__slCheckUpdate = async () => {
   return before || !!swReg.waiting || !!swReg.installing;
 };
 
+// dev-only: preseed localhost demo data. Guarded here so the whole module is
+// tree-shaken out of the production build (verified: no seed logic ships).
+if (import.meta.env.DEV) devSeed();
 render(<App />, document.getElementById('app')!);

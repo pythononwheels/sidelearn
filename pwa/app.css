@@ -644,6 +644,11 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cal-cell.today { box-shadow: inset 0 0 0 2px var(--ll-accent); }
 .cal-cell.sel { background: var(--ll-accent); color: var(--ll-accent-ink); box-shadow: none; }
 
+/* Archive: the calendar inline (full width) instead of a dropdown popover. */
+.archive-cal { margin: 4px 0 18px; }
+.archive-cal .cal { position: static; width: auto; padding: 6px 2px 2px; background: transparent; border: none; box-shadow: none; }
+.archive-cal .cal-cell { min-height: 34px; }
+
 /* Redesigned Home (Knuddel) -------------------------------------------- */
 .gurki { display: block; }
 .h2-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
@@ -897,6 +902,17 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn.r .rn-card { grid-column: 3; text-align: left; align-items: flex-start; }
 .rn-title { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
 .rn-sub { font-size: 12.5px; color: var(--ll-text-soft); }
+
+/* Daily-summary cards in the current Etappe window — small, light, with Kürzel chips. */
+.rn.day { min-height: 38px; }
+.rn.day .rn-dot.day-dot { width: 28px; height: 28px; background: #cfe8d8; color: var(--ll-ok, #2f9e6b); border-width: 3px; }
+.rn.day .rn-dot.day-dot svg { width: 15px; height: 15px; }
+.rn.day .day-card { gap: 3px; padding: 5px 4px; }
+.rn-day-date { font-family: var(--font-head); font-weight: 800; font-size: 12.5px; color: var(--ll-text-soft); }
+.rn-day-counts { display: flex; flex-wrap: wrap; gap: 5px; }
+.rn.l .rn-day-counts { justify-content: flex-end; }
+.rn-day-counts span { font-size: 11px; font-weight: 800; letter-spacing: .02em; color: var(--ll-ok, #2f9e6b);
+  background: var(--ll-mint-soft, #e2f6ee); border-radius: 99px; padding: 1px 8px; white-space: nowrap; } /* done = grün */
 
 /* Card style: every step (except the section header) sits in a calm card. */
 .route .rn:not(.head) .rn-card {

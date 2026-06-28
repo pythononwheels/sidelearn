@@ -54,6 +54,7 @@ import { addTargets, dueEntries, grade as srsGrade, clearedCount, encounter as s
 import { recordMilestone, getMilestone, lastMilestoneTs } from './milestones';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
+import { bumpDaily, dailyLogSince } from './dailylog';
 import { getTodayQuest, type QuestTask } from './quest';
 import { pop, celebrate } from './confetti';
 
@@ -126,6 +127,7 @@ async function creditWordsFromText(settings: PwaSettings, text: string, ref: str
       }
     }
   }
+  if (credited.size) bumpDaily('voc', credited.size);
   return credited.size;
 }
 
@@ -1493,6 +1495,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       credited.current = true;
       completeActivity(settings.level, 'cloze');
       markDailyDone('cloze');
+      bumpDaily('gap', 1); // count this cloze round
       logActivity({ type: 'lesson', level: settings.level, title: t('cloze.logTitle', { title }), detail: t('cloze.title') });
       void creditWordsFromText(settings, clozeText.current, t('cloze.logTitle', { title }));
     }
@@ -1923,6 +1926,24 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
   const rows: ComponentChildren[] = [];
   let idx = 0;
   const side = () => (idx++ % 2 === 0 ? 'l' : 'r'); // alternate card side along the rail
+
+  // Daily summary cards for the current Etappe window (since the last milestone):
+  // a small "28.6. · 2 ART · 30 VOK · 2 LÜC" per active day.
+  const recentDays = dailyLogSince(lastMilestoneTs(level));
+  const fmtDay = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString(settings.native, { day: 'numeric', month: 'numeric' });
+  const dayCard = (d: { date: string; counts: { art: number; voc: number; gap: number } }) => (
+    <div class={`rn day ${side()}`} key={`d${d.date}`}>
+      <div class="rn-rail"><span class="rn-dot day-dot"><IconCheck /></span></div>
+      <span class="rn-card day-card">
+        <span class="rn-day-date">{t('route.dayDone', { date: fmtDay(d.date) })}</span>
+        <span class="rn-day-counts">
+          {d.counts.art > 0 && <span>{d.counts.art} {t('route.dayArt')}</span>}
+          {d.counts.voc > 0 && <span>{d.counts.voc} {t('route.dayVoc')}</span>}
+          {d.counts.gap > 0 && <span>{d.counts.gap} {t('route.dayGap')}</span>}
+        </span>
+      </span>
+    </div>
+  );
   for (let e = 0; e < ETAPPEN_PER_LEVEL; e++) {
     const done = e < prog.etappe;
     const isCur = e === prog.etappe && !prog.atAufstieg;
@@ -1943,6 +1964,9 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
           <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
           <span class="rn-card flat"><span class="rn-title">{t('route.subLevelWeek', { level, n: e + 1 })}</span></span>
         </div>,
+      );
+      recentDays.forEach((d) => rows.push(dayCard(d)));
+      rows.push(
         <div class={`rn ${ready ? 'done' : 'current'} ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot">{ready ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
@@ -2050,7 +2074,6 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
   const [area, setArea] = useState<AreaArticle[] | null>(null);
   const [choice, setChoice] = useState<AreaArticle | null>(null);
   const [openAreas, setOpenAreas] = useState<Set<string>>(new Set()); // expanded rubriken
-  const [olderOpen, setOlderOpen] = useState(false); // "Älter" date dropdown
   const toggleArea = (id: string) => setOpenAreas((prev) => {
     const n = new Set(prev);
     if (n.has(id)) n.delete(id); else n.add(id);
@@ -2082,9 +2105,6 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
   // The server archive includes today; drop it so it isn't shown twice (next to
   // the dedicated "Heute" pill). Show ~a week as pills, the rest behind "Älter ▾".
   const days = (dates ?? []).filter((d) => d !== dayStamp());
-  const recent = days.slice(0, 6);
-  const older = days.slice(6);
-  const selOlder = !!sel && older.includes(sel);
 
   const toRef = (a: AreaArticle): ArticleRef => ({ id: a.id, title: a.title, url: a.url, thumb: a.thumbnail });
   const pickArea = (a: AreaArticle) => { if (settings.level === 'A1') onOpen(toRef(a), false); else setChoice(a); };
@@ -2121,28 +2141,13 @@ function ChallengesTab({ settings, onOpen, onDigest }: {
       <h1 class="tab-screen-title">{t('tab.archive')}</h1>
       <p class="lr-section">{t('archive.subtitle')}</p>
       {days.length > 0 && (
-        <div class="lr-pick day-pick" style={{ flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-          <button class={`pill-day ${!sel ? 'on' : ''}`} onClick={() => { setSel(undefined); setOlderOpen(false); }}>{t('archive.today')}</button>
-          {recent.map((d) => (
-            <button class={`pill-day ${sel === d ? 'on' : ''}`} onClick={() => { setSel(d); setOlderOpen(false); }}>
-              {d.slice(5)}
-            </button>
-          ))}
-          {older.length > 0 && (
-            <div class="day-older">
-              <button class={`pill-day older ${selOlder ? 'on' : ''}`} onClick={() => setOlderOpen((o) => !o)} aria-expanded={olderOpen}>
-                {selOlder ? `${sel!.slice(5)} ▾` : t('archive.calendar')}
-              </button>
-              {olderOpen && (
-                <DayCalendar
-                  available={new Set(dates ?? [])}
-                  sel={sel}
-                  today={dayStamp()}
-                  onPick={(d) => { setSel(d === dayStamp() ? undefined : d); setOlderOpen(false); }}
-                />
-              )}
-            </div>
-          )}
+        <div class="archive-cal">
+          <DayCalendar
+            available={new Set(dates ?? [])}
+            sel={sel}
+            today={dayStamp()}
+            onPick={(d) => setSel(d === dayStamp() ? undefined : d)}
+          />
         </div>
       )}
       {daily && articles.length > 0 && (
@@ -2417,7 +2422,7 @@ function DictView({ settings, initialMode, onBack }: {
 
   const toggleSave = (word: string, translation: string) => {
     if (inDeck(settings.learn, word)) removeFromDeck(settings.learn, word);
-    else addToDeck({ word, translation, lang: settings.learn, ts: Date.now() });
+    else { addToDeck({ word, translation, lang: settings.learn, ts: Date.now() }); bumpDaily('voc', 1); }
     force((n) => n + 1);
   };
 
@@ -2697,6 +2702,7 @@ function Lesson({
       title: article.title,
       detail: score.answered > 0 ? t('lesson.logQuiz', { c: score.correct, a: score.answered }) : undefined,
     });
+    bumpDaily('art', 1); // count every finished article read (route or free)
     if (route) {
       completeActivity(settings.level, 'lesson'); // daily read advances the route
       markDailyDone('article');
@@ -2994,6 +3000,7 @@ function WordPopover({
     if (saved || !translation) return;
     if (addToDeck({ word: pop.word, translation, lang: settings.learn, context: pop.sentence, ts: Date.now() })) {
       award(XP.merken);
+      bumpDaily('voc', 1); // a word actively saved = learned
     }
     setSaved(true);
   }
