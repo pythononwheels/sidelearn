@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.130] — 2026-06-28 — Lernpfad: Tages-Zusammenfassung
+
+- Im Lernpfad zeigt das **aktuelle Etappen-Fenster** (seit dem letzten Meilenstein) jetzt pro
+  aktivem Tag eine kleine Karte mit Kürzeln: „28.6. · **2 ART · 30 VOK · 2 LÜC**"
+  (Artikel · gelernte Vokabeln · Lückentexte). Null-Werte ausgeblendet, max. 8 Tage, Datum
+  lokalisiert.
+- Neuer On-Device-**Tageszähler** (`pwa/dailylog.ts`, `sl_pwa_daily_log`): hochgezählt beim
+  Artikel-Lesen, bei gutgeschriebenen/gemerkten Vokabeln und je Lückentext-Runde.
+
 ## [0.6.129] — 2026-06-28 — Optionen übersetzen · UI in NL/FR/ES/IT · Onboarding-Politur
 
 - **„Optionen übersetzen"** im Lückentext: ein Tipp zeigt die Bedeutung **aller**

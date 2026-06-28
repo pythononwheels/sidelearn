@@ -54,6 +54,7 @@ import { addTargets, dueEntries, grade as srsGrade, clearedCount, encounter as s
 import { recordMilestone, getMilestone, lastMilestoneTs } from './milestones';
 import { pseudoWordsFor } from './pseudowords';
 import { getActivity, logActivity, type Activity } from './activity';
+import { bumpDaily, dailyLogSince } from './dailylog';
 import { getTodayQuest, type QuestTask } from './quest';
 import { pop, celebrate } from './confetti';
 
@@ -126,6 +127,7 @@ async function creditWordsFromText(settings: PwaSettings, text: string, ref: str
       }
     }
   }
+  if (credited.size) bumpDaily('voc', credited.size);
   return credited.size;
 }
 
@@ -1493,6 +1495,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       credited.current = true;
       completeActivity(settings.level, 'cloze');
       markDailyDone('cloze');
+      bumpDaily('gap', 1); // count this cloze round
       logActivity({ type: 'lesson', level: settings.level, title: t('cloze.logTitle', { title }), detail: t('cloze.title') });
       void creditWordsFromText(settings, clozeText.current, t('cloze.logTitle', { title }));
     }
@@ -1923,6 +1926,24 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
   const rows: ComponentChildren[] = [];
   let idx = 0;
   const side = () => (idx++ % 2 === 0 ? 'l' : 'r'); // alternate card side along the rail
+
+  // Daily summary cards for the current Etappe window (since the last milestone):
+  // a small "28.6. · 2 ART · 30 VOK · 2 LÜC" per active day.
+  const recentDays = dailyLogSince(lastMilestoneTs(level));
+  const fmtDay = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString(settings.native, { day: 'numeric', month: 'numeric' });
+  const dayCard = (d: { date: string; counts: { art: number; voc: number; gap: number } }) => (
+    <div class={`rn day ${side()}`} key={`d${d.date}`}>
+      <div class="rn-rail"><span class="rn-dot day-dot" /></div>
+      <span class="rn-card day-card">
+        <span class="rn-day-date">{fmtDay(d.date)}</span>
+        <span class="rn-day-counts">
+          {d.counts.art > 0 && <span>{d.counts.art} {t('route.dayArt')}</span>}
+          {d.counts.voc > 0 && <span>{d.counts.voc} {t('route.dayVoc')}</span>}
+          {d.counts.gap > 0 && <span>{d.counts.gap} {t('route.dayGap')}</span>}
+        </span>
+      </span>
+    </div>
+  );
   for (let e = 0; e < ETAPPEN_PER_LEVEL; e++) {
     const done = e < prog.etappe;
     const isCur = e === prog.etappe && !prog.atAufstieg;
@@ -1943,6 +1964,9 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
           <div class="rn-rail"><span class="rn-dot" ref={curRef}><IconRoute /></span></div>
           <span class="rn-card flat"><span class="rn-title">{t('route.subLevelWeek', { level, n: e + 1 })}</span></span>
         </div>,
+      );
+      recentDays.forEach((d) => rows.push(dayCard(d)));
+      rows.push(
         <div class={`rn ${ready ? 'done' : 'current'} ${!ready ? 'pulse' : ''} ${side()}`} key={`e${e}`}>
           <div class="rn-rail"><span class="rn-dot">{ready ? <IconCheck /> : <IconCards />}</span></div>
           <button class="rn-card" onClick={onTrainer}>
@@ -2417,7 +2441,7 @@ function DictView({ settings, initialMode, onBack }: {
 
   const toggleSave = (word: string, translation: string) => {
     if (inDeck(settings.learn, word)) removeFromDeck(settings.learn, word);
-    else addToDeck({ word, translation, lang: settings.learn, ts: Date.now() });
+    else { addToDeck({ word, translation, lang: settings.learn, ts: Date.now() }); bumpDaily('voc', 1); }
     force((n) => n + 1);
   };
 
@@ -2697,6 +2721,7 @@ function Lesson({
       title: article.title,
       detail: score.answered > 0 ? t('lesson.logQuiz', { c: score.correct, a: score.answered }) : undefined,
     });
+    bumpDaily('art', 1); // count every finished article read (route or free)
     if (route) {
       completeActivity(settings.level, 'lesson'); // daily read advances the route
       markDailyDone('article');
@@ -2994,6 +3019,7 @@ function WordPopover({
     if (saved || !translation) return;
     if (addToDeck({ word: pop.word, translation, lang: settings.learn, context: pop.sentence, ts: Date.now() })) {
       award(XP.merken);
+      bumpDaily('voc', 1); // a word actively saved = learned
     }
     setSaved(true);
   }

@@ -898,6 +898,16 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn-title { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ll-text); }
 .rn-sub { font-size: 12.5px; color: var(--ll-text-soft); }
 
+/* Daily-summary cards in the current Etappe window — small, light, with Kürzel chips. */
+.rn.day { min-height: 38px; }
+.rn.day .rn-dot.day-dot { width: 12px; height: 12px; background: var(--ll-border); border-width: 2px; }
+.rn.day .day-card { gap: 3px; padding: 5px 4px; }
+.rn-day-date { font-family: var(--font-head); font-weight: 800; font-size: 12.5px; color: var(--ll-text-soft); }
+.rn-day-counts { display: flex; flex-wrap: wrap; gap: 5px; }
+.rn.l .rn-day-counts { justify-content: flex-end; }
+.rn-day-counts span { font-size: 11px; font-weight: 800; letter-spacing: .02em; color: var(--ll-accent-strong);
+  background: var(--ll-accent-soft); border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+
 /* Card style: every step (except the section header) sits in a calm card. */
 .route .rn:not(.head) .rn-card {
   background: var(--ll-surface); border: 1px solid var(--ll-border); border-radius: 14px;

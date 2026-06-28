@@ -267,6 +267,9 @@ const de: Dict = {
 
   // route (full learning path)
   'route.title': 'Lernpfad',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOK',
+  'route.dayGap': 'LÜC',
   'route.headStage': 'Etappe {n}/{total} → {next}',
   'route.subLevel': 'Sprachniveau {level}.{n}',
   'route.subLevelWeek': 'Sprachniveau {level}.{n} — diese Woche',
@@ -584,6 +587,9 @@ const en: Dict = {
   'time.weeksAgo': '{n} weeks ago',
 
   'route.title': 'Learning path',
+  'route.dayArt': 'ART',
+  'route.dayVoc': 'VOC',
+  'route.dayGap': 'GAP',
   'route.headStage': 'Stage {n}/{total} → {next}',
   'route.subLevel': 'Level {level}.{n}',
   'route.subLevelWeek': 'Level {level}.{n} — this week',
