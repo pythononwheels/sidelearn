@@ -910,8 +910,8 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .rn-day-date { font-family: var(--font-head); font-weight: 800; font-size: 12.5px; color: var(--ll-text-soft); }
 .rn-day-counts { display: flex; flex-wrap: wrap; gap: 5px; }
 .rn.l .rn-day-counts { justify-content: flex-end; }
-.rn-day-counts span { font-size: 11px; font-weight: 800; letter-spacing: .02em; color: var(--ll-accent-strong);
-  background: var(--ll-accent-soft); border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+.rn-day-counts span { font-size: 11px; font-weight: 800; letter-spacing: .02em; color: var(--ll-ok, #2f9e6b);
+  background: var(--ll-mint-soft, #e2f6ee); border-radius: 99px; padding: 1px 8px; white-space: nowrap; } /* done = grün */
 
 /* Card style: every step (except the section header) sits in a calm card. */
 .route .rn:not(.head) .rn-card {
