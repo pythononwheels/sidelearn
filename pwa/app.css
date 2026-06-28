@@ -644,6 +644,11 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cal-cell.today { box-shadow: inset 0 0 0 2px var(--ll-accent); }
 .cal-cell.sel { background: var(--ll-accent); color: var(--ll-accent-ink); box-shadow: none; }
 
+/* Archive: the calendar inline (full width) instead of a dropdown popover. */
+.archive-cal { margin: 4px 0 18px; }
+.archive-cal .cal { position: static; width: auto; padding: 6px 2px 2px; background: transparent; border: none; box-shadow: none; }
+.archive-cal .cal-cell { min-height: 34px; }
+
 /* Redesigned Home (Knuddel) -------------------------------------------- */
 .gurki { display: block; }
 .h2-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }

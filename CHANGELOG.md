@@ -11,6 +11,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
   lokalisiert.
 - Neuer On-Device-**Tageszähler** (`pwa/dailylog.ts`, `sl_pwa_daily_log`): hochgezählt beim
   Artikel-Lesen, bei gutgeschriebenen/gemerkten Vokabeln und je Lückentext-Runde.
+- **Archiv: Monatskalender statt Datums-Pills** — die `DayCalendar`-Komponente jetzt inline als
+  primäre Tagesauswahl (verfügbare Tage hervorgehoben, heute markiert), statt der horizontalen
+  Pill-Leiste + „Älter ▾"-Dropdown.
 
 ## [0.6.129] — 2026-06-28 — Optionen übersetzen · UI in NL/FR/ES/IT · Onboarding-Politur
 
