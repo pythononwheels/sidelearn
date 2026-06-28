@@ -2,6 +2,44 @@
 
 Status: `open` · `hold` · `closed` · `archive`
 
+## Content correctness — never teach a wrong thing (HIGH PRIORITY)
+
+Risk map (2026-06-28 audit): word-level surfaces are safe (deterministic), LLM
+surfaces have only JSON-shape validation. Worst case: tap a word → wrong LLM
+translation → "merken" → drilled in the Vokabeltest (a false translation gets
+reinforced).
+
+- 🟢 safe (deterministic): Lückentext (options + answer), Vokabeltest (cards +
+  options), schwere-Wort-Markierung, Übersetzung/Beispiel **when richdict hits**.
+- 🔴 LLM, only JSON-shape checked: vereinfachter Artikeltext, Quiz (Frage +
+  Optionen + „richtig"), Wort-Übersetzung-**Fallback**, Beispielsatz-Fallback,
+  Satz-/Digest-Übersetzung.
+
+Plan — hard guarantees first:
+
+- [open] **Tier 0 — deterministic, cheap (do first):**
+  1. **Word-existence gate** — every shown word (quiz option, gemerkte Vokabel,
+     getippte Übersetzung) must exist in the frequency list / dictionary, else
+     filter / don't save → no fantasy words.
+  2. **langdetect on LLM output** (already in the repo for toots) — paragraph /
+     translation in the wrong language → reject / retry.
+  3. **Dictionary cross-check for word translations** — only let the LLM fallback
+     into the deck if richdict/freedict corroborates it; else mark "unverified"
+     or drop.
+- [open] **Tier 1 — build-time (nightly cron → free at serve time):**
+  4. **LanguageTool** grammar pass on simplified paragraphs → regenerate on
+     serious errors.
+  5. **Quiz verifier** — second cheap pass: is the "correct" option supported by
+     the paragraph, the distractors clearly wrong? drop questions that fail.
+- [open] **Tier 2:** Tatoeba corpus example sentences (vs LLM); back-translation
+  check for sentence translations; content-linter in CI over DB samples.
+- Cross-cutting: prompt hardening ("only real, correctly-spelled {lang} words;
+  invent nothing; keep the original word if unsure").
+
+Files: `server/app/llm.py` (prompts/validation), `pipeline.py` (build-time hooks,
+retry), `src/core/dict/freedict.ts` + `src/core/difficulty/frequency.ts` (the
+deterministic ground truth to check against), `pwa/App.tsx` (deck-save path).
+
 ## Now
 
 - [closed] **curl-test LM Studio** — done. gemma-4-e4b: translation ~3s,
