@@ -95,7 +95,13 @@
     font-family:var(--head);font-weight:700;font-size:14px;color:#563acc}
   .masto-shout:hover{background:#ece9ff}
   .masto-logo{width:22px;height:22px;fill:#6364ff;flex:none}
-  @media(max-width:820px){.masto-note,.masto-shout{margin-left:auto;margin-right:auto}}
+  .wiki-shout{display:inline-flex;align-items:center;gap:10px;margin-top:18px;
+    background:#f4f4f5;border:1px solid #e3e3e6;border-radius:99px;padding:9px 16px;
+    font-family:var(--head);font-weight:700;font-size:14px;color:#3a3a3c}
+  .wiki-shout:hover{background:#ececee}
+  .wiki-logo{width:22px;height:22px;flex:none;display:grid;place-items:center;line-height:1;
+    font-family:'Linux Libertine','Georgia','Times New Roman',serif;font-weight:400;font-size:22px;color:#000}
+  @media(max-width:820px){.masto-note,.masto-shout,.wiki-shout{margin-left:auto;margin-right:auto}}
 
   @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
 </style>
@@ -147,6 +153,10 @@
         <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="s2a">Tippen zum Übersetzen — direkt im Text</span></li>
         <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="s2b">Sprachniveau jederzeit umschaltbar (A1–C1)</span></li>
       </ul>
+      <a class="wiki-shout" href="https://www.wikipedia.org" target="_blank" rel="noopener">
+        <span class="wiki-logo" aria-hidden="true">W</span>
+        <span data-i18n="s2shout">Shoutout an Wikipedia · CC BY-SA</span>
+      </a>
     </div>
     <div class="shot reveal"><div class="device"><img data-shot="article" src="shots/article-de.webp" width="800" height="1740" alt="Artikel lesen mit Tap-Übersetzung" loading="lazy" /></div></div>
   </section>
@@ -222,6 +232,7 @@
       s2k:"Lesen + Wörterbuch", s2h:"Echte Artikel, auf deinem Sprachniveau",
       s2p:"Jeden Tag die meistgelesenen Wikipedia-Artikel — neu geschrieben für dein Sprachniveau (A1–C1). Tippe ein markiertes Wort an und du bekommst Übersetzung, Wortart und einen Beispielsatz. Ein Tipp, und das Wort liegt in deinem Deck.",
       s2a:"Tippen zum Übersetzen — direkt im Text", s2b:"Sprachniveau jederzeit umschaltbar (A1–C1)",
+      s2shout:"Shoutout an Wikipedia · CC BY-SA",
       s3k:"Üben", s3h:"Lückentexte",
       s3p:"Setze fehlende Wörter aus dem Tagesstoff ein. Vier Optionen, sofortiges Feedback und auf Wunsch die Übersetzung — so verankert sich neuer Wortschatz im echten Kontext statt auf Karteikarten.",
       s4k:"Wiederholen", s4h:"Dein Vokabel-Deck",
@@ -247,6 +258,7 @@
       s2k:"Reading + dictionary", s2h:"Real articles, at your level",
       s2p:"Every day, the most-read Wikipedia articles — rewritten for your level (A1–C1). Tap a highlighted word for its translation, part of speech and an example sentence. One tap and it's in your deck.",
       s2a:"Tap to translate — right in the text", s2b:"Switch level anytime (A1–C1)",
+      s2shout:"Shoutout to Wikipedia · CC BY-SA",
       s3k:"Practice", s3h:"Fill the gap",
       s3p:"Fill the missing words from the day's material. Four options, instant feedback and the translation on request — so new vocabulary sticks in real context, not on flashcards.",
       s4k:"Review", s4h:"Your vocabulary deck",
