@@ -905,7 +905,8 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 
 /* Daily-summary cards in the current Etappe window — small, light, with Kürzel chips. */
 .rn.day { min-height: 38px; }
-.rn.day .rn-dot.day-dot { width: 12px; height: 12px; background: var(--ll-border); border-width: 2px; }
+.rn.day .rn-dot.day-dot { width: 28px; height: 28px; background: #cfe8d8; color: var(--ll-ok, #2f9e6b); border-width: 3px; }
+.rn.day .rn-dot.day-dot svg { width: 15px; height: 15px; }
 .rn.day .day-card { gap: 3px; padding: 5px 4px; }
 .rn-day-date { font-family: var(--font-head); font-weight: 800; font-size: 12.5px; color: var(--ll-text-soft); }
 .rn-day-counts { display: flex; flex-wrap: wrap; gap: 5px; }

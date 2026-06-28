@@ -1933,9 +1933,9 @@ function RouteView({ settings, onTrainer, onTest, onBack }: {
   const fmtDay = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString(settings.native, { day: 'numeric', month: 'numeric' });
   const dayCard = (d: { date: string; counts: { art: number; voc: number; gap: number } }) => (
     <div class={`rn day ${side()}`} key={`d${d.date}`}>
-      <div class="rn-rail"><span class="rn-dot day-dot" /></div>
+      <div class="rn-rail"><span class="rn-dot day-dot"><IconCheck /></span></div>
       <span class="rn-card day-card">
-        <span class="rn-day-date">{fmtDay(d.date)}</span>
+        <span class="rn-day-date">{t('route.dayDone', { date: fmtDay(d.date) })}</span>
         <span class="rn-day-counts">
           {d.counts.art > 0 && <span>{d.counts.art} {t('route.dayArt')}</span>}
           {d.counts.voc > 0 && <span>{d.counts.voc} {t('route.dayVoc')}</span>}
