@@ -184,9 +184,13 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   padding: calc(env(safe-area-inset-top, 0px) + 40px) 22px calc(env(safe-area-inset-bottom, 0px) + 28px);
   display: flex; flex-direction: column; gap: 14px; min-height: 100vh;
 }
-.lr-onb-logo { width: 56px; height: 56px; border-radius: 16px; background: var(--ll-accent-grad); box-shadow: var(--ll-shadow); margin-bottom: 6px; }
+.lr-onb-logo { width: 72px; height: 72px; display: grid; place-items: center; margin-bottom: 4px; }
 .lr-onb-h { font-size: 26px; line-height: 1.2; margin: 0; }
 .lr-onb-p { margin: 0 0 6px; font-size: 15px; line-height: 1.5; color: var(--ll-text-soft); }
+/* rotating multilingual hint on step 0: reserve height (avoid jump) + soft fade */
+.lr-onb-hint { min-height: 3em; animation: onb-hint-fade .5s ease; }
+@keyframes onb-hint-fade { from { opacity: 0 } to { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .lr-onb-hint { animation: none; } }
 .lr-onb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .lr-onb-choice {
   font: inherit; font-size: 16px; font-weight: 700; padding: 18px; border-radius: 16px;

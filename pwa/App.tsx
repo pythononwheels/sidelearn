@@ -32,7 +32,7 @@ import {
 import { buildClozeQuestions } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
-import { t, setUiLang } from './i18n';
+import { t, setUiLang, tFor, UI_LANGS } from './i18n';
 import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
 import { seedVocab, nextLevelTargets, type SeedWord } from './seedvocab';
@@ -334,7 +334,8 @@ const IconFlame = () => (<svg {...svg}><path d="M12 2c1 4 4 5 4 9a4 4 0 0 1-8 0c
 
 type Pose = 'yay' | 'sad' | 'party' | 'think';
 const Gurki = ({ pose = 'yay', size = 92 }: { pose?: Pose; size?: number }) => (
-  <img class="gurki" src={`/gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
+  // base-aware (app is served under /app/; the pose pngs live in src/public/gurki)
+  <img class="gurki" src={`${import.meta.env.BASE_URL}gurki/${pose}.png`} alt="" width={size} style={{ height: 'auto' }} />
 );
 
 // Greeting bubbles live in i18n as hype.0 … hype.{HYPE_COUNT-1}.
@@ -353,6 +354,14 @@ function Onboarding({
   const [nat, setNat] = useState<Language>(settings.native);
   const [learn, setLearn] = useState<Language>(settings.learn === settings.native ? (LANGUAGES.find((l) => l !== settings.native) as Language) : settings.learn);
   const [level, setLevel] = useState<CefrLevel>(settings.level);
+  // Step 0 shows the "this is your native language" hint cycling through every
+  // UI language (2.5s each) — so a speaker of any language sees it in theirs.
+  const [hintI, setHintI] = useState(0);
+  useEffect(() => {
+    if (step !== 0) return;
+    const id = setInterval(() => setHintI((i) => (i + 1) % UI_LANGS.length), 2500);
+    return () => clearInterval(id);
+  }, [step]);
 
   // UI language follows the (in-progress) native pick, so onboarding itself
   // switches language live as you choose.
@@ -364,11 +373,11 @@ function Onboarding({
 
   return (
     <main class="lr-onb">
-      <div class="lr-onb-logo" />
+      <div class="lr-onb-logo"><Gurki pose="yay" size={64} /></div>
       {step === 0 ? (
         <>
           <h1 class="lr-onb-h">{t('onb.welcome')}</h1>
-          <p class="lr-onb-p">{t('onb.uiP')}</p>
+          <p class="lr-onb-p lr-onb-hint" key={hintI} lang={UI_LANGS[hintI] ?? 'de'}>{tFor(UI_LANGS[hintI] ?? 'de', 'onb.uiP')}</p>
           <div class="lr-onb-grid">
             {LANGUAGES.map((l) => (
               <button class={`lr-onb-choice ${nat === l ? 'sel' : ''}`} onClick={() => pickNative(l)}>

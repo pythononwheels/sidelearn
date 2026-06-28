@@ -1919,3 +1919,13 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   if (!vars) return s;
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
 }
+
+/** Languages with a full UI translation (for the rotating multilingual onboarding
+ *  hint that shows the same line cycling through every language). */
+export const UI_LANGS = ['de', 'en', 'nl', 'fr', 'es', 'it'] as const;
+
+/** Look up a key in a SPECIFIC language (no interpolation) — for UI that shows
+ *  several languages at once, independent of the active UI language. */
+export function tFor(lang: string, key: string): string {
+  return DICTS[lang]?.[key] ?? en[key] ?? de[key] ?? key;
+}

@@ -3,13 +3,18 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.6.129] — 2026-06-28 — Lückentext: Optionen übersetzen
+## [0.6.129] — 2026-06-28 — Optionen übersetzen · UI in NL/FR/ES/IT · Onboarding-Politur
 
 - **„Optionen übersetzen"** im Lückentext: ein Tipp zeigt die Bedeutung **aller**
   Antwort-Optionen als kleine Unterzeile — für den Fall, dass man die Kandidatenwörter
   gar nicht kennt. Wörterbuch-first (richdict → Offline-Dict → Server-Fallback). Toggle
   („Übersetzung ausblenden"); pro Lücke zurückgesetzt. Satz-Übersetzung bleibt wie gehabt.
-  (DE/EN lokalisiert.)
+- **UI jetzt in 6 Sprachen**: NL/FR/ES/IT ergänzt (je 292 Keys, Platzhalter geprüft) — UI
+  folgt der Muttersprache; Maschinen-Übersetzung, Native-Review steht noch aus.
+- **„Cloze" → „Fill the gap"** (engl. Jargon raus; DE bleibt „Lückentext").
+- **Onboarding**: Gurki (Maskottchen) statt Platzhalter-Quadrat; der „Muttersprache"-Hinweis
+  **rotiert durch alle Sprachen** (alle 2,5 s). **Fix**: Gurki-Bildpfad base-aware (`/app/gurki/…`)
+  — lud vorher nur per Root-Fallback.
 
 ## [0.6.128] — 2026-06-28 — Mehrsprachige UI (DE/EN)
 
