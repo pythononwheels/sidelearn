@@ -352,6 +352,12 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
 .cloze-hint { margin: 2px 6px 12px; font-size: 13px; font-weight: 700; color: var(--ll-text-soft); }
 .cloze-opts-list { gap: 10px; padding: 0 6%; } /* extra inset for the answer buttons */
 .cloze-opts-list .sl-quiz-opt { text-align: center; } /* centered option labels */
+/* "Translate options": each option button shows its meaning as a small sub-line */
+.sl-quiz-opt .opt-trans { display: block; margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--ll-text-soft); }
+.cloze-opts-list .sl-quiz-opt.has-trans { padding-top: 9px; padding-bottom: 9px; }
+.cloze-opttrans { display: block; margin: 12px auto 0; font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--ll-accent-strong, var(--ll-accent)); background: none; border: 0; cursor: pointer; }
+.cloze-opttrans:disabled { opacity: 0.6; cursor: default; }
 .cloze-next { margin-top: 18px; display: block; width: 100%; } /* full width → stable position */
 
 /* Answered state: card turns white, wrong options go grey, the right one stays

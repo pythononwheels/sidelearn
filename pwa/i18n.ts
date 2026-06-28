@@ -215,6 +215,9 @@ const de: Dict = {
   'cloze.empty': 'Gerade kein Lückentext verfügbar — schau, dass es eine Tageslektion gibt, und versuch es nochmal.',
   'cloze.progress': 'Lücke {n} / {total} · {title}',
   'cloze.tapHint': 'Tippe auf das fehlende Wort',
+  'cloze.optsTranslate': 'Optionen übersetzen',
+  'cloze.optsHide': 'Übersetzung ausblenden',
+  'cloze.translating': 'Übersetze …',
   'cloze.resOk': 'Stark — richtig!',
   'cloze.resNo': 'Schade — richtig wäre „{answer}".',
 
@@ -534,6 +537,9 @@ const en: Dict = {
   'cloze.empty': "No cloze available right now — make sure there's a daily lesson and try again.",
   'cloze.progress': 'Gap {n} / {total} · {title}',
   'cloze.tapHint': 'Tap the missing word',
+  'cloze.optsTranslate': 'Translate options',
+  'cloze.optsHide': 'Hide translations',
+  'cloze.translating': 'Translating …',
   'cloze.resOk': 'Great — correct!',
   'cloze.resNo': 'Too bad — the answer is “{answer}”.',
 

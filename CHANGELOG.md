@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.129] — 2026-06-28 — Lückentext: Optionen übersetzen
+
+- **„Optionen übersetzen"** im Lückentext: ein Tipp zeigt die Bedeutung **aller**
+  Antwort-Optionen als kleine Unterzeile — für den Fall, dass man die Kandidatenwörter
+  gar nicht kennt. Wörterbuch-first (richdict → Offline-Dict → Server-Fallback). Toggle
+  („Übersetzung ausblenden"); pro Lücke zurückgesetzt. Satz-Übersetzung bleibt wie gehabt.
+  (DE/EN lokalisiert.)
+
 ## [0.6.128] — 2026-06-28 — Mehrsprachige UI (DE/EN)
 
 - **Komplett zweisprachige App-Oberfläche (DE/EN)** über ein leichtes `t()`-System (`pwa/i18n.ts`,
