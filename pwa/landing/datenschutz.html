@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Datenschutzerklärung — Learny</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#ff6b9d" />
+<link rel="icon" href="icon/48.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{ --surface:#fff; --border:#e9e6f5; --text:#2b2540; --soft:#7a7290; --accent:#ff6b9d; --accent-strong:#e84f86;
+    --font:'Quicksand',system-ui,sans-serif; --head:'Baloo 2',system-ui,cursive; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--text);background:linear-gradient(180deg,#eef9f3 0%,#f5f1ff 50%,#efeafb 100%);
+    -webkit-font-smoothing:antialiased;line-height:1.65;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px 80px}
+  nav{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 0}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--head);font-weight:800;font-size:22px;color:var(--text)}
+  .brand img{width:36px;height:36px;border-radius:10px}
+  .back{font-family:var(--head);font-weight:700;color:var(--soft);font-size:15px}
+  h1{font-family:var(--head);font-weight:800;font-size:34px;margin:18px 0 6px}
+  .lead{color:var(--soft);margin-bottom:22px}
+  h2{font-family:var(--head);font-weight:700;font-size:20px;margin:30px 0 8px}
+  h3{font-family:var(--head);font-weight:700;font-size:16px;margin:18px 0 6px}
+  p{margin:0 0 10px}
+  ul{margin:0 0 10px 20px}
+  li{margin:0 0 5px}
+  a{color:var(--accent-strong)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 28px;box-shadow:0 12px 30px rgba(124,92,252,.10)}
+  .muted{color:var(--soft);font-size:14px;margin-top:26px}
+  code{background:#f3eefe;border-radius:6px;padding:1px 6px;font-size:.92em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="index.html"><img src="icon/192.png" alt="" />Learny</a>
+    <a class="back" href="index.html">← zurück</a>
+  </nav>
+
+  <h1>Datenschutzerklärung</h1>
+  <p class="lead">Learny ist privacy-first: kein Konto, kein Tracking, keine Werbung. Dein Lernfortschritt
+    bleibt auf deinem Gerät. Diese Erklärung beschreibt, welche Daten dennoch unvermeidlich verarbeitet werden.</p>
+
+  <div class="card">
+
+    <h2>1. Verantwortlicher</h2>
+    <p>
+      11to1 UG (haftungsbeschränkt)<br>
+      Buchenstr. 16, 28844 Weyhe, Deutschland<br>
+      Geschäftsführer: Klaas-Henning Zweck<br>
+      E-Mail: <a href="mailto:support@talepal.org">support@talepal.org</a>
+    </p>
+
+    <h2>2. Daten auf deinem Gerät (lokale Speicherung)</h2>
+    <p>Deine Einstellungen (App-Sprache, Lernsprache, Niveau, Theme), dein Lernfortschritt (Streak, Lernpfad,
+      gelesene Artikel), deine gemerkten Vokabeln und die Spracheinstellung der Webseite werden ausschließlich
+      lokal in deinem Browser (<code>localStorage</code>) gespeichert. Diese Daten werden <strong>nicht</strong> an
+      uns übertragen und verlassen dein Gerät nicht. Du kannst sie in den Einstellungen als Datei exportieren und
+      jederzeit löschen (Browserdaten löschen / App entfernen).</p>
+
+    <h2>3. Abruf von Inhalten &amp; Übersetzungen (unser Server)</h2>
+    <p>Wenn du die Tageslektion lädst, ein markiertes Wort antippst oder einen Satz/Artikel übersetzen lässt,
+      sendet die App eine Anfrage an unseren Inhalts-Server (<code>api.sidelearn.pyrates.io</code>). Dabei werden
+      verarbeitet:</p>
+    <ul>
+      <li>deine <strong>IP-Adresse</strong> — technisch erforderlich für die Verbindung und zur Begrenzung von
+        Missbrauch (Rate-Limiting, Schutz vor automatisierten Massenanfragen);</li>
+      <li>der jeweils <strong>angetippte/zu übersetzende Text</strong> (Wort, Satz oder Artikel-Abschnitt).</li>
+    </ul>
+    <p>Zweck ist die Bereitstellung des Lerndienstes. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung
+      der von dir angeforderten Funktion) sowie lit. f DSGVO (berechtigtes Interesse an einem missbrauchssicheren,
+      kostenstabilen Betrieb).</p>
+
+    <h2>4. Einsatz von KI zur Übersetzung &amp; Vereinfachung</h2>
+    <p>Zur Übersetzung von Wörtern/Sätzen und zur niveaugerechten Vereinfachung von Artikeln wird der betreffende
+      Text an den KI-Dienst <strong>Google Gemini API</strong> (Google Ireland Limited, Irland; ggf. Google LLC,
+      USA) übermittelt und dort verarbeitet. Eine Verarbeitung in einem Drittland (USA) kann stattfinden; Grundlage
+      hierfür sind die EU-Standardvertragsklauseln. Übermittelt werden ausschließlich die jeweiligen Textausschnitte,
+      keine Konto- oder Profildaten (es gibt kein Konto). Nach Angaben des Anbieters werden Inhalte der
+      kostenpflichtigen Gemini-API nicht zum Training der Modelle verwendet. Rechtsgrundlage: Art. 6 Abs. 1 lit. b
+      und f DSGVO.</p>
+
+    <h2>5. Server-Protokolle &amp; Missbrauchsschutz</h2>
+    <p>Zum Schutz vor Missbrauch und zur Kostenkontrolle können bei blockierten oder limitierten Anfragen die
+      IP-Adresse, der angefragte Pfad und der Zeitpunkt kurzzeitig protokolliert werden. Diese Protokolle werden
+      ausschließlich zu diesem Zweck genutzt und nach kurzer Frist gelöscht. Rechtsgrundlage: Art. 6 Abs. 1 lit. f
+      DSGVO.</p>
+
+    <h2>6. Hosting</h2>
+    <p>Die Webseite (<code>learny.pyrates.io</code>) und der Inhalts-Server werden bei
+      <strong>[Hosting-Anbieter — bitte ergänzen, z. B. Hetzner Online GmbH, Deutschland]</strong> betrieben.
+      Mit dem Anbieter besteht ein Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO). Beim Abruf der Seite fallen
+      technisch bedingt Verbindungsdaten (u. a. IP-Adresse) an, die zur Auslieferung der Seite verarbeitet werden.</p>
+
+    <h2>7. Schriftarten (Google Fonts)</h2>
+    <p>Aktuell werden die Schriftarten „Baloo 2" und „Quicksand" über Google Fonts (Google Ireland Limited) geladen.
+      Dabei wird deine IP-Adresse an Google übermittelt. Wir planen, diese Schriften künftig lokal von unserem
+      Server auszuliefern, um diese Übermittlung zu vermeiden.</p>
+
+    <h2>8. Inhalte aus Wikipedia &amp; Mastodon</h2>
+    <p>Die Lese-Artikel stammen aus der Wikipedia (Lizenz CC BY-SA) und werden serverseitig durch uns abgerufen —
+      dein Browser baut dazu keine direkte Verbindung zur Wikipedia auf. Der „Social Stream" zeigt öffentliche
+      Beiträge von Mastodon, die wir serverseitig einsammeln. <strong>Bilder</strong> in solchen Beiträgen können
+      jedoch direkt von den jeweiligen Mastodon-Servern in deinem Browser geladen werden; dabei wird deine
+      IP-Adresse an den jeweiligen Server übermittelt. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</p>
+
+    <h2>9. Externe Links</h2>
+    <p>Unsere Seite enthält Links zu externen Angeboten (z. B. „Buy me a coffee", joinmastodon.org, Wikipedia).
+      Mit dem Klick verlässt du unsere Seite; für diese Angebote gelten die Datenschutzbestimmungen des jeweiligen
+      Anbieters. Erst beim Klick werden Daten dorthin übertragen.</p>
+
+    <h2>10. Keine Cookies, kein Tracking</h2>
+    <p>Learny setzt <strong>keine</strong> Cookies, keine Analyse- oder Tracking-Dienste (z. B. Google Analytics)
+      und keine Werbenetzwerke ein. Es gibt kein Nutzerkonto und keine geräteübergreifende Profilbildung.</p>
+
+    <h2>11. Deine Rechte</h2>
+    <p>Dir stehen im Rahmen der DSGVO folgende Rechte zu: Auskunft (Art. 15), Berichtigung (Art. 16), Löschung
+      (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch
+      (Art. 21). Wende dich dazu an <a href="mailto:support@talepal.org">support@talepal.org</a>. Da wir keine
+      Konten führen und keine personenbezogenen Profile speichern, liegen uns über die oben genannten,
+      kurzlebigen Verbindungs-/Missbrauchsdaten hinaus in der Regel keine dir zuordenbaren Daten vor.</p>
+
+    <h2>12. Beschwerderecht</h2>
+    <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde über die Verarbeitung deiner
+      personenbezogenen Daten zu beschweren.</p>
+
+    <h2>13. Änderungen</h2>
+    <p>Wir passen diese Erklärung an, wenn sich der Dienst oder die Rechtslage ändert. Es gilt die jeweils hier
+      veröffentlichte Fassung. Stand: Juni 2026.</p>
+
+  </div>
+
+  <p class="muted">Siehe auch unser <a href="impressum.html">Impressum</a>.</p>
+</div>
+</body>
+</html>
