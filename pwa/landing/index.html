@@ -138,6 +138,17 @@
   .inst-steps li span{color:var(--text);font-size:15.5px;padding-top:2px}
   .inst-steps b{color:var(--text)}
   .inst-note{color:var(--muted);font-size:14px;font-weight:600;margin-top:6px}
+  /* Start + Buy-me-a-coffee, two cards side by side */
+  .start-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px 0 0;text-align:left}
+  .start-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:flex-start;gap:16px}
+  .start-card h3{font-size:19px;margin:0}
+  .start-steps{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:10px;margin:0;width:100%}
+  .start-steps li{counter-increment:s;display:flex;align-items:center;gap:11px;color:var(--soft);font-weight:600;font-size:16px}
+  .start-steps li::before{content:counter(s);flex:none;width:27px;height:27px;border-radius:8px;background:var(--grad);color:#fff;font-family:var(--head);font-weight:800;font-size:14px;display:grid;place-items:center}
+  .start-steps b{color:var(--text)}
+  .start-card .btn{margin-top:auto}
+  .bmc-card .bmc-text{color:var(--soft);font-size:16px;line-height:1.55;margin:0}
+  .bmc-card .bmc{margin-top:auto;font-size:16px;padding:13px 24px}
 
   /* privacy */
   .privacy{background:linear-gradient(135deg,#fff,#f5f1ff);border:1px solid var(--border);border-radius:28px;padding:40px;text-align:center;box-shadow:var(--shadow)}
@@ -162,7 +173,7 @@
     .hero h1{font-size:40px}.cta,.trust{justify-content:center}
     .steps,.feat{grid-template-columns:1fr 1fr}
     .node{width:96px}
-    .inst-cols{grid-template-columns:1fr}
+    .inst-cols,.start-cols{grid-template-columns:1fr}
   }
   @media(max-width:560px){.steps,.feat{grid-template-columns:1fr}.hero h1{font-size:34px}}
 
@@ -265,35 +276,24 @@
   </section>
 
   <section id="install" class="install">
-    <div class="kicker" data-i18n="kInstall">Installieren</div>
-    <h2 class="sec-h" data-i18n="instH">So holst du Learny auf den Homescreen</h2>
+    <h2 class="sec-h" data-i18n="sgH">Klingt gut?</h2>
     <p class="sec-lead" data-i18n="instLead">Learny ist eine installierbare Web-App (PWA) — kein App-Store nötig. Einfach eine Webseite, die direkt auf deinem Gerät läuft.</p>
-    <div class="inst-cols">
-      <div class="inst-card" data-os="ios">
-        <div class="inst-head">
-          <span class="inst-os"><span class="osi"><svg class="ic" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span>iPhone / iPad</span>
-          <span class="inst-badge" data-i18n="myDevice">Dein Gerät</span>
-        </div>
-        <ol class="inst-steps">
-          <li><span data-i18n="ios1">Unten auf <b>„Learny jetzt öffnen"</b> tippen (in Safari).</span></li>
-          <li><span data-i18n="ios2">Unten auf <b>Teilen</b> tippen — das Quadrat mit dem Pfeil nach oben.</span></li>
-          <li><span data-i18n="ios3"><b>„Zum Home-Bildschirm"</b> wählen und <b>Hinzufügen</b> tippen. Fertig. 🥒</span></li>
+    <div class="start-cols">
+      <div class="start-card">
+        <h3 data-i18n="startCardH">Auf den Homescreen</h3>
+        <ol class="start-steps">
+          <li data-i18n="instStep1">Learny öffnen (mit dem Button unten)</li>
+          <li data-i18n="instStep2">Auf <b>Teilen</b> tippen</li>
+          <li data-i18n="instStep3"><b>„Zum Home-Bildschirm"</b> wählen</li>
         </ol>
+        <a class="btn" href="/app/" data-i18n="ctaStart">Los geht's</a>
       </div>
-      <div class="inst-card" data-os="android">
-        <div class="inst-head">
-          <span class="inst-os"><span class="osi"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 3h6"/></svg></span>Android</span>
-          <span class="inst-badge" data-i18n="myDevice">Dein Gerät</span>
-        </div>
-        <ol class="inst-steps">
-          <li><span data-i18n="and1">Unten auf <b>„Learny jetzt öffnen"</b> tippen (in Chrome).</span></li>
-          <li><span data-i18n="and2">Oben rechts auf das <b>⋮-Menü</b> tippen.</span></li>
-          <li><span data-i18n="and3"><b>„App installieren"</b> bzw. „Zum Startbildschirm hinzufügen". Fertig. 🥒</span></li>
-        </ol>
+      <div class="start-card bmc-card">
+        <h3 data-i18n="bmcCardH">Unterstützen</h3>
+        <p class="bmc-text" data-i18n="bmcCardText">Learny ist kostenlos. Infrastruktur und Entwicklung kosten aber etwas — wenn dir die App gefällt, freue ich mich über deine Unterstützung.</p>
+        <a class="bmc" href="https://buymeacoffee.com/kilohertz" target="_blank" rel="noopener" data-i18n="bmc">☕ Spendier mir einen Kaffee</a>
       </div>
     </div>
-    <p class="inst-note" id="inst-note" data-i18n="instNote">Tipp: Auf dem Desktop kannst du Learny direkt im Browser nutzen.</p>
-    <p style="margin-top:18px"><a class="btn" href="/app/" data-i18n="instBtn">Learny jetzt öffnen</a></p>
   </section>
 
   <section>
@@ -350,6 +350,9 @@
       fe7h:"Social Stream", fe7p:"Echte Social-Media-Posts in deiner Lernsprache — nach Thema & Sprachniveau gefiltert. Tippen zum Übersetzen.",
       kInstall:"Installieren", instH:"So holst du Learny auf den Homescreen",
       instLead:"Learny ist eine installierbare Web-App (PWA) — kein App-Store nötig. Einfach eine Webseite, die direkt auf deinem Gerät läuft.",
+      sgH:"Klingt gut?", startCardH:"Auf den Homescreen",
+      instStep1:"Learny öffnen (mit dem Button unten)", instStep2:"Auf <b>Teilen</b> tippen", instStep3:'<b>„Zum Home-Bildschirm"</b> wählen',
+      bmcCardH:"Unterstützen", bmcCardText:"Learny ist kostenlos. Infrastruktur und Entwicklung kosten aber etwas — wenn dir die App gefällt, freue ich mich über deine Unterstützung.",
       myDevice:"Dein Gerät",
       ios1:'Unten auf <b>„Learny jetzt öffnen"</b> tippen (in Safari).', ios2:'Unten auf <b>Teilen</b> tippen — das Quadrat mit dem Pfeil nach oben.', ios3:'<b>„Zum Home-Bildschirm"</b> wählen und <b>Hinzufügen</b> tippen. Fertig. 🥒',
       and1:'Unten auf <b>„Learny jetzt öffnen"</b> tippen (in Chrome).', and2:'Oben rechts auf das <b>⋮-Menü</b> tippen.', and3:'<b>„App installieren"</b> bzw. „Zum Startbildschirm hinzufügen". Fertig. 🥒',
@@ -389,6 +392,9 @@
       fe7h:"Social Stream", fe7p:"Real social-media posts in your target language — filtered by topic & level. Tap to translate.",
       kInstall:"Install", instH:"How to get Learny on your home screen",
       instLead:"Learny is an installable web app (PWA) — no app store needed. Just a webpage that runs right on your device.",
+      sgH:"Sounds good?", startCardH:"Add to home screen",
+      instStep1:"Open Learny (with the button below)", instStep2:"Tap <b>Share</b>", instStep3:'Choose <b>“Add to Home Screen”</b>',
+      bmcCardH:"Support", bmcCardText:"Learny is free. But infrastructure and development cost something — if you like the app, I'd really appreciate your support.",
       myDevice:"Your device",
       ios1:'Tap <b>“Open Learny now”</b> below (in Safari).', ios2:'Tap <b>Share</b> at the bottom — the square with the arrow pointing up.', ios3:'Choose <b>“Add to Home Screen”</b> and tap <b>Add</b>. Done. 🥒',
       and1:'Tap <b>“Open Learny now”</b> below (in Chrome).', and2:'Tap the <b>⋮ menu</b> top right.', and3:'Tap <b>“Install app”</b> / “Add to home screen”. Done. 🥒',

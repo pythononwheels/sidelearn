@@ -10,6 +10,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **Screenshots aktualisiert**: `home-en` / `cloze-en` zeigen jetzt „Fill the gap" (nach dem Cloze-Rename);
   `stream-de` = der alte Mastodon-Anime-Shot zurück.
 
+## [Unreleased] — 2026-06-29 — Landing: Start + Support als zwei Karten
+
+- Die Install-Sektion der Hauptseite ist jetzt eine „Klingt gut?"-Sektion mit **zwei Karten
+  nebeneinander**: links „Auf den Homescreen" (Schritte + „Los geht's"), rechts eine
+  **Buy-me-a-coffee**-Karte mit Hinweis (Learny ist kostenlos, Infrastruktur/Entwicklung kosten etwas).
+  Ersetzt die ausführliche iOS/Android-Anleitung durch den schlankeren modi-Stil.
+
 ## [0.6.131] — 2026-06-29 — In-App-Support
 
 - **Settings → „Unterstützen"**: kurzer Hinweis, dass Learny kostenlos ist (Infrastruktur &
