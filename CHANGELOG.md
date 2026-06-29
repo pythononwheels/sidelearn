@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.133] — 2026-06-29 — Lückentext SRS-getrieben + clevere Distraktoren
+
+- **Wortauswahl jetzt SRS-getrieben**: der Lückentext zieht die Lücken aus den **fälligen
+  SRS-Reviews + i+1-Etappenzielen**, die im heutigen Artikel vorkommen, und blankt sie in der
+  **echten Artikel-Passage** (statt halb aus der zufälligen Artikel-Vokabelliste / synthetischen
+  Wörterbuch-Beispielsätzen). Neuer reiner Helfer `buildClozeFromLemmas` (`src/core/cloze.ts`)
+  brückt Lemma↔flektierte Oberflächenform (wie `creditWordsFromText`).
+- **Ergebnis zählt**: jede Antwort wird per `srsGrade` in die Leitner-Box geschrieben
+  (richtig → Box+1, falsch → Box=1, `due` neu getaktet). Das blinde Gut-Schreiben aller
+  geblankten Wörter beim Abschluss ist entfernt — eine verhauene Lücke bringt das Wort nicht
+  mehr fälschlich voran.
+- **Clevere Distraktoren**: gleiche Wortart + CEFR-Band (±1) aus dem richdict statt rein zufällig;
+  weitet bei Knappheit sauber auf den alten Pool.
+- Konsolidierungs-Anteil + Cold-Start-Fallback: nie ein (fast) leerer Lückentext, auch bei
+  leerem Deck. Alle 6 `buildClozeQuestions`-Aufrufer abwärtskompatibel.
+
 ## [0.6.132] — 2026-06-29 — Lückentext: Bedeutungen nach dem Antworten
 
 - **Lückentext**: nach dem Antworten erscheinen jetzt **automatisch die Übersetzungen unter allen
