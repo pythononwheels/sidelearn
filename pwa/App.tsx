@@ -1402,15 +1402,25 @@ function renderCloze(prompt: string): ComponentChildren {
   return prompt.split(/(_{2,})/).map((p) => (/^_{2,}$/.test(p) ? <span class="cloze-blank" /> : p));
 }
 
-/** Bucket the free-form German richdict POS into a coarse class for distractor
- *  matching (so a noun blank gets noun distractors, a verb gets verbs, …). */
+/** Bucket the free-form richdict POS into a coarse class for distractor matching
+ *  (a noun blank gets noun distractors, a verb gets verbs, …). POS is written in
+ *  the user's native language, so this recognises the grammatical terms of all
+ *  supported natives (de/en/es/fr/nl/it). Soft heuristic — unknowns → 'other'. */
 function posBucket(p?: string): string {
   const s = (p ?? '').toLowerCase();
-  if (s.startsWith('subst') || s.startsWith('nomen') || s === 'eigenname') return 'noun';
-  if (s.startsWith('verb') || s.startsWith('partizip')) return 'verb'; // incl. "Partizip Perfekt"
-  if (s.startsWith('adjekt')) return 'adj';
-  if (s.startsWith('adverb')) return 'adv';
-  return 'other'; // Pronomen, Präposition, Konjunktion, Artikel, Interjektion
+  if (!s) return 'other';
+  const has = (...xs: string[]) => xs.some((x) => s.includes(x));
+  // Function words first — some contain noun/verb substrings (e.g. "pronom", "adverbe").
+  if (has('pronom', 'präpos', 'prepos', 'préposition', 'voorzetsel', 'preposizion',
+          'konjunkt', 'conjunct', 'conjonction', 'voegwoord', 'congiunzion',
+          'artikel', 'article', 'artícul', 'articol', 'lidwoord',
+          'interje', 'tussenwerpsel', 'numeral', 'zahl', 'numéral', 'telwoord')) return 'other';
+  if (has('adverb', 'adverbi', 'adverbe', 'bijwoord')) return 'adv';
+  if (has('adjekt', 'adject', 'adjetiv', 'aggettiv', 'bijvoeglijk')) return 'adj';
+  if (has('verb', 'verbo', 'verbe', 'werkwoord', 'partizip', 'particip', 'deelwoord')) return 'verb';
+  if (has('subst', 'nomen', 'noun', 'naamwoord', 'sustantiv', 'sostantiv',
+          'eigenname', 'eigennaam', 'proper', 'nombre', 'nome', 'propr', 'nom')) return 'noun';
+  return 'other';
 }
 const bandIdx = (b?: string) => (b && (CEFR_LEVELS as readonly string[]).includes(b) ? levelIndex(b as CefrLevel) : -1);
 

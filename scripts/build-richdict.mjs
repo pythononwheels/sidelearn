@@ -8,11 +8,13 @@
  * a learning app.
  *
  *   GEMINI_API_KEY=... [GEMINI_MODEL=gemini-2.5-flash-lite] \
- *     node scripts/build-richdict.mjs <learn> [N] [concurrency]
+ *     node scripts/build-richdict.mjs <learn> [native=de] [N] [concurrency]
  *
- * Reads:  src/public/data/freq-<learn>.json, dict-<learn>-de.json, gloss-<learn>-de.json
- * Writes: src/public/data/richdict-<learn>-de.json
+ * Reads:  src/public/data/freq-<learn>.json, dict-<learn>-<native>.json, gloss-<learn>-<native>.json
+ * Writes: src/public/data/richdict-<learn>-<native>.json
  *   schema: { word: { b: "A2", s: [{t,p,ex,exd}], alt: [..] } }
+ *   meanings/POS/example-translation are in the NATIVE language; `native` defaults
+ *   to 'de'. Grounding dict is optional — without it the build is LLM-only.
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -31,24 +33,26 @@ const THRESHOLDS = [['A1', 750], ['A2', 1500], ['B1', 3000], ['B2', 6000], ['C1'
 const bandOf = (rank) => THRESHOLDS.find(([, b]) => rank <= b)?.[0] ?? 'C2';
 const norm = (w) => w.toLowerCase().replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '');
 
-function systemPrompt(lang) {
+function systemPrompt(lang, nativeName) {
   return (
-    `You build a learner's dictionary for a GERMAN speaker learning ${lang}. ` +
+    `You build a learner's dictionary for a ${nativeName} speaker learning ${lang}. ` +
     `The user message is a JSON array of words, each: { "w": the ${lang} word, ` +
-    `"b": CEFR band, "fd": German translations from a TRUSTED dictionary grouped by sense (may be empty) }.\n` +
+    `"b": CEFR band, "fd": ${nativeName} translations from a TRUSTED dictionary grouped by sense (may be empty) }.\n` +
     `For EACH word, output an entry with:\n` +
     `- "s": 1-3 senses ORDERED BY HOW COMMONLY A LEARNER MEETS THE WORD — the everyday ` +
     `dominant meaning MUST be first, NOT necessarily the order given in "fd". Each sense:\n` +
-    `  "t" = German meaning (1-4 words). Use "fd" as the source of meanings, BUT you MUST:\n` +
-    `    • put the everyday dominant sense first — e.g. ${lang} "pas" → "nicht" BEFORE "Schritt"; ` +
-    `"son" → "sein/ihr" BEFORE "Klang"; a frequent verb form like "as" → "hast";\n` +
+    `  "t" = ${nativeName} meaning (1-4 words). Use "fd" as the source of meanings, BUT you MUST:\n` +
+    `    • put the everyday dominant sense first — the meaning a learner meets most often, ` +
+    `not necessarily the order given in "fd" (e.g. for a frequent function word or a common ` +
+    `conjugated verb form, lead with its everyday sense);\n` +
     `    • ADD a clearly-correct very common sense if it is missing from "fd" ` +
     `(negation particles, possessives, articles, frequent conjugated verb forms);\n` +
     `    • NEVER invent rare, technical, or uncertain meanings.\n` +
-    `  "p" = part of speech in German (Substantiv, Verb, Adjektiv, Adverb, Pronomen, Artikel, Präposition, …).\n` +
+    `  "p" = part of speech, written in ${nativeName} using that language's standard grammatical ` +
+    `terms (the equivalents of noun, verb, adjective, adverb, pronoun, article, preposition, …).\n` +
     `  "ex" = ONE short, natural ${lang} example sentence using the word in THAT sense.\n` +
-    `  "exd" = the German translation of that example.\n` +
-    `- "alt": up to 3 further German synonyms across the senses (optional, may be []).\n` +
+    `  "exd" = the ${nativeName} translation of that example.\n` +
+    `- "alt": up to 3 further ${nativeName} synonyms across the senses (optional, may be []).\n` +
     `Correctness matters — this is for language learning. Reply with MINIFIED JSON ONLY, an object ` +
     `keyed by each input word: {"<w>":{"s":[{"t":"","p":"","ex":"","exd":""}],"alt":[]}, ...}. Include every input word.`
   );
@@ -81,15 +85,25 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
   const learn = process.argv[2];
-  const N = parseInt(process.argv[3] || '6000', 10);
-  const CONC = parseInt(process.argv[4] || '8', 10);
-  if (!learn || !LANG_NAMES[learn]) throw new Error('usage: build-richdict.mjs <fr|es|en|nl|it> [N] [conc]');
+  // Optional <native> (defaults to 'de' for backward compatibility). If argv[3]
+  // isn't a known language code it's treated as N, so `… <learn> [N] [conc]` works.
+  let native = process.argv[3];
+  let argShift = 4;
+  if (!native || !LANG_NAMES[native]) { native = 'de'; argShift = 3; }
+  const N = parseInt(process.argv[argShift] || '6000', 10);
+  const CONC = parseInt(process.argv[argShift + 1] || '8', 10);
+  if (!learn || !LANG_NAMES[learn]) throw new Error('usage: build-richdict.mjs <learn> [native=de] [N] [conc]');
+  if (learn === native) throw new Error('learn and native must differ');
   if (!KEY) throw new Error('set GEMINI_API_KEY');
   const lang = LANG_NAMES[learn];
+  const nativeName = LANG_NAMES[native];
 
   const freq = JSON.parse(await readFile(join(DATA, `freq-${learn}.json`), 'utf8'));
-  const dict = JSON.parse(await readFile(join(DATA, `dict-${learn}-de.json`), 'utf8').catch(() => '{}'));
-  const gloss = JSON.parse(await readFile(join(DATA, `gloss-${learn}-de.json`), 'utf8').catch(() => '{}'));
+  const dict = JSON.parse(await readFile(join(DATA, `dict-${learn}-${native}.json`), 'utf8').catch(() => '{}'));
+  const gloss = JSON.parse(await readFile(join(DATA, `gloss-${learn}-${native}.json`), 'utf8').catch(() => '{}'));
+  if (!Object.keys(dict).length) {
+    console.warn(`! no dict-${learn}-${native}.json grounding found — building UNGROUNDED (LLM-only). Review quality by sampling.`);
+  }
 
   // Candidate words: top-N by rank, letters only, length >= 2.
   const words = Object.entries(freq)
@@ -105,7 +119,7 @@ async function main() {
     return { w, b: bandOf(freq[w]), fd: fd.slice(0, 4) };
   });
 
-  const system = systemPrompt(lang);
+  const system = systemPrompt(lang, nativeName);
   const BATCH = 12;
   const batches = [];
   for (let i = 0; i < cand.length; i += BATCH) batches.push(cand.slice(i, i + BATCH));
@@ -151,8 +165,8 @@ async function main() {
   await Promise.all(Array.from({ length: CONC }, worker));
   process.stderr.write('\n');
 
-  await writeFile(join(DATA, `richdict-${learn}-de.json`), JSON.stringify(out));
-  console.log(`richdict-${learn}-de.json: ${Object.keys(out).length} words (of ${cand.length} candidates)`);
+  await writeFile(join(DATA, `richdict-${learn}-${native}.json`), JSON.stringify(out));
+  console.log(`richdict-${learn}-${native}.json: ${Object.keys(out).length} words (of ${cand.length} candidates)`);
 }
 
 await main();

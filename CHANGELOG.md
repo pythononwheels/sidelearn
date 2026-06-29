@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.136] — 2026-06-29 — Multilang-Vokabel-Engine: EN- & ES-Muttersprachler (Stufe 1)
+
+- **`build-richdict.mjs` für beliebige Muttersprache parametrisiert** (`<learn> [native]`): Bedeutungen,
+  Wortart und Beispiel-Übersetzung werden in der Zielsprache erzeugt; Pfade `…-<native>.json`.
+- **8 neue richdicts** für EN- und ES-Muttersprachler (fr/nl/es/de→en, en/fr/nl/de→es), je ~5700–5900
+  Wörter, Qualität auf DE-Niveau. Damit funktionieren Vokabeltest, i+1-Ziele und der SRS-Lückentext
+  jetzt auch für englische und spanische Muttersprache.
+- **`posBucket` mehrsprachig**: POS-gematchte Lückentext-Distraktoren erkennen die grammatischen Begriffe
+  aller unterstützten Muttersprachen (de/en/es/fr/nl/it), nicht nur Deutsch.
+- Daten on-demand gefetcht (nicht im Install-Precache) → kein Bundle-Bloat.
+
 ## [0.6.135] — 2026-06-29 — Fix: alte Home-Screen-Icons öffneten die Landing
 
 - **Standalone-Weiche** in der Landing-`index.html`: wird `/` als **installierte PWA** geöffnet
