@@ -58,6 +58,9 @@ const de: Dict = {
   'set.update.checking': 'Suche …',
   'set.update.current': 'Aktuell ✓',
   'set.foot': 'Learny · Teil der Sidelearn-Familie · Texte: Wikipedia (CC BY-SA)',
+  'set.support': 'Unterstützen',
+  'set.supportText': 'Learny ist kostenlos. Infrastruktur und Entwicklung kosten aber etwas — wenn dir die App gefällt, freue ich mich über deine Unterstützung.',
+  'set.coffee': '☕ Spendier mir einen Kaffee',
   'set.importOk': 'Importiert ✓ — die App wird neu geladen.',
   'set.importFail': 'Import fehlgeschlagen — ist das eine Learny-Sicherung (.json)?',
 
@@ -399,6 +402,9 @@ const en: Dict = {
   'set.update.checking': 'Checking …',
   'set.update.current': 'Up to date ✓',
   'set.foot': 'Learny · part of the Sidelearn family · Texts: Wikipedia (CC BY-SA)',
+  'set.support': 'Support',
+  'set.supportText': "Learny is free. But infrastructure and development cost something — if you like the app, I'd really appreciate your support.",
+  'set.coffee': '☕ Buy me a coffee',
   'set.importOk': 'Imported ✓ — the app will reload.',
   'set.importFail': 'Import failed — is this a Learny backup (.json)?',
 
@@ -713,6 +719,9 @@ const nl: Dict = {
   'set.update.checking': 'Zoeken …',
   'set.update.current': 'Up-to-date ✓',
   'set.foot': 'Learny · onderdeel van de Sidelearn-familie · Teksten: Wikipedia (CC BY-SA)',
+  'set.support': 'Steunen',
+  'set.supportText': 'Learny is gratis. Maar infrastructuur en ontwikkeling kosten geld — als de app je bevalt, waardeer ik je steun enorm.',
+  'set.coffee': '☕ Trakteer me op een koffie',
   'set.importOk': 'Geïmporteerd ✓ — de app wordt herladen.',
   'set.importFail': 'Importeren mislukt — is dit een Learny-back-up (.json)?',
 
@@ -1026,6 +1035,9 @@ const fr: Dict = {
   'set.update.checking': 'Recherche …',
   'set.update.current': 'À jour ✓',
   'set.foot': 'Learny · membre de la famille Sidelearn · Textes : Wikipédia (CC BY-SA)',
+  'set.support': 'Soutenir',
+  'set.supportText': "Learny est gratuit. Mais l'infrastructure et le développement ont un coût — si l'app te plaît, ton soutien est le bienvenu.",
+  'set.coffee': '☕ Offre-moi un café',
   'set.importOk': 'Importé ✓ — l’app va se recharger.',
   'set.importFail': 'Échec de l’import — est-ce une sauvegarde Learny (.json) ?',
 
@@ -1339,6 +1351,9 @@ const es: Dict = {
   'set.update.checking': 'Buscando …',
   'set.update.current': 'Actualizada ✓',
   'set.foot': 'Learny · parte de la familia Sidelearn · Textos: Wikipedia (CC BY-SA)',
+  'set.support': 'Apoyar',
+  'set.supportText': 'Learny es gratis. Pero la infraestructura y el desarrollo cuestan — si te gusta la app, agradezco mucho tu apoyo.',
+  'set.coffee': '☕ Invítame a un café',
   'set.importOk': 'Importado ✓ — la app se recargará.',
   'set.importFail': 'Error al importar — ¿es una copia de Learny (.json)?',
 
@@ -1652,6 +1667,9 @@ const it: Dict = {
   'set.update.checking': 'Ricerca …',
   'set.update.current': 'Aggiornata ✓',
   'set.foot': 'Learny · parte della famiglia Sidelearn · Testi: Wikipedia (CC BY-SA)',
+  'set.support': 'Sostieni',
+  'set.supportText': "Learny è gratis. Ma infrastruttura e sviluppo hanno un costo — se l'app ti piace, il tuo sostegno è molto gradito.",
+  'set.coffee': '☕ Offrimi un caffè',
   'set.importOk': 'Importato ✓ — l’app verrà ricaricata.',
   'set.importFail': 'Importazione non riuscita — è un backup di Learny (.json)?',
 

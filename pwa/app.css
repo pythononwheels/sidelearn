@@ -578,6 +578,9 @@ h1, h2, h3, .tab-screen-title { font-family: var(--font-head); }
   background: var(--ll-surface); font-size: 14px; color: var(--ll-text-soft);
 }
 .set-version b { color: var(--ll-text); }
+.set-coffee { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-weight: 800; font-size: 15px;
+  color: #2b2540; background: #ffdd00; border-radius: 12px; padding: 12px 18px; text-decoration: none; box-shadow: 0 3px 0 #e3c400; }
+.set-coffee:active { transform: translateY(2px); box-shadow: 0 1px 0 #e3c400; }
 .set-update {
   font: inherit; font-weight: 700; font-size: 13px; padding: 7px 12px; border-radius: 11px;
   border: 1px solid var(--ll-border); background: var(--ll-accent-soft); color: var(--ll-accent-strong); cursor: pointer;
