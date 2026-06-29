@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.132] — 2026-06-29 — Lückentext: Bedeutungen nach dem Antworten
+
+- **Lückentext**: nach dem Antworten erscheinen jetzt **automatisch die Übersetzungen unter allen
+  Optionen** (wörterbuch-first) — man sieht die Bedeutung des richtigen *und* des falsch getippten Worts
+  und lernt aus dem Fehler. Vor dem Antworten bleiben die Optionen sauber (manueller „Übersetzen"-Button
+  unverändert). Gemeinsamer Loader für Auto-Reveal und manuelles Übersetzen.
+
 ## [Unreleased] — 2026-06-29 — Landing-Feinschliff
 
 - **modi-Seite**: Install-Schritte im Footer (App öffnen → Teilen → „Zum Home-Bildschirm") vor dem

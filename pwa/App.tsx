@@ -1453,6 +1453,7 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
   function choose(opt: string, e: MouseEvent) {
     if (picked !== null) return;
     setPicked(opt);
+    void loadOptTrans(); // after answering, reveal every option's meaning so you learn from a miss
     if (questions && opt === questions[pos]!.answer) {
       setScore((s) => s + 1); award(XP.merken);
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -1479,13 +1480,18 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
     const sv = await fetchWordTranslation(SERVER, settings.learn, settings.native, w, q?.prompt ?? '');
     return sv?.translation ?? '';
   }
-  async function revealOpts() {
-    if (optTrans) { setOptTrans(null); return; }
-    if (!q) return;
+  // Populate the per-option translation map (idempotent). Shared by the manual
+  // "translate options" toggle and the auto-reveal after answering.
+  async function loadOptTrans() {
+    if (optTrans || optBusy || !q) return;
     setOptBusy(true);
     const pairs = await Promise.all(q.options.map(async (o) => [o, await translateOptWord(o)] as const));
     setOptTrans(Object.fromEntries(pairs));
     setOptBusy(false);
+  }
+  function revealOpts() {
+    if (optTrans) { setOptTrans(null); return; }
+    void loadOptTrans();
   }
 
   // Completing a Lückentext-Runde advances a 'cloze' route node (once).
