@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.135] — 2026-06-29 — Fix: alte Home-Screen-Icons öffneten die Landing
+
+- **Standalone-Weiche** in der Landing-`index.html`: wird `/` als **installierte PWA** geöffnet
+  (`display-mode: standalone` / `navigator.standalone`), leitet es sofort auf `/app/` weiter.
+  Hintergrund: Installs aus der Zeit, als die App noch auf `/` lag, haben ihre Icon-`start_url`
+  auf `/` festgeschrieben; nachdem `/` zur Landing wurde (+ Kill-Switch den alten App-SW
+  entfernte), öffneten diese Icons die Landing statt der App. Normale Browser-Besucher sind
+  nicht betroffen.
+- Verwaistes `/manifest.webmanifest` (alter Root-Deploy, `start_url:"."`) serverseitig entfernt.
+
 ## [0.6.134] — 2026-06-29 — Landing: Install-Hinweis „am Handy"
 
 - **Install-Karte** („Add to home screen"): Überschrift um **„— am Handy" / „— on your phone"**

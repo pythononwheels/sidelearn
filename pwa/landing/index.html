@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>
+  // Standalone redirect: installs made back when the app lived at "/" baked their
+  // home-screen icon's start_url to "/". The app is now at "/app/". When this page
+  // is launched as an INSTALLED PWA (standalone), forward to the app so the old
+  // icon lands in Learny — not on this marketing page. Normal browser visitors
+  // (not standalone) are unaffected and see the landing as usual.
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    location.replace('/app/');
+  }
+</script>
 <title>Learny — Lies dich in eine neue Sprache</title>
 <meta name="description" content="Lies jeden Tag aktuelle Wikipedia-Artikel (most read), gekürzt und angepasst an dein Sprachniveau (A1–C1) — ganz ohne Lehrbuch. Privacy-first, kein Account, alles bleibt auf deinem Gerät." />
 <meta name="theme-color" content="#ff6b9d" />
