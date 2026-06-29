@@ -36,6 +36,10 @@ const DICT_PAIRS = [
   ['de', 'en'], ['fr', 'en'], ['nl', 'en'], ['es', 'en'],
   ['es', 'fr'], ['es', 'nl'],
   ['de', 'es'], ['en', 'es'], ['fr', 'es'], ['nl', 'es'],
+  // Stufe 2 — NL / IT / FR natives (FreeDict directed packages exist for these).
+  ['fr', 'nl'], ['de', 'nl'], ['en', 'nl'], ['it', 'nl'],
+  ['fr', 'it'], ['de', 'it'], ['en', 'it'], ['nl', 'it'], ['es', 'it'],
+  ['de', 'fr'], ['en', 'fr'], ['nl', 'fr'],
 ];
 
 const TOP_RANKS = 20_000; // ranks bundled into freq-*.json

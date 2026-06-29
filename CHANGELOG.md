@@ -3,6 +3,18 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.137] — 2026-06-30 — Multilang Stufe 2 (NL/IT/FR) + UI-Native-Review
+
+- **Vokabel-Engine für NL-, IT- & FR-Muttersprachler** (Stufe 2): 12 neue richdicts
+  (fr/de/en/it→nl, fr/de/en/nl/es→it, de/en/nl→fr), je ~5670–5940 Wörter, gegroundet auf
+  FreeDict. Damit sind **alle 6 UI-Sprachen** vollwertige Muttersprachen (inkl. NL→FR, IT→EN).
+- **UI native-review per LLM-Cross-Check**: zwei unabhängige Durchläufe (gpt-5 + gpt-5.5) über die
+  maschinenübersetzten nl/fr/es/it-Strings gegen die de/en-Quelle. **64 Fixes** eingearbeitet
+  (29 high + 35 med): natürlichere/kindgerechte Cloze-Begriffe (nl „lacune"→„Invultekst", fr
+  „Comble le trou"→„Texte à trous", it→„Spazi vuoti"), Grammatik-/Kongruenz-Korrekturen,
+  Imperative für Action-Labels, kulturelle Fixes (es „coge" → „consigue"). gpt-5.5 bestätigte
+  0 verbleibende High-Issues. Platzhalter/HTML überall erhalten.
+
 ## [0.6.136] — 2026-06-29 — Multilang-Vokabel-Engine: EN- & ES-Muttersprachler (Stufe 1)
 
 - **`build-richdict.mjs` für beliebige Muttersprache parametrisiert** (`<learn> [native]`): Bedeutungen,
