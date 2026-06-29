@@ -8,7 +8,7 @@
 import { type ComponentChildren } from 'preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { LANGUAGES, LANG_LABELS, type Language } from '@/core/config';
-import { CEFR_LEVELS, isAboveLevel, rankToBand, type CefrLevel } from '@/core/difficulty/banding';
+import { CEFR_LEVELS, isAboveLevel, levelIndex, rankToBand, type CefrLevel } from '@/core/difficulty/banding';
 import { loadRanks, rankOf, normalize } from '@/core/difficulty/frequency';
 import { lemmaCandidates } from '@/core/dict/lemmatize';
 import { loadNames } from '@/core/names';
@@ -29,7 +29,7 @@ import {
   type AreaArticle,
   type ServerToot,
 } from '@/core/serverapi';
-import { buildClozeQuestions } from '@/core/cloze';
+import { buildClozeQuestions, buildClozeFromLemmas, type ClozeItem, type LemmaTarget } from '@/core/cloze';
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
 import { t, setUiLang, tFor, UI_LANGS } from './i18n';
@@ -1402,15 +1402,67 @@ function renderCloze(prompt: string): ComponentChildren {
   return prompt.split(/(_{2,})/).map((p) => (/^_{2,}$/.test(p) ? <span class="cloze-blank" /> : p));
 }
 
+/** Bucket the free-form German richdict POS into a coarse class for distractor
+ *  matching (so a noun blank gets noun distractors, a verb gets verbs, …). */
+function posBucket(p?: string): string {
+  const s = (p ?? '').toLowerCase();
+  if (s.startsWith('subst') || s.startsWith('nomen') || s === 'eigenname') return 'noun';
+  if (s.startsWith('verb') || s.startsWith('partizip')) return 'verb'; // incl. "Partizip Perfekt"
+  if (s.startsWith('adjekt')) return 'adj';
+  if (s.startsWith('adverb')) return 'adv';
+  return 'other'; // Pronomen, Präposition, Konjunktion, Artikel, Interjektion
+}
+const bandIdx = (b?: string) => (b && (CEFR_LEVELS as readonly string[]).includes(b) ? levelIndex(b as CefrLevel) : -1);
+
+/** Build a POS+band-aware distractor picker over the richdict. Same word class,
+ *  CEFR band ±1; widens to any band, then to the legacy uniform-random pool, so
+ *  it never returns fewer than it can. */
+function makeDistractorPicker(rich: Record<string, RichEntry>, fallbackPool: string[]) {
+  const byBucket = new Map<string, { lemma: string; bi: number }[]>();
+  for (const [lemma, e] of Object.entries(rich)) {
+    const b = posBucket(e.s?.[0]?.p);
+    const arr = byBucket.get(b) ?? [];
+    arr.push({ lemma, bi: bandIdx(e.b) });
+    byBucket.set(b, arr);
+  }
+  const rng = Math.random;
+  const draw = (arr: string[], n: number, ex: Set<string>) =>
+    [...new Set(arr)].filter((w) => !ex.has(w.toLowerCase())).sort(() => rng() - 0.5).slice(0, n);
+
+  return (answerSurface: string, lemma: string, band: string | undefined, n: number): string[] => {
+    const e = rich[lemma];
+    const bucket = posBucket(e?.s?.[0]?.p);
+    const ti = bandIdx(band ?? e?.b);
+    const ex = new Set([lemma.toLowerCase(), answerSurface.toLowerCase()]);
+    const inBucket = byBucket.get(bucket) ?? [];
+    let picked = draw(inBucket.filter((x) => ti < 0 || x.bi < 0 || Math.abs(x.bi - ti) <= 1).map((x) => x.lemma), n, ex);
+    if (picked.length < n) picked = draw([...picked, ...inBucket.map((x) => x.lemma)], n, ex); // any band
+    if (picked.length < n) picked = draw([...picked, ...fallbackPool], n, ex); // legacy uniform-random
+    return picked;
+  };
+}
+
+/** Dedupe LemmaTargets by lemma, keeping the first (= highest priority). */
+function dedupByLemma(targets: LemmaTarget[]): LemmaTarget[] {
+  const seen = new Set<string>();
+  const out: LemmaTarget[] = [];
+  for (const t of targets) {
+    const k = t.lemma.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push({ lemma: k, band: t.band });
+  }
+  return out;
+}
+
 function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => void }) {
-  const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
+  const [questions, setQuestions] = useState<ClozeItem[] | null>(null);
   const [title, setTitle] = useState('');
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [optTrans, setOptTrans] = useState<Record<string, string> | null>(null);
   const [optBusy, setOptBusy] = useState(false);
-  const clozeText = useRef('');
 
   useEffect(() => {
     let alive = true;
@@ -1424,28 +1476,55 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       if (!alive) return;
       if (!lessons.length) { setQuestions([]); return; }
       const text = lessons.flatMap((l) => l.paragraphs.map((p) => p.simplified)).join(' ');
-      clozeText.current = text;
       const vocab = [...new Set(lessons.flatMap((l) => l.vocab.map((v) => v.word)))];
+
+      // Lemmatize an article surface form → candidate deck lemmas (mirrors the
+      // matcher used by creditWordsFromText, so cloze and read-credit agree).
+      const forms = await loadForms(settings.learn);
+      const lemmasOf = (surface: string): string[] => {
+        const base = normalize(surface);
+        if (base.length < 3) return [base]; // skip glue words (false-positive guard)
+        const out = [base, ...lemmaCandidates(base, settings.learn)];
+        const f = forms[base];
+        if (f) out.push(f);
+        return out.map((s) => s.toLowerCase());
+      };
+
+      const rich = await loadRichDict(settings.learn, settings.native);
       const deckWords = getDeck().filter((d) => d.lang === settings.learn).map((d) => d.word);
-      const pool = [...new Set([...vocab, ...deckWords])];
-      // ~half consolidation (from the article), ~half i+1 drill of this Etappe's
-      // next-level target words, blanked in their own (richdict) example sentences.
-      const articleQs = buildClozeQuestions(text, vocab, pool, Math.random, 4);
-      let iqs: QuizQuestion[] = [];
+      const fallbackPool = [...new Set([...vocab, ...deckWords])];
+      const pickDistractors = makeDistractorPicker(rich, fallbackPool);
+
+      // Priority: SRS reviews that are DUE, then this Etappe's i+1 target words —
+      // each blanked where an inflected form actually occurs in today's article.
+      const due: LemmaTarget[] = dueEntries(settings.learn).map((e) => ({ lemma: e.word, band: e.band }));
+      let targets: LemmaTarget[] = [];
       const prog = getStageProgress(settings.level);
       if (!prog.atAufstieg) {
-        const { batch } = await etappeBatch(settings, prog.etappe);
+        const { batch } = await etappeBatch(settings, prog.etappe); // seeds targets into the deck
         if (!alive) return;
-        const withEx = batch.filter((b) => b.example && b.example.trim());
-        const exText = withEx.map((b) => b.example!.trim()).join(' ');
-        const targetWords = withEx.map((b) => b.word);
-        const iPool = [...new Set([...targetWords, ...vocab])];
-        iqs = buildClozeQuestions(exText, targetWords, iPool, Math.random, 4);
-        clozeText.current += ' ' + exText; // so the completion scan credits these targets
+        targets = batch.map((b) => ({ lemma: b.word, band: b.band }));
       }
-      const qs = shuffleInPlace([...articleQs, ...iqs]).slice(0, 8);
+      const srsTargets = dedupByLemma([...due, ...targets]);
+      const srsSet = new Set(srsTargets.map((s) => s.lemma));
+      // Consolidation: article vocab not already covered by an SRS target.
+      const consoTargets: LemmaTarget[] = vocab
+        .map((w) => ({ lemma: w.toLowerCase(), band: rich[w.toLowerCase()]?.b }))
+        .filter((c) => !srsSet.has(c.lemma));
+
+      const used = new Set<string>();
+      const srsItems = buildClozeFromLemmas(text, srsTargets, { lemmasOf, pickDistractors, max: 6, used });
+      const consoItems = buildClozeFromLemmas(text, consoTargets, { lemmasOf, pickDistractors, max: 8 - srsItems.length, used });
+      let qs: ClozeItem[] = shuffleInPlace([...srsItems, ...consoItems]).slice(0, 8);
+
+      // Cold-start / scarcity guard: never ship a near-empty cloze.
+      if (qs.length < 3) {
+        qs = buildClozeQuestions(text, vocab, fallbackPool, Math.random, 8)
+          .map((q): ClozeItem => ({ ...q, lemma: q.answer.toLowerCase() }))
+          .slice(0, 8);
+      }
       setTitle(lessons.length > 1 ? t('cloze.dailyLesson') : lessons[0]!.title);
-      setQuestions(qs.length ? qs : buildClozeQuestions(text, vocab, pool, Math.random, 8));
+      setQuestions(qs);
     })();
     return () => { alive = false; };
   }, [settings.learn, settings.level]);
@@ -1453,7 +1532,12 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
   function choose(opt: string, e: MouseEvent) {
     if (picked !== null) return;
     setPicked(opt);
-    if (questions && opt === questions[pos]!.answer) {
+    void loadOptTrans(); // after answering, reveal every option's meaning so you learn from a miss
+    const item = questions?.[pos];
+    if (!item) return;
+    const correct = opt === item.answer;
+    srsGrade(settings.learn, item.lemma, correct); // grade into SRS (no-op if lemma not in deck)
+    if (correct) {
       setScore((s) => s + 1); award(XP.merken);
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
       pop(r.left + r.width / 2, r.top + r.height / 2);
@@ -1479,13 +1563,18 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
     const sv = await fetchWordTranslation(SERVER, settings.learn, settings.native, w, q?.prompt ?? '');
     return sv?.translation ?? '';
   }
-  async function revealOpts() {
-    if (optTrans) { setOptTrans(null); return; }
-    if (!q) return;
+  // Populate the per-option translation map (idempotent). Shared by the manual
+  // "translate options" toggle and the auto-reveal after answering.
+  async function loadOptTrans() {
+    if (optTrans || optBusy || !q) return;
     setOptBusy(true);
     const pairs = await Promise.all(q.options.map(async (o) => [o, await translateOptWord(o)] as const));
     setOptTrans(Object.fromEntries(pairs));
     setOptBusy(false);
+  }
+  function revealOpts() {
+    if (optTrans) { setOptTrans(null); return; }
+    void loadOptTrans();
   }
 
   // Completing a Lückentext-Runde advances a 'cloze' route node (once).
@@ -1497,7 +1586,9 @@ function ClozeView({ settings, onBack }: { settings: PwaSettings; onBack: () => 
       markDailyDone('cloze');
       bumpDaily('gap', 1); // count this cloze round
       logActivity({ type: 'lesson', level: settings.level, title: t('cloze.logTitle', { title }), detail: t('cloze.title') });
-      void creditWordsFromText(settings, clozeText.current, t('cloze.logTitle', { title }));
+      // No blind text-credit here: each answer is now graded into the SRS in
+      // choose() (a miss must NOT advance the word, and reading-credit lives on
+      // the article path), so creditWordsFromText is intentionally not called.
     }
   }, [done]);
 
