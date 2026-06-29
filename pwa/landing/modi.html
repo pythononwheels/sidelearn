@@ -8,9 +8,7 @@
 <meta name="theme-color" content="#ff6b9d" />
 <link rel="icon" href="icon/48.png" />
 <link rel="apple-touch-icon" href="icon/180.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="fonts.css" />
 <style>
   :root{
     --bg:#f1f3fb; --surface:#fff; --border:#e9e6f5;
@@ -71,7 +69,12 @@
   .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,.68,0,1)}
   .reveal.in{opacity:1;transform:none}
 
-  .closer{text-align:center;padding:60px 0 78px;border-top:1px solid var(--border)}
+  .closer{text-align:center;padding:60px 0 40px;border-top:1px solid var(--border)}
+  .modi-foot{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;padding:10px 0 64px}
+  .bmc{display:inline-flex;align-items:center;gap:8px;font-family:var(--head);font-weight:700;font-size:15px;color:#2b2540;background:#ffdd00;border-radius:99px;padding:11px 22px;box-shadow:0 3px 0 #e3c400;text-decoration:none}
+  .bmc:hover{filter:brightness(1.04)}
+  .foot-links{font-size:14px;margin:0;color:var(--soft)}
+  .foot-links a{color:var(--soft);text-decoration:underline}
   .closer h2{font-size:32px;margin-bottom:8px}
   .closer p{color:var(--soft);font-size:18px;margin-bottom:24px}
   .closer .inst-lead{color:var(--soft);font-size:15.5px;max-width:34em;margin:0 auto 18px}
@@ -219,6 +222,11 @@
     <a class="btn" href="/app/" data-i18n="closeBtn">Learny öffnen</a>
   </section>
 
+  <footer class="modi-foot">
+    <a class="bmc" href="https://buymeacoffee.com/kilohertz" target="_blank" rel="noopener" data-i18n="bmc">☕ Spendier mir einen Kaffee</a>
+    <p class="foot-links"><a href="impressum.html" data-i18n="footImprint">Impressum</a> · <a href="datenschutz.html" data-i18n="footPrivacy">Datenschutz</a></p>
+  </footer>
+
 </div>
 <script>
   var I18N = {
@@ -247,7 +255,8 @@
       s6shout:"Shoutout an die offene Mastodon-Community",
       closeH:"Klingt gut?", closeP:"Kein Account, kein Tracking — alles bleibt auf deinem Gerät.", closeBtn:"Learny öffnen",
       instLead:"Learny ist eine installierbare Web-App (PWA) — kein App-Store nötig. Einfach eine Webseite, die direkt auf deinem Gerät läuft.",
-      instH:"So holst du Learny auf den Homescreen:", inst1:"Learny öffnen (mit dem Button unten)", inst2:"Auf <b>Teilen</b> tippen", inst3:'<b>„Zum Home-Bildschirm"</b> wählen'
+      instH:"So holst du Learny auf den Homescreen:", inst1:"Learny öffnen (mit dem Button unten)", inst2:"Auf <b>Teilen</b> tippen", inst3:'<b>„Zum Home-Bildschirm"</b> wählen',
+      bmc:"☕ Spendier mir einen Kaffee", footImprint:"Impressum", footPrivacy:"Datenschutz"
     },
     en:{
       back:"← Back", kick:"How it works",
@@ -274,7 +283,8 @@
       s6shout:"Shoutout to the open Mastodon community",
       closeH:"Sounds good?", closeP:"No account, no tracking — everything stays on your device.", closeBtn:"Open Learny",
       instLead:"Learny is an installable web app (PWA) — no App Store needed. Just a simple webpage running right on your device.",
-      instH:"Add Learny to your home screen:", inst1:"Open Learny (with the button below)", inst2:"Tap <b>Share</b>", inst3:'Choose <b>“Add to Home Screen”</b>'
+      instH:"Add Learny to your home screen:", inst1:"Open Learny (with the button below)", inst2:"Tap <b>Share</b>", inst3:'Choose <b>“Add to Home Screen”</b>',
+      bmc:"☕ Buy me a coffee", footImprint:"Imprint", footPrivacy:"Privacy"
     }
   };
   function applyLang(lang){

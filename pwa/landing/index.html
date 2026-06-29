@@ -14,9 +14,7 @@
 <meta property="og:image" content="icon/512.png" />
 <meta property="og:url" content="https://learny.pyrates.io/" />
 <meta name="twitter:card" content="summary" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="fonts.css" />
 <style>
   :root{
     --bg:#f1f3fb; --surface:#fff; --border:#e9e6f5;
@@ -154,6 +152,10 @@
   footer a{color:var(--soft)}
   footer p{margin:0}
   .src{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:99px;padding:8px 16px;color:var(--soft);font-weight:700;margin:0}
+  .bmc{display:inline-flex;align-items:center;gap:8px;font-family:var(--head);font-weight:700;font-size:15px;color:#2b2540;background:#ffdd00;border-radius:99px;padding:11px 22px;box-shadow:0 3px 0 #e3c400;text-decoration:none}
+  .bmc:hover{filter:brightness(1.04)}
+  .foot-links{font-size:14px;margin:0}
+  .foot-links a{color:var(--soft);text-decoration:underline}
 
   @media(max-width:860px){
     .hero{grid-template-columns:1fr;text-align:center}
@@ -309,8 +311,10 @@
 
   <footer>
     <a class="btn" href="/app/" data-i18n="footCta">Jetzt loslegen</a>
+    <a class="bmc" href="https://buymeacoffee.com/kilohertz" target="_blank" rel="noopener" data-i18n="bmc">☕ Spendier mir einen Kaffee</a>
     <div class="src"><svg class="ic" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> <span data-i18n="footSrc">Texte aus Wikipedia · CC BY-SA</span></div>
     <p data-i18n="footTag">Learny · Teil der Sidelearn-Familie</p>
+    <p class="foot-links"><a href="impressum.html" data-i18n="footImprint">Impressum</a> · <a href="datenschutz.html" data-i18n="footPrivacy">Datenschutz</a></p>
   </footer>
 
 </div>
@@ -353,7 +357,8 @@
       privH:"Deine Daten bleiben bei dir.<br>Lokal auf deinem Gerät.",
       privP:"Learny braucht keinen Account und sammelt nichts über dich. Alle Inhalte werden lokal geladen, dein Fortschritt liegt nur auf deinem Gerät — exportierbar als Datei, wann immer du willst.",
       b1:"Kein Account", b2:"Kein Tracking", b3:"Keine zentralen Daten", b4:"Export & Import",
-      footCta:"Jetzt loslegen", footSrc:"Texte aus Wikipedia · CC BY-SA", footTag:"Learny · Teil der Sidelearn-Familie"
+      footCta:"Jetzt loslegen", footSrc:"Texte aus Wikipedia · CC BY-SA", footTag:"Learny · Teil der Sidelearn-Familie",
+      bmc:"☕ Spendier mir einen Kaffee", footImprint:"Impressum", footPrivacy:"Datenschutz"
     },
     en:{
       navCta:"Open app",
@@ -391,7 +396,8 @@
       privH:"Your data stays with you.<br>Local, on your device.",
       privP:"Learny needs no account and collects nothing about you. All content is loaded locally, your progress lives only on your device — exportable as a file, whenever you like.",
       b1:"No account", b2:"No tracking", b3:"No central data", b4:"Export & import",
-      footCta:"Start now", footSrc:"Texts from Wikipedia · CC BY-SA", footTag:"Learny · part of the Sidelearn family"
+      footCta:"Start now", footSrc:"Texts from Wikipedia · CC BY-SA", footTag:"Learny · part of the Sidelearn family",
+      bmc:"☕ Buy me a coffee", footImprint:"Imprint", footPrivacy:"Privacy"
     }
   };
 
