@@ -10,6 +10,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **Screenshots aktualisiert**: `home-en` / `cloze-en` zeigen jetzt „Fill the gap" (nach dem Cloze-Rename);
   `stream-de` = der alte Mastodon-Anime-Shot zurück.
 
+## [0.6.131] — 2026-06-29 — In-App-Support
+
+- **Settings → „Unterstützen"**: kurzer Hinweis, dass Learny kostenlos ist (Infrastruktur &
+  Entwicklung kosten aber etwas) + **☕ Buy-me-a-coffee**-Button (buymeacoffee.com/kilohertz).
+  Zweisprachig in allen 6 UI-Sprachen.
+
 ## [0.6.130] — 2026-06-28 — Lernpfad: Tages-Zusammenfassung
 
 - Im Lernpfad zeigt das **aktuelle Etappen-Fenster** (seit dem letzten Meilenstein) jetzt pro

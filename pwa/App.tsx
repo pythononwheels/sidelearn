@@ -2361,6 +2361,12 @@ function SettingsTab({ settings, onPatch }: {
       </div>
 
       <div class="set-group">
+        <p class="set-label">{t('set.support')}</p>
+        <p class="sl-muted" style={{ margin: '0 0 12px' }}>{t('set.supportText')}</p>
+        <a class="set-coffee" href="https://buymeacoffee.com/kilohertz" target="_blank" rel="noopener">{t('set.coffee')}</a>
+      </div>
+
+      <div class="set-group">
         <p class="set-label">{t('set.app')}</p>
         <div class="set-version">
           <span>{t('set.version')} <b>{__APP_VERSION__}</b></span>
