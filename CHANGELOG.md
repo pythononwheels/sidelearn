@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.134] — 2026-06-29 — Landing: Install-Hinweis „am Handy"
+
+- **Install-Karte** („Add to home screen"): Überschrift um **„— am Handy" / „— on your phone"**
+  ergänzt (index + modi, DE/EN), da die Schritte (Teilen → Zum Home-Bildschirm) auf dem Desktop
+  keinen Sinn ergeben.
+
 ## [0.6.133] — 2026-06-29 — Lückentext SRS-getrieben + clevere Distraktoren
 
 - **Wortauswahl jetzt SRS-getrieben**: der Lückentext zieht die Lücken aus den **fälligen
