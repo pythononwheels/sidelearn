@@ -27,7 +27,9 @@ AUTO_BUILD = os.getenv("SL_AUTO_BUILD", "0") == "1"
 BUILD_HOUR = int(os.getenv("SL_BUILD_HOUR", "4"))
 
 # Bump when the prepared-content shape changes so old rows are re-generated.
-SCHEMA_VERSION = 1
+# v2: comprehension questions must be answerable from the SIMPLIFIED text (not
+# only the original) — forces re-prep of all cached lessons with the new prompt.
+SCHEMA_VERSION = 2
 
 # Price per 1M tokens (text input, output) in USD.
 # Gemini verified against ai.google.dev/gemini-api/docs/pricing on 2026-06-18.
