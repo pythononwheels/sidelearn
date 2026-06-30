@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.139] — 2026-06-30 — richdict Stufe 1 (DE-native, Top-Frequenz)
+
+- **Frequenz-priorisierte Inhalts-Korrektur** der häufigsten ~1500 Wörter/Dict mit gemini-3.5-flash:
+  **1565 Bedeutungs-/Wortart-Korrekturen** auf den 4 deutsch-nativen Dicts (en-de, es-de, fr-de, it-de)
+  — z. B. en→de `still→noch/trotzdem`, `is→ist` (ohne sind-Verwechslung).
+- Die übrigen 21 Dicts stehen aus: der Lauf brach am **monatlichen Gemini-Spending-Cap des Projekts**
+  ab (429 RESOURCE_EXHAUSTED) — wird fortgesetzt, sobald der Cap angehoben ist.
+
 ## [0.6.138] — 2026-06-30 — richdict-Inhalts-Bereinigung (alle 25 Dicts)
 
 - **LLM-Inhalts-QA + Bereinigung** aller 25 richdicts (gemini-3.5-flash):
