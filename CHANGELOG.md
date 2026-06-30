@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.140] — 2026-06-30 — Fix: Tages-Streak fror auf iOS-PWA ein
+
+- **iOS-PWA-Resume:** installierte PWAs werden von iOS suspendiert; beim Wieder-Öffnen lief die
+  **alte Session** weiter → Tagesartikel/Stats/Streak eingefroren auf gestern (Streak „hängt auf
+  fester Zahl"). Fix: wird die App auf einem **neuen Kalendertag** wieder sichtbar, lädt sie neu
+  (frischer Tagesartikel → heute wieder XP möglich → Streak zählt hoch). Gleicher Tag: kein Reload.
+
 ## [0.6.139] — 2026-06-30 — richdict Stufe 1 (DE-native, Top-Frequenz)
 
 - **Frequenz-priorisierte Inhalts-Korrektur** der häufigsten ~1500 Wörter/Dict mit gemini-3.5-flash:

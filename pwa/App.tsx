@@ -33,7 +33,7 @@ import { buildClozeQuestions, buildClozeFromLemmas, type ClozeItem, type LemmaTa
 import { type QuizQuestion } from '@/core/quiz';
 import { getSettings, saveSettings, getProgress, isCompleted, saveProgress, exportData, importData, type PwaSettings } from './store';
 import { t, setUiLang, tFor, UI_LANGS } from './i18n';
-import { award, creditLesson, isLessonCredited, getStats, XP } from './gamify';
+import { award, creditLesson, isLessonCredited, getStats, todayKey, XP } from './gamify';
 import { addToDeck, getDeck, inDeck, removeFromDeck } from './deck';
 import { seedVocab, nextLevelTargets, type SeedWord } from './seedvocab';
 import { THEMES, applyTheme } from './theme';
@@ -167,6 +167,22 @@ export function App() {
   useEffect(() => {
     applyTheme(settings.theme);
   }, [settings.theme]);
+
+  // iOS keeps installed PWAs suspended in memory: reopening just RESUMES the old
+  // session, so the daily set, stats and day streak stay frozen on yesterday —
+  // the user can't earn today's XP and the streak never advances. When the app
+  // becomes visible again on a NEW calendar day, reload to pull a fresh day.
+  useEffect(() => {
+    let day = todayKey();
+    const onResume = () => {
+      if (document.visibilityState === 'visible' && todayKey() !== day) {
+        day = todayKey();
+        location.reload();
+      }
+    };
+    document.addEventListener('visibilitychange', onResume);
+    return () => document.removeEventListener('visibilitychange', onResume);
+  }, []);
 
   if (!settings.onboarded) {
     return (
