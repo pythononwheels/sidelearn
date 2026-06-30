@@ -3,6 +3,18 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.138] — 2026-06-30 — richdict-Inhalts-Bereinigung (alle 25 Dicts)
+
+- **LLM-Inhalts-QA + Bereinigung** aller 25 richdicts (gemini-3.5-flash):
+  - **6952 Eigennamen-Einträge entfernt** (~280/Dict — john/paris/michael & Co. sind kein
+    Vokabular mehr; per POS=Eigenname, sicher).
+  - **867 Bedeutungs-/Wortart-/Beispiel-Korrekturen** angewendet (z. B. `zu` POS gesplittet
+    to/prep · too/adverb; `gefällt` Tempus; `ran` dt. „heran" statt engl. „ran").
+- **Bewusst NICHT gedroppt**: flektierte Formen + lowercase Einträge bleiben — das Dict ist
+  frequenzbasiert (Lernende tippen Oberflächenformen im Text an), kein Lemma-Wörterbuch. Ein
+  erster, zu aggressiver Pass (wollte `war/einen/vamos` droppen) wurde verworfen.
+- Headword-Keys unverändert (Lookup-sicher), Einträge nur in den Bedeutungen korrigiert.
+
 ## [0.6.137] — 2026-06-30 — Multilang Stufe 2 (NL/IT/FR) + UI-Native-Review
 
 - **Vokabel-Engine für NL-, IT- & FR-Muttersprachler** (Stufe 2): 12 neue richdicts
