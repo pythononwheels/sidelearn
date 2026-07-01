@@ -151,32 +151,40 @@ def daily(
 ) -> dict:
     _check_lang(lang)
     _check_level(level)
-    dkey = date_ or pipeline.today_key()
-    ids = db.daily_article_ids(dkey, lang)
-    # If today's set isn't built yet (and no explicit date was asked), fall back
-    # to the most recent day that has content — so users always see a challenge.
-    if not ids and not date_:
-        recent = db.daily_dates(lang, 1)
-        if recent:
-            dkey = recent[0]
-            ids = db.daily_article_ids(dkey, lang)
-    articles = []
-    for aid in ids:
-        art = db.get_article(aid)
-        if not art:
-            continue
-        prepared = db.get_prepared(aid, level)
-        articles.append(
-            {
-                "id": art["id"],
-                "title": art["title"],
-                "url": art["url"],
-                "thumbnail": art["thumbnail"],
-                "paragraphs": len(art["paragraphs"]),
-                "ready": prepared is not None,
-                "summary": (prepared or {}).get("summary", ""),
-            }
-        )
+
+    def build(d: str) -> list[dict]:
+        out = []
+        for aid in db.daily_article_ids(d, lang):
+            art = db.get_article(aid)
+            if not art:
+                continue
+            prepared = db.get_prepared(aid, level)
+            out.append(
+                {
+                    "id": art["id"],
+                    "title": art["title"],
+                    "url": art["url"],
+                    "thumbnail": art["thumbnail"],
+                    "paragraphs": len(art["paragraphs"]),
+                    "ready": prepared is not None,
+                    "summary": (prepared or {}).get("summary", ""),
+                }
+            )
+        return out
+
+    if date_:
+        # Explicit date (archive): return that day's set as-is, with ready flags.
+        dkey, articles = date_, build(date_)
+    else:
+        # No date: today's set may be discovered but not yet prepped. Skip to the
+        # most recent day that actually has READABLE (prepared) articles, and only
+        # return those — so the user never taps into a 404.
+        dkey, articles = pipeline.today_key(), []
+        for d in db.daily_dates(lang, 14):
+            ready = [a for a in build(d) if a["ready"]]
+            if ready:
+                dkey, articles = d, ready
+                break
     return {"date": dkey, "lang": lang, "level": level, "goal": min(2, len(articles)), "articles": articles}
 
 
