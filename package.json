@@ -1,6 +1,6 @@
 {
   "name": "sidelearn",
-  "version": "0.6.141",
+  "version": "0.6.142",
   "description": "Read foreign-language web pages with inline, CEFR-aware reading help powered by a local LLM (LM Studio).",
   "license": "MIT",
   "type": "module",
@@ -17,14 +17,15 @@
     "test:e2e": "npm run build && playwright test",
     "e2e:install": "playwright install chromium",
     "pwa:dev": "vite --config pwa/vite.config.ts",
-    "pwa:build": "vite build --config pwa/vite.config.ts",
+    "pwa:build": "node scripts/build-data-manifest.mjs && vite build --config pwa/vite.config.ts",
     "data:wordlists": "node scripts/build-wordlists.mjs",
     "data:gaps": "node scripts/build-gaps.mjs",
     "data:gloss": "node scripts/merge-gloss.mjs",
     "data:forms": "node scripts/build-forms.mjs",
     "data:richdict": "node scripts/build-richdict.mjs",
     "data:names": "node scripts/build-names.mjs",
-    "data:names-merge": "node scripts/merge-names.mjs"
+    "data:names-merge": "node scripts/merge-names.mjs",
+    "data:manifest": "node scripts/build-data-manifest.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
