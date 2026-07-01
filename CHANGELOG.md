@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.142] — 2026-07-01 — Versionierte Daten-URLs (Wörterbücher aktualisieren beim Client)
+
+- **Content-Hash-Versionierung für `/data/`-Dateien:** ein Build-Schritt (`build-data-manifest.mjs`)
+  erzeugt `data-manifest.json` (Dateiname → Kurz-Hash); die App lädt es beim Start und fragt Dicts
+  als `…?v=<hash>` ab. Ein **geändertes Wörterbuch bekommt eine neue URL** → der Service-Worker
+  (CacheFirst) holt es frisch; **unveränderte** Dicts behalten ihren Hash und bleiben im Cache
+  (kein Verschwendungs-Download).
+- Vorher hielt CacheFirst alte Dicts bis zu 30 Tage → neue/größere Wörterbücher kamen nicht an.
+  Jetzt: Nutzer bekommt die neue Version zuverlässig in der nächsten Online-Session.
+- Manifest via NetworkFirst (immer frisch, Offline-Fallback).
+
 ## [0.6.141] — 2026-07-01 — Fix: leere App nach SCHEMA_VERSION-Bump (Server)
 
 - **Graceful degradation beim Aufbereiten:** der `SCHEMA_VERSION 1→2`-Bump (Frage-Grounding)

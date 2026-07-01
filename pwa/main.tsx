@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { registerSW } from 'virtual:pwa-register';
+import { loadDataManifest } from '@/core/dataurl';
 import '@/ui/tokens.css';
 import './app.css';
 import { App } from './App';
@@ -36,4 +37,10 @@ w.__slCheckUpdate = async () => {
 // dev-only: preseed localhost demo data. Guarded here so the whole module is
 // tree-shaken out of the production build (verified: no seed logic ships).
 if (import.meta.env.DEV) devSeed();
-render(<App />, document.getElementById('app')!);
+
+// Load the data manifest first so dictionary URLs are versioned (?v=<hash>)
+// before any loader runs — a changed dict then busts the SW cache. Fails soft.
+void (async () => {
+  await loadDataManifest();
+  render(<App />, document.getElementById('app')!);
+})();

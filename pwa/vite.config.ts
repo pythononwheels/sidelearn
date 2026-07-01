@@ -45,17 +45,24 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell precached; large dictionary/frequency JSONs cached on first
-        // use (cache-first, they're immutable per deploy).
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 6_000_000,
         runtimeCaching: [
           {
+            // The version manifest must always be fresh — it drives cache-busting.
+            urlPattern: ({ url }) => url.pathname.endsWith('data-manifest.json'),
+            handler: 'NetworkFirst',
+            options: { cacheName: 'sidelearn-manifest', networkTimeoutSeconds: 4 },
+          },
+          {
+            // Dictionary/frequency JSONs are requested with a ?v=<content-hash>
+            // (see dataUrl), so CacheFirst is correct: changed content = new URL =
+            // fresh fetch; unchanged files stay cached (no wasteful re-download).
             urlPattern: ({ url }) => url.pathname.includes('/data/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'sidelearn-data',
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 60 },
             },
           },
         ],

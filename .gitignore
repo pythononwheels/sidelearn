@@ -33,3 +33,4 @@ data/sources/
 
 # Caddy site snippets are documented in the READMEs, not committed as config.
 *.caddy
+src/public/data/data-manifest.json
