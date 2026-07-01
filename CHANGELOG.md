@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.141] — 2026-07-01 — Fix: leere App nach SCHEMA_VERSION-Bump (Server)
+
+- **Graceful degradation beim Aufbereiten:** der `SCHEMA_VERSION 1→2`-Bump (Frage-Grounding)
+  blendete alle 4.337 alt-aufbereiteten Lektionen (schema 1) aus; da Neu-Prep am Gemini-Ausfall
+  hing, zeigte die App keine Artikel/leeres Archiv. Fix: **Serving-Queries (`get_prepared`,
+  `area_pool_prepared`, `random_area_prepared`, `prepared_levels`) servieren jetzt die beste
+  *verfügbare* Aufbereitung schema-agnostisch** → nie mehr leer. `has_prepared` bleibt strikt,
+  daher upgradet der nächtliche Build alte Lektionen auf schema 2, sobald Gemini wieder läuft.
+- Hinweis: Gemini-Key liefert aktuell `403 PERMISSION_DENIED` (Billing/Key am Projekt prüfen) —
+  bis dahin laufen alte, un-grounded Fragen weiter, aber die App ist voll nutzbar.
+
 ## [0.6.140] — 2026-06-30 — Fix: Tages-Streak fror auf iOS-PWA ein
 
 - **iOS-PWA-Resume:** installierte PWAs werden von iOS suspendiert; beim Wieder-Öffnen lief die

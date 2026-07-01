@@ -221,9 +221,9 @@ def random_area_prepared(area: str, lang: str, level: str) -> Optional[str]:
         row = c.execute(
             """SELECT p.article_id FROM area_pool ap
                  JOIN prepared p ON p.article_id = ap.article_id
-                WHERE ap.area=? AND ap.lang=? AND p.level=? AND p.schema_version=?
+                WHERE ap.area=? AND ap.lang=? AND p.level=?
                 ORDER BY RANDOM() LIMIT 1""",
-            (area, lang, level, config.SCHEMA_VERSION),
+            (area, lang, level),
         ).fetchone()
     return row["article_id"] if row else None
 
@@ -238,10 +238,10 @@ def area_pool_prepared(
         "SELECT ap.area AS area, a.id AS id, a.title AS title, a.url AS url, a.thumbnail AS thumbnail "
         "FROM area_pool ap "
         "JOIN article a ON a.id = ap.article_id "
-        "JOIN prepared p ON p.article_id = ap.article_id AND p.level=? AND p.schema_version=? "
+        "JOIN prepared p ON p.article_id = ap.article_id AND p.level=? "
         "WHERE ap.lang=? "
     )
-    params: list[Any] = [level, config.SCHEMA_VERSION, lang]
+    params: list[Any] = [level, lang]
     if date:
         sql += "AND substr(ap.added_at, 1, 10) = ? "
         params.append(date)
@@ -382,17 +382,21 @@ def upsert_prepared(article_id: str, level: str, data: dict[str, Any], now: str)
 def prepared_levels(article_id: str) -> list[str]:
     with conn() as c:
         rows = c.execute(
-            "SELECT level FROM prepared WHERE article_id=? AND schema_version=?",
-            (article_id, config.SCHEMA_VERSION),
+            "SELECT level FROM prepared WHERE article_id=?",
+            (article_id,),
         ).fetchall()
     return [r["level"] for r in rows]
 
 
 def get_prepared(article_id: str, level: str) -> Optional[dict[str, Any]]:
+    # Serve the best AVAILABLE prep regardless of schema_version: there is exactly
+    # one row per (article, level), so this returns the current-schema prep if it
+    # exists, else the older one. Keeps the app non-empty after a SCHEMA_VERSION
+    # bump (has_prepared stays strict, so the build still upgrades old rows).
     with conn() as c:
         row = c.execute(
-            "SELECT data FROM prepared WHERE article_id=? AND level=? AND schema_version=?",
-            (article_id, level, config.SCHEMA_VERSION),
+            "SELECT data FROM prepared WHERE article_id=? AND level=?",
+            (article_id, level),
         ).fetchone()
     return json.loads(row["data"]) if row else None
 
